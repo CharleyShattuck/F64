@@ -1,5 +1,6 @@
 package com.F64;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -27,11 +28,15 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 	private JToolBar		toolbar;
 	private JButton			run;
 	private JButton			step;
-	private JCheckBox		carry;
+	private JButton			stop;
 	private JScrollPane 	scroll;
 	private JPanel			panel;
+	private JCheckBox[]		flags;
 	private JLabel[]		register_labels;
 	private JTextField[]	register_fields;
+	private JTextField		slot_no;
+	private JTextField[]	slots;
+	private volatile boolean	is_running;
 
 
 	public static void systemLookAndFeel()
@@ -57,6 +62,8 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 	
 	public View()
 	{
+		JLabel label;
+		int x, y;
 		vm = new Interpreter();
 		
 		int i;
@@ -67,10 +74,12 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		split_pane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		run = new JButton("Run");
 		step = new JButton("Step");
+		stop = new JButton("Stop");
 
 		toolbar.setFloatable(false);
 		toolbar.add(run);
 		toolbar.add(step);
+		toolbar.add(stop);
 		split_pane.setTopComponent(toolbar);
 		panel = new JPanel( new GridBagLayout() );
 		//
@@ -79,8 +88,9 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		Insets label_insets = new Insets( 0, 10, 0, 4);
 		Insets field_insets = new Insets( 0,  0, 0, 0);
 		Dimension registerFieldMin = new Dimension(100, 10);
+		x = 0; y = 0;
 		for (i=0; i<Interpreter.SLOT_SIZE; ++i) {
-			JLabel label = new JLabel();
+			label = new JLabel();
 			JTextField field = new JTextField();
 			field.setMinimumSize(registerFieldMin);
 			if (i < Register.values().length) {
@@ -93,36 +103,40 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			register_labels[i] = label;
 			register_fields[i] = field;
 			panel.add(
-					label,
-					new GridBagConstraints(
-						i < (Interpreter.SLOT_SIZE/2) ? 0 : 2, i < (Interpreter.SLOT_SIZE/2) ? i : i - (Interpreter.SLOT_SIZE/2),
-						1, 1,
-						0.0, 1.0,
-						GridBagConstraints.WEST,
-						GridBagConstraints.BOTH,
-						label_insets,
-						2, 0
-					)
-				);
-			panel.add(
-					field,
-					new GridBagConstraints(
-						i < (Interpreter.SLOT_SIZE/2) ? 1 : 3, i < (Interpreter.SLOT_SIZE/2) ? i : i - (Interpreter.SLOT_SIZE/2),
-						1, 1,
-						0.0, 1.0,
-						GridBagConstraints.EAST,
-						GridBagConstraints.BOTH,
-						field_insets,
-						4, 0
-					)
-				);
-		}
-		carry = new JCheckBox("Carry");
-		carry.addItemListener(this);
-		panel.add(
-				carry,
+				label,
 				new GridBagConstraints(
-					4, 0,
+					i < (Interpreter.SLOT_SIZE/2) ? x : x+2, i < (Interpreter.SLOT_SIZE/2) ? y+i : y+i - (Interpreter.SLOT_SIZE/2),
+					1, 1,
+					0.0, 1.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.BOTH,
+					label_insets,
+					2, 0
+				)
+			);
+			panel.add(
+				field,
+				new GridBagConstraints(
+					i < (Interpreter.SLOT_SIZE/2) ? x+1 : x+3, i < (Interpreter.SLOT_SIZE/2) ? y+i : y+i - (Interpreter.SLOT_SIZE/2),
+					1, 1,
+					0.0, 1.0,
+					GridBagConstraints.EAST,
+					GridBagConstraints.BOTH,
+					field_insets,
+					4, 0
+				)
+			);
+		}
+		x += 4;
+		// Flags
+		flags = new JCheckBox[Flag.values().length];
+		for (i=0; i<Flag.values().length; ++i) {
+			flags[i] = new JCheckBox(Flag.values()[i].name());
+			flags[i].addItemListener(this);
+			panel.add(
+				flags[i],
+				new GridBagConstraints(
+					x, y+i,
 					1, 1,
 					0.0, 1.0,
 					GridBagConstraints.WEST,
@@ -131,16 +145,80 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 					2, 0
 				)
 			);
-
+		}
+		x += 1;
+//		int detailx = x;
+		//
+		label = new JLabel("slot#");
+		panel.add(
+			label,
+			new GridBagConstraints(
+				x, y,
+				1, 1,
+				0.0, 1.0,
+				GridBagConstraints.WEST,
+				GridBagConstraints.BOTH,
+				label_insets,
+				2, 0
+			)
+		);
+		slot_no = new JTextField();
+		slot_no.setHorizontalAlignment(JTextField.RIGHT);
+		panel.add(
+			slot_no,
+			new GridBagConstraints(
+				x, y+1,
+				1, 1,
+				0.0, 1.0,
+				GridBagConstraints.WEST,
+				GridBagConstraints.BOTH,
+				field_insets,
+				2, 0
+			)
+		);
+		x += 1;
+		// slots
+		slots = new JTextField[vm.getMaxSlot()];
+		for (i=0; i<slots.length; ++i) {
+			label = new JLabel("slot "+i);
+			panel.add(
+				label,
+				new GridBagConstraints(
+					x+i, y,
+					1, 1,
+					0.0, 1.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.BOTH,
+					label_insets,
+					2, 0
+				)
+			);
+			slots[i] = new JTextField();
+			slots[i].setHorizontalAlignment(JTextField.RIGHT);
+			panel.add(
+				slots[i],
+				new GridBagConstraints(
+					x+i, y+1,
+					1, 1,
+					0.0, 1.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.BOTH,
+					field_insets,
+					2, 0
+				)
+			);
+		}
+		x += slots.length;
 		//
 		scroll = new JScrollPane(panel);
 		split_pane.setBottomComponent(scroll);
-		run.setEnabled(false);
-		step.setEnabled(false);
-		run.setBackground(getBackground());
-		step.setBackground(getBackground());
+		stop.setEnabled(false);
+//		step.setEnabled(false);
+//		run.setBackground(getBackground());
+//		step.setBackground(getBackground());
 		run.addActionListener(this);
 		step.addActionListener(this);
+		stop.addActionListener(this);
 
 		update();
 		
@@ -149,6 +227,15 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		setVisible(true);
 	}
 
+	public Interpreter getInterpreter() {return vm;}
+
+	public void setup(int memory_size, int stack_size, int return_stack_size)
+	{
+		vm.setup(new long[memory_size], stack_size, return_stack_size);
+		update();
+	}
+	
+	
 	public void update()
 	{
 		int i;
@@ -156,35 +243,91 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			long value = vm.getRegister(i);
 			register_fields[i].setText(convertLongToString(value));
 		}
-		carry.setSelected(vm.getFlag(Flag.Carry));
+		for (i=0; i<Flag.values().length; ++i) {
+			flags[i].setSelected(vm.getFlag(i));
+		}
+		int slot = this.vm.getSlot();
+		slot_no.setText(Integer.toString(slot));
+
+		ISA instr = ISA.values()[vm.getSlot(slot)];
+		i = 0;
+		slots[i].setToolTipText(instr.getTooltip());
+		slots[i++].setText(instr.name());
+		int no_of_slots = instr.size();
+		if (no_of_slots == 0) {
+			// extension instruction
+		}
+		while (i<no_of_slots) {
+			slots[i++].setText(Integer.toString(this.vm.getSlot(slot+i)));
+		}
+		while (i<slots.length) {
+			slots[i++].setText("");
+		}
+	
 	}
 
 	public void setInterpreter(Interpreter value) {vm = value;}
 	
+	public void step()
+	{
+		try {
+			this.vm.step();
+		}
+		catch (Exception ex) {
+			this.panel.setBackground(Color.RED);
+//			this.setTitle(ex.getMessage());
+		}
+	}
+
 	@Override
 	public void actionPerformed(ActionEvent ev)
 	{
-		// TODO Auto-generated method stub
+		Object source = ev.getSource();
+		if (source == step) {
+			step();
+			this.update();
+		}
+		else if (source == run) {
+			is_running = true;
+			step.setEnabled(false);
+			run.setEnabled(false);
+			stop.setEnabled(true);
+			Thread thread = new Thread(this);
+			thread.start();
+		}
+		if (source == stop) {
+			is_running = false;
+			step.setEnabled(true);
+			run.setEnabled(true);
+			stop.setEnabled(false);
+		}
+	}
+
+	@Override
+	public void itemStateChanged(ItemEvent ev)
+	{
+		int i;
+		Object source = ev.getItemSelectable();
+		for (i=0; i<Flag.values().length; ++i) {
+			if (source == flags[i]) {
+				// toggle flag bit
+				vm.setFlag(i, !vm.getFlag(i));
+				update();
+			}
+		}
 		
 	}
 
 	@Override
 	public void run()
 	{
-		this.vm = new Interpreter();
-		
-	}
-
-	@Override
-	public void itemStateChanged(ItemEvent ev)
-	{
-		Object source = ev.getItemSelectable();
-		if (source == carry) {
-			// toggle carry bit
-			vm.setFlag(Flag.Carry, !vm.getFlag(Flag.Carry));
-			update();
+		int cnt = 0;
+		while (is_running) {
+			this.step();
+			if ((++cnt & 0xff) == 0) {
+				this.update();
+			}
 		}
-		
 	}
 	
 }

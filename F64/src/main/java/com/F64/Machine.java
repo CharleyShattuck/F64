@@ -4,19 +4,20 @@ import java.nio.charset.StandardCharsets;
 
 
 public class Machine {
+	private View	view;
 
+	Machine(int memory_size, int stack_size, int return_stack_size)
+	{
+		view = new View();
+		view.setup(memory_size, stack_size, return_stack_size);
+		View.systemLookAndFeel();
+		javax.swing.SwingUtilities.invokeLater(view);
+		
+	}
+	
 	public static void main(String[] args)
 	{
-		// TODO Auto-generated method stub
-		View.systemLookAndFeel();
-		javax.swing.SwingUtilities.invokeLater(new View());
-//		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-//			public void run() {
-//				View view = new View();
-//				view.run();
-//			}
-//		});
-
+		Machine main = new Machine(1000, 16, 16);
 	}
 
 }

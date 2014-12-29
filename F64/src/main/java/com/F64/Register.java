@@ -9,17 +9,21 @@ public enum Register {
 	R("top of return stack"),
 	A("index register A"),
 	B("index register B"),
-	FLAGS("flags register"),
 	SP("stack pointer"),
 	RP("return pointer"),
+	SELF("current object"),
+	MT("current method table"),
+	IT("current interface table"),
+	FLAGS("flags register"),
+	INTE("interrupt enable register"),
+	INTF("interrupt flags register"),
+	INTV("interrupt vector register"),
 	S0("stack pointer start"),
 	SL("stack pointer limit"),
 	R0("return stack pointer start"),
 	RL("return stack pointer limit"),
 	CLK("external clock counter"),
-	SELF("current object"),
-	MT("current method table"),
-	IT("current interface table");
+	CLI("external clock interrupt");
 
 	private String tooltip;
 

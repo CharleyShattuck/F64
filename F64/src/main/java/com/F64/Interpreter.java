@@ -6,6 +6,7 @@ public class Interpreter {
 	private long[]	stack;
 	private long[]	return_stack;
 	private int		slot;
+	private int		max_slot;	// max # of slots
 	public static final int BITS_PER_CELL = 64;
 	public static final int SLOT_BITS = 6;
 	public static final int SLOT_SIZE = 1 << SLOT_BITS;
@@ -21,14 +22,197 @@ public class Interpreter {
 	{
 		this.register = new long[64];
 		this.register[Register.Z.ordinal()] = 0;
+		this.setInterruptFlag(Register.INTE, Interrupt.Reset, true);
+		//this.setInterruptFlag(Register.INTF, Interrupt.Reset, true);
+		max_slot = 0;
+		int i, size;
+		for (i=0; i<ISA.values().length; ++i) {
+			size = ISA.values()[i].size();
+			if (size < 0) {size = -size;}
+			if (size > max_slot) {max_slot = size;}
+		}
+		for (i=0; i<Ext1.values().length; ++i) {
+			size = Ext1.values()[i].size();
+			if (size < 0) {size = -size;}
+			if (size > max_slot) {max_slot = size;}
+		}
 	}
 
-	public long getRegister(int reg) {return register[reg];}
-	public long getRegister(Register reg) {return register[reg.ordinal()];}
-	public void setRegister(int reg, long value) {if (reg > 0) {register[reg] = value;}}
-	public void setRegister(Register reg, long value) {if (reg != Register.Z) {register[reg.ordinal()] = value;}}
+	public int getSlot() {return this.slot;}
+	public int getMaxSlot() {return this.max_slot;}
+
+	public void setSlot(int reg, int slot, int value)
+	{
+		long tmp1 = value & SLOT_MASK;
+		tmp1 <<= (BITS_PER_CELL-(slot*SLOT_BITS));
+		long tmp2 = SLOT_MASK;
+		tmp2 <<= (BITS_PER_CELL-(slot*SLOT_BITS));
+		tmp2 = ~tmp2;
+		tmp2 &= this.getRegister(reg);
+		this.setRegister(reg, tmp1 | tmp2);
+	}
+
+	public int getSlot(int reg, int slot)
+	{
+		int res = 0;
+		long tmp = this.getRegister(reg);
+		if (slot < FINAL_SLOT) {
+			res = ((int)(tmp >> (BITS_PER_CELL-(slot*SLOT_BITS)))) & SLOT_MASK;
+		}
+		else if (slot == FINAL_SLOT) {
+			res = ((int)tmp) & FINAL_SLOT_MASK;
+		}
+		return res;
+	}
+
+	public int getSlot(int slot)
+	{
+		int res = 0;
+		if (slot < FINAL_SLOT) {
+			res = ((int)(this.register[Register.I.ordinal()] >> (BITS_PER_CELL-(slot*SLOT_BITS)))) & SLOT_MASK;
+		}
+		else if (slot == FINAL_SLOT) {
+			res = ((int)(this.register[Register.I.ordinal()])) & FINAL_SLOT_MASK;
+		}
+		return res;
+	}
+
+	public int nextSlot()
+	{
+		int res = 0;
+		if (slot < FINAL_SLOT) {
+			res = ((int)(this.register[Register.I.ordinal()] >> (BITS_PER_CELL-(slot*SLOT_BITS)))) & SLOT_MASK;
+			++slot;
+		}
+		else if (slot == FINAL_SLOT) {
+			res = ((int)(this.register[Register.I.ordinal()])) & FINAL_SLOT_MASK;
+			++slot;
+		}
+		return res;
+	}
+
+	public long getRegister(int reg)
+	{
+		long res = register[reg];
+		if (reg == Register.FLAGS.ordinal()) {
+			long mask = this.slot;
+			mask <<= (BITS_PER_CELL - SLOT_BITS);
+			res |= mask;
+		}
+		return res;
+	}
+
+	public long getRegister(Register reg)
+	{
+		long res = register[reg.ordinal()];
+		if (reg == Register.FLAGS) {
+			long mask = this.slot;
+			mask <<= (BITS_PER_CELL - SLOT_BITS);
+			res |= mask;
+		}
+		return res;
+	}
 	
+	public void setRegister(int reg, long value)
+	{
+		if (reg > 0) {
+			if (reg == Register.INTE.ordinal()) {
+				value |= Interrupt.Reset.getMask();
+			}
+			register[reg] = value;
+		}
+	}
+
+	public void setRegister(Register reg, long value)
+	{
+		if (reg != Register.Z) {
+			if (reg == Register.INTE) {
+				value |= Interrupt.Reset.getMask();
+			}
+			register[reg.ordinal()] = value;
+		}
+	}
+
+	public boolean getFlag(int fl)
+	{
+		long mask = 1;
+		mask <<= fl;
+		return (this.register[Register.FLAGS.ordinal()] & mask) != 0;
+	}
+
+	public boolean getFlag(Flag fl)
+	{
+		return (this.register[Register.FLAGS.ordinal()] & fl.getMask()) != 0;
+	}
 	
+	public void setFlag(int fl, boolean value)
+	{
+		long mask = 1;
+		mask <<= fl;
+		if (value) {
+			this.register[Register.FLAGS.ordinal()] |= mask;
+		}
+		else {
+			this.register[Register.FLAGS.ordinal()] &= ~mask;			
+		}
+	}
+
+	public void setFlag(Flag fl, boolean value)
+	{
+		if (value) {
+			this.register[Register.FLAGS.ordinal()] |= fl.getMask();
+		}
+		else {
+			this.register[Register.FLAGS.ordinal()] &= ~fl.getMask();			
+		}
+	}
+
+
+	public boolean getInterruptFlag(Register reg, Interrupt fl)
+	{
+		return (this.register[reg.ordinal()] & fl.getMask()) != 0;
+	}
+
+	public void setInterruptFlag(Register reg, Interrupt fl, boolean value)
+	{
+		if (value) {
+			this.register[reg.ordinal()] |= fl.getMask();
+		}
+		else if ((fl != Interrupt.Reset) || (reg != Register.INTE)) {
+			this.register[reg.ordinal()] &= ~fl.getMask();			
+		}
+	}
+
+	public void setMemory(long adr, long value)
+	{
+		this.memory[(int)adr] = value;
+	}
+
+	public long getMemory(long adr)
+	{
+		return this.memory[(int)adr];
+	}
+
+	public void setStackMemory(long adr, long value)
+	{
+		this.stack[(int)adr] = value;
+	}
+
+	public long getStackMemory(long adr)
+	{
+		return this.stack[(int)adr];
+	}
+
+	public void setReturnStackMemory(long adr, long value)
+	{
+		this.return_stack[(int)adr] = value;
+	}
+
+	public long getReturnStackMemory(long adr)
+	{
+		return this.return_stack[(int)adr];
+	}
+
 	public void pushStack(long value)
 	{
 		if (this.register[Register.SP.ordinal()] == this.register[Register.S0.ordinal()]) {
@@ -37,12 +221,12 @@ public class Interpreter {
 		else {
 			--this.register[Register.SP.ordinal()];
 		}
-		this.stack[(int)this.register[Register.SP.ordinal()]] = value;
+		this.setStackMemory(this.register[Register.SP.ordinal()], value);
 	}
 	
 	public long popStack()
 	{
-		long res = this.stack[(int)this.register[Register.SP.ordinal()]];
+		long res = this.getStackMemory(this.register[Register.SP.ordinal()]);
 		if (this.register[Register.SP.ordinal()] == this.register[Register.SL.ordinal()]) {
 			this.register[Register.SP.ordinal()] = this.register[Register.S0.ordinal()];
 		}
@@ -60,12 +244,12 @@ public class Interpreter {
 		else {
 			--this.register[Register.RP.ordinal()];
 		}
-		this.return_stack[(int)this.register[Register.RP.ordinal()]] = value;
+		this.setReturnStackMemory(this.register[Register.RP.ordinal()], value);
 	}
 	
 	public long popReturnStack()
 	{
-		long res = this.return_stack[(int)this.register[Register.RP.ordinal()]];
+		long res = this.getReturnStackMemory(this.register[Register.RP.ordinal()]);
 		if (this.register[Register.RP.ordinal()] == this.register[Register.RL.ordinal()]) {
 			this.register[Register.RP.ordinal()] = this.register[Register.R0.ordinal()];
 		}
@@ -75,12 +259,41 @@ public class Interpreter {
 		return res;
 	}
 
-	
-	public void storeRegister(Register reg, long value)
+//	public void storeRegister(int reg, long value)
+//	{
+//		if (reg != Register.Z.ordinal()) {
+//			if (reg == Register.INTE.ordinal()) {
+//				value |= Interrupt.Reset.getMask();
+//			}
+//			this.register[reg] = value;
+//		}
+//	}
+//
+//	public void storeRegister(Register reg, long value)
+//	{
+//		if (reg != Register.Z) {
+//			if (reg == Register.INTE) {
+//				value |= Interrupt.Reset.getMask();
+//			}
+//			this.register[reg.ordinal()] = value;
+//		}
+//	}
+
+	/**
+	 * Increment register
+	 */
+	public void inc(int reg)
 	{
-		if (reg != Register.Z) {
-			this.register[reg.ordinal()] = value;
-		}
+		this.setRegister(reg, this.getRegister(reg)+1);
+	}
+
+
+	/**
+	 * Increment register
+	 */
+	public void dec(int reg)
+	{
+		this.setRegister(reg, this.getRegister(reg)-1);
 	}
 
 	/**
@@ -88,8 +301,9 @@ public class Interpreter {
 	 */
 	public void incPointer(int reg)
 	{
-		if (this.register[reg] >= 0) {
-			++this.register[reg];
+		long value = this.getRegister(reg);
+		if (value >= 0) {
+			this.setRegister(reg, value+1);
 		}
 	}
 
@@ -99,8 +313,9 @@ public class Interpreter {
 	 */
 	public void decPointer(int reg)
 	{
-		if (this.register[reg] >= 0) {
-			--this.register[reg];
+		long value = this.getRegister(reg);
+		if (value >= 0) {
+			this.setRegister(reg, value-1);
 		}
 	}
 
@@ -112,10 +327,10 @@ public class Interpreter {
 		incPointer(Register.P.ordinal());
 	}
 
-	public long fetchRegister(Register reg)
-	{
-		return this.register[reg.ordinal()];
-	}
+//	public long fetchRegister(Register reg)
+//	{
+//		return this.register[reg.ordinal()];
+//	}
 
 	public long remainingSlots()
 	{
@@ -134,24 +349,6 @@ public class Interpreter {
 		this.register[Register.P.ordinal()] &= ~mask;
 		this.register[Register.P.ordinal()] |= this.register[Register.P.ordinal()] & mask;
 		this.slot = NO_OF_SLOTS;
-	}
-
-
-	public int nextSlot() throws Exception
-	{
-		int res = 0;
-		if (slot < FINAL_SLOT) {
-			res = ((int)(this.register[Register.I.ordinal()] >> (BITS_PER_CELL-(slot*SLOT_BITS)))) & SLOT_MASK;
-		}
-		else if (slot == FINAL_SLOT) {
-			res = ((int)(this.register[Register.I.ordinal()])) & FINAL_SLOT_MASK;
-		
-		}
-		else {
-			throw new Exception();
-		}
-		++slot;
-		return res;
 	}
 
 	public long replaceNextSlot(long base) throws Exception
@@ -227,7 +424,7 @@ public class Interpreter {
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
 		this.register[Register.R.ordinal()] = this.register[Register.P.ordinal()];
 		// check index is in range of method table
-		if (index >= this.memory[(int)this.register[Register.MT.ordinal()] + MethodTable.OFFSET_TO_SIZE]) {
+		if (index >= this.getMemory(this.register[Register.MT.ordinal()] + MethodTable.OFFSET_TO_SIZE)) {
 			throw new Exception();
 		}
 //		// check if MT must be loaded
@@ -236,7 +433,7 @@ public class Interpreter {
 //			this.register[Register.MT.ordinal()] = this.memory[(int)this.register[Register.SELF.ordinal()]];
 //		}
 		// load address of method
-		this.register[Register.P.ordinal()] = this.memory[(int)(this.register[Register.MT.ordinal()] + index) + MethodTable.OFFSET_TO_METHOD_ARRAY];
+		this.register[Register.P.ordinal()] = this.getMemory(this.register[Register.MT.ordinal()] + index + MethodTable.OFFSET_TO_METHOD_ARRAY);
 		this.slot = NO_OF_SLOTS;
 	}
 
@@ -244,7 +441,7 @@ public class Interpreter {
 	public void doJumpMethod(long index) throws Exception
 	{
 		// check index is in range of method table
-		if (index >= this.memory[(int)this.register[Register.MT.ordinal()] + MethodTable.OFFSET_TO_SIZE]) {
+		if (index >= this.getMemory(this.register[Register.MT.ordinal()] + MethodTable.OFFSET_TO_SIZE)) {
 			throw new Exception();
 		}
 //		// check if MT must be loaded
@@ -253,7 +450,7 @@ public class Interpreter {
 //			this.register[Register.MT.ordinal()] = this.memory[(int)this.register[Register.SELF.ordinal()]];
 //		}
 		// load address of method
-		this.register[Register.P.ordinal()] = this.memory[(int)(this.register[Register.MT.ordinal()] + index) + MethodTable.OFFSET_TO_METHOD_ARRAY];
+		this.register[Register.P.ordinal()] = this.getMemory(this.register[Register.MT.ordinal()] + index + MethodTable.OFFSET_TO_METHOD_ARRAY);
 		this.slot = NO_OF_SLOTS;
 	}
 
@@ -262,21 +459,21 @@ public class Interpreter {
 		int src = nextSlot();
 		int dst = nextSlot();
 		long tmp = this.register[dst];
-		this.register[dst] = this.register[src];
-		this.register[src] = tmp;
+		this.setRegister(dst, this.register[src]);
+		this.setRegister(src, tmp);
 	}
 
 	public void doMove() throws Exception
 	{
-		int src = nextSlot();
 		int dst = nextSlot();
-		this.register[dst] = this.register[src];
+		int src = nextSlot();
+		this.setRegister(dst, this.register[src]);
 	}
 
 	public void doMoveStack() throws Exception
 	{
-		int src = nextSlot();
 		int dst = nextSlot();
+		int src = nextSlot();
 		long value = this.register[src];
 		if (dst == Register.R.ordinal()) {
 			this.pushReturnStack(this.register[Register.R.ordinal()]);			
@@ -287,7 +484,7 @@ public class Interpreter {
 		else if ((dst == Register.T.ordinal()) && (src == Register.S.ordinal())) {
 			this.doDup();
 		}
-		this.register[dst] = value;
+		this.setRegister(dst, value);
 		if (src == Register.R.ordinal()) {
 			this.register[Register.R.ordinal()] = this.popReturnStack();
 		}
@@ -301,29 +498,28 @@ public class Interpreter {
 
 	public void doRFetch(int reg) throws Exception
 	{
-		long tmp = this.register[reg];
-		this.pushStack(this.register[Register.S.ordinal()]);
-		this.register[Register.S.ordinal()] = this.register[Register.T.ordinal()];
+		long tmp = this.getRegister(reg);
+		this.doDup();
 		this.register[Register.T.ordinal()] = tmp;
 	}
 
 	public void doRStore(int reg) throws Exception
 	{
-		this.register[reg] = this.register[Register.T.ordinal()];
-		this.register[Register.T.ordinal()] = this.register[Register.S.ordinal()];
-		this.register[Register.S.ordinal()] = this.popStack();
+		long tmp = this.register[Register.T.ordinal()];
+		this.doDrop();
+		this.setRegister(reg, tmp);
 	}
 
 	public void doFetchR(int reg) throws Exception
 	{
 		this.doDup();
-		this.register[Register.T.ordinal()] = this.memory[(int)this.register[reg]];
+		this.register[Register.T.ordinal()] = this.getMemory(this.getRegister(reg));
 	}
 	
 
 	public void doStoreR(int reg) throws Exception
 	{
-		this.memory[(int)this.register[reg]] = this.register[Register.T.ordinal()];
+		this.setMemory(this.getRegister(reg), this.register[Register.T.ordinal()]);
 		this.doDrop();
 	}
 
@@ -331,34 +527,32 @@ public class Interpreter {
 	{
 		int reg = Register.P.ordinal();
 		doDup();
-		this.register[Register.T.ordinal()] = this.memory[(int)this.register[reg]];
-		incPointer(Register.P.ordinal());
+		this.register[Register.T.ordinal()] = this.getMemory(this.getRegister(reg));
+		incPointer(reg);
 	}
 	
 
 	public void doStorePInc() throws Exception
 	{
 		int reg = Register.P.ordinal();
-		this.memory[(int)this.register[reg]] = this.register[Register.T.ordinal()];
+		this.setMemory(this.getRegister(reg), this.register[Register.T.ordinal()]);
 		doDrop();
-		incPointer(Register.P.ordinal());
+		incPointer(reg);
 	}
 
 	public void doFetchAInc() throws Exception
 	{
-		int reg = Register.A.ordinal();
 		doDup();
-		this.register[Register.T.ordinal()] = this.memory[(int)this.register[reg]];
-		this.incPointer(reg);
+		this.register[Register.T.ordinal()] = this.getMemory(this.register[Register.A.ordinal()]);
+		this.incPointer(Register.A.ordinal());
 	}
 	
 
 	public void doStoreBInc() throws Exception
 	{
-		int reg = Register.B.ordinal();
-		this.memory[(int)this.register[reg]] = this.register[Register.T.ordinal()];
+		this.setMemory(this.register[Register.B.ordinal()], this.register[Register.T.ordinal()]);
 		doDrop();
-		this.incPointer(reg);
+		this.incPointer(Register.B.ordinal());
 	}
 
 	public void doExit() throws Exception
@@ -480,17 +674,27 @@ public class Interpreter {
 		this.jumpRemainigSlots();		
 	}
 
-	public void doPush() throws Exception
+	public void doPush(int reg) throws Exception
 	{
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
-		this.register[Register.R.ordinal()] = this.register[Register.T.ordinal()];
-		this.doDrop();
+		this.register[Register.R.ordinal()] = this.getRegister(reg);
+		if (reg == Register.S.ordinal()) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
+		else if (reg == Register.T.ordinal()) {
+			this.doDrop();
+		}
 	}
 
-	public void doPop() throws Exception
+	public void doPop(int reg) throws Exception
 	{
-		this.doDup();
-		this.register[Register.T.ordinal()] = this.register[Register.P.ordinal()];
+		if (reg == Register.S.ordinal()) {
+			this.pushStack(this.register[Register.S.ordinal()]);
+		}
+		else if (reg == Register.T.ordinal()) {
+			this.doDup();
+		}
+		this.setRegister(reg, this.register[Register.P.ordinal()]);
 		this.register[Register.P.ordinal()] = this.popReturnStack();
 	}
 
@@ -504,10 +708,10 @@ public class Interpreter {
 
 	public void doLoadMT() throws Exception
 	{
-		this.register[Register.MT.ordinal()] = this.memory[(int)this.register[Register.SELF.ordinal()]];
+		this.register[Register.MT.ordinal()] = this.getMemory(this.register[Register.SELF.ordinal()]);
 	}
 
-	public void microstep() throws Exception
+	public void step() throws Exception
 	{
 		switch (ISA.values()[this.nextSlot()]) {
 		case NOP:		break;
@@ -552,8 +756,8 @@ public class Interpreter {
 		case RSTORE:	this.doRStore(this.nextSlot()); break;
 		case FETCHR:	this.doFetchR(this.nextSlot()); break;
 		case STORER:	this.doStoreR(this.nextSlot()); break;
-		case RINC:		++this.register[this.nextSlot()]; break;
-		case RDEC:		--this.register[this.nextSlot()]; break;
+		case RINC:		this.inc(this.nextSlot()); break;
+		case RDEC:		this.dec(this.nextSlot()); break;
 		case RPINC:		this.incPointer(this.nextSlot()); break;
 		case RPDEC:		this.decPointer(this.nextSlot()); break;
 		case FETCHPINC:	this.doFetchPInc(); break;
@@ -564,28 +768,25 @@ public class Interpreter {
 		case NOT:		this.doNot(); break;
 		case MUL2:		this.doMul2(); break;
 		case DIV2:		this.doDiv2(); break;
-		case PUSH:		this.doPush(); break;
-		case POP:		this.doPop(); break;
+		case PUSH:		this.doPush(this.nextSlot()); break;
+		case POP:		this.doPop(this.nextSlot()); break;
 		case EXT1:		this.doExt1(); break;
 		case EXT2:		this.doExt2(); break;
 		case EXT3:		this.doExt3(); break;
 		case EXT4:		this.doExt4(); break;
+		case EXT5:		this.doExt5(); break;
+		case EXT6:		this.doExt6(); break;
+		case EXT7:		this.doExt7(); break;
+		case EXT8:		this.doExt8(); break;
 
 		}
-	}
-
-	public boolean getFlag(Flag fl)
-	{
-		return (this.register[Register.FLAGS.ordinal()] & fl.getMask()) != 0;
-	}
-	
-	public void setFlag(Flag fl, boolean value)
-	{
-		if (value) {
-			this.register[Register.FLAGS.ordinal()] |= fl.getMask();
-		}
-		else {
-			this.register[Register.FLAGS.ordinal()] &= ~fl.getMask();			
+		if (this.slot > FINAL_SLOT) {
+			// load new instruction cell
+			this.register[Register.I.ordinal()] = this.getMemory(this.register[Register.P.ordinal()]);
+			// increment P
+			incPointer(Register.P.ordinal());
+			// begin with first slot
+			this.slot = 0;
 		}
 	}
 	
@@ -734,14 +935,19 @@ public class Interpreter {
 	{
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
 		this.register[Register.R.ordinal()] = this.register[Register.MT.ordinal()];
-		this.register[Register.MT.ordinal()] = this.memory[(int)this.register[Register.SELF.ordinal()]];
+		this.register[Register.MT.ordinal()] = this.getMemory(this.register[Register.SELF.ordinal()]);
 	}
 
+	public void doExitInterrupt() throws Exception
+	{
+		
+	}
 
 	public void doExt1() throws Exception
 	{
 		switch (Ext1.values()[this.nextSlot()]) {
 		case NOP:		break;
+		case EXITI:		this.doExitInterrupt(); break;
 		case ADDC:		this.doAddWithCarry(); break;
 		case SUBC:		this.doSubtractWithCarry(); break;
 		case MULS:		this.doMultiplyStep(); break;
@@ -780,53 +986,68 @@ public class Interpreter {
 	{
 	}
 
-	
-	
-	public void step() throws Exception
+	public void doExt5() throws Exception
 	{
-		// load new instruction cell
-		this.register[Register.I.ordinal()] = this.memory[(int)this.register[Register.P.ordinal()]];
-		// increment P
-		incPointer(Register.P.ordinal());
-		// begin with first slot
-		this.slot = 0;
-		while (this.slot <= FINAL_SLOT) {
-			microstep();
+	}
+
+	public void doExt6() throws Exception
+	{
+	}
+
+	public void doExt7() throws Exception
+	{
+	}
+
+	public void doExt8() throws Exception
+	{
+	}
+
+	public void interrupt(Interrupt no)
+	{
+		// signaling interrupt
+		this.setInterruptFlag(Register.INTF, no, true);
+		if (this.getInterruptFlag(Register.INTE, no)) {
+			// interrupt is enabled
+			// save slot to flags register
+			this.setSlot(Register.FLAGS.ordinal(), 1, this.slot);
+			// load instruction from interrupt vector table
+			long value = this.getMemory(this.register[Register.INTV.ordinal()]+no.ordinal());
+			this.setRegister(Register.I, value);
+			this.slot = 0;
 		}
 	}
 
-	public void storeMemory(long adr, long value)
+	public void reset()
 	{
-		this.memory[(int)adr] = value;
+		this.interrupt(Interrupt.Reset);
 	}
 
-	public long fetchMemory(long adr)
-	{
-		return this.memory[(int)adr];
-	}
-	
-	public void run(long[] memory, long starting_address, int stack_size, int return_stack_size)
+	public void setup(long[] memory, int stack_size, int return_stack_size)
 	{
 		// initialize stack
 		this.stack = new long[stack_size];
-		this.storeRegister(Register.SP, 0);
-		this.storeRegister(Register.S0, 0);
-		this.storeRegister(Register.SL, stack_size-1);
+		this.setRegister(Register.SP, 0);
+		this.setRegister(Register.S0, 0);
+		this.setRegister(Register.SL, stack_size-1);
 		// initialize return stack
 		this.return_stack = new long[return_stack_size];
-		this.storeRegister(Register.RP, 0);
-		this.storeRegister(Register.R0, 0);
-		this.storeRegister(Register.RL, return_stack_size-1);
+		this.setRegister(Register.RP, 0);
+		this.setRegister(Register.R0, 0);
+		this.setRegister(Register.RL, return_stack_size-1);
 		// memory
 		this.memory = memory;
-		this.storeRegister(Register.P, starting_address);
-		try {
-			for (;;) {
-				step();
-			}
-		}
-		catch (Exception ex) {
-		}
+		this.setRegister(Register.INTV, 0);
+		this.reset();
+		// power-on reset clears the reset interrupt flag
+		this.setInterruptFlag(Register.INTF, Interrupt.Reset, false);
+//		this.setRegister(Register.P, 0);
+//		try {
+//			for (;;) {
+//				step();
+//			}
+//		}
+//		catch (Exception ex) {
+//		}
 	}
 	
 	
