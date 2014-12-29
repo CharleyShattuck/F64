@@ -22,7 +22,7 @@ public class Interpreter {
 	{
 		this.register = new long[64];
 		this.register[Register.Z.ordinal()] = 0;
-		this.setInterruptFlag(Register.INTE, Interrupt.Reset, true);
+		this.register[Register.INTE.ordinal()] = Flag.RESET.getMask() | Flag.NMI.getMask();
 		//this.setInterruptFlag(Register.INTF, Interrupt.Reset, true);
 		max_slot = 0;
 		int i, size;
@@ -117,7 +117,7 @@ public class Interpreter {
 	{
 		if (reg > 0) {
 			if (reg == Register.INTE.ordinal()) {
-				value |= Interrupt.Reset.getMask();
+				value |= Flag.RESET.getMask() | Flag.NMI.getMask();
 			}
 			register[reg] = value;
 		}
@@ -127,7 +127,7 @@ public class Interpreter {
 	{
 		if (reg != Register.Z) {
 			if (reg == Register.INTE) {
-				value |= Interrupt.Reset.getMask();
+				value |= Flag.RESET.getMask() | Flag.NMI.getMask();
 			}
 			register[reg.ordinal()] = value;
 		}
@@ -168,18 +168,45 @@ public class Interpreter {
 	}
 
 
-	public boolean getInterruptFlag(Register reg, Interrupt fl)
+	public boolean getFlag(Register reg, Flag fl)
 	{
 		return (this.register[reg.ordinal()] & fl.getMask()) != 0;
 	}
 
-	public void setInterruptFlag(Register reg, Interrupt fl, boolean value)
+	public boolean getInterruptFlag(Register reg, int fl)
+	{
+		long mask = 1;
+		mask <<= fl;
+		return (this.register[reg.ordinal()] & mask) != 0;
+	}
+
+	public void setFlag(Register reg, Flag fl, boolean value)
 	{
 		if (value) {
 			this.register[reg.ordinal()] |= fl.getMask();
 		}
-		else if ((fl != Interrupt.Reset) || (reg != Register.INTE)) {
+		else if (reg != Register.INTE) {
 			this.register[reg.ordinal()] &= ~fl.getMask();			
+		}
+		else {
+			this.register[Register.INTE.ordinal()] &= ~fl.getMask();			
+			this.register[Register.INTE.ordinal()] |= Flag.RESET.getMask() | Flag.NMI.getMask();
+		}
+	}
+
+	public void setInterruptFlag(Register reg, int fl, boolean value)
+	{
+		long mask = 1;
+		mask <<= fl;
+		if (value) {
+			this.register[reg.ordinal()] |= mask;
+		}
+		else if (reg != Register.INTE) {
+			this.register[reg.ordinal()] &= ~mask;			
+		}
+		else {
+			this.register[Register.INTE.ordinal()] &= ~mask;			
+			this.register[Register.INTE.ordinal()] |= Flag.RESET.getMask() | Flag.NMI.getMask();
 		}
 	}
 
@@ -217,34 +244,37 @@ public class Interpreter {
 	{
 		if (this.register[Register.SP.ordinal()] == this.register[Register.S0.ordinal()]) {
 			this.register[Register.SP.ordinal()] = this.register[Register.SL.ordinal()];
+			this.setFlag(Flag.SOVER, true);
 		}
 		else {
 			--this.register[Register.SP.ordinal()];
 		}
 		this.setStackMemory(this.register[Register.SP.ordinal()], value);
 	}
-	
-	public long popStack()
-	{
-		long res = this.getStackMemory(this.register[Register.SP.ordinal()]);
-		if (this.register[Register.SP.ordinal()] == this.register[Register.SL.ordinal()]) {
-			this.register[Register.SP.ordinal()] = this.register[Register.S0.ordinal()];
-		}
-		else {
-			++this.register[Register.SP.ordinal()];
-		}
-		return res;
-	}
 
 	public void pushReturnStack(long value)
 	{
 		if (this.register[Register.RP.ordinal()] == this.register[Register.R0.ordinal()]) {
 			this.register[Register.RP.ordinal()] = this.register[Register.RL.ordinal()];
+			this.setFlag(Flag.ROVER, true);
 		}
 		else {
 			--this.register[Register.RP.ordinal()];
 		}
 		this.setReturnStackMemory(this.register[Register.RP.ordinal()], value);
+	}
+
+	public long popStack()
+	{
+		long res = this.getStackMemory(this.register[Register.SP.ordinal()]);
+		if (this.register[Register.SP.ordinal()] == this.register[Register.SL.ordinal()]) {
+			this.register[Register.SP.ordinal()] = this.register[Register.S0.ordinal()];
+			this.setFlag(Flag.SUNDER, true);
+		}
+		else {
+			++this.register[Register.SP.ordinal()];
+		}
+		return res;
 	}
 	
 	public long popReturnStack()
@@ -252,6 +282,7 @@ public class Interpreter {
 		long res = this.getReturnStackMemory(this.register[Register.RP.ordinal()]);
 		if (this.register[Register.RP.ordinal()] == this.register[Register.RL.ordinal()]) {
 			this.register[Register.RP.ordinal()] = this.register[Register.R0.ordinal()];
+			this.setFlag(Flag.RUNDER, true);
 		}
 		else {
 			++this.register[Register.RP.ordinal()];
@@ -363,7 +394,7 @@ public class Interpreter {
 		case 0: break;	// always
 		case 1: if (this.register[Register.T.ordinal()] != 0) {return false;}	// if T == 0
 		case 2: if (this.register[Register.T.ordinal()] < 0) {return false;}	// if T >= 0
-		case 3: if (!this.getFlag(Flag.Carry)) {return false;}	// if Flags.Carry == 0
+		case 3: if (!this.getFlag(Flag.CARRY)) {return false;}	// if Flags.Carry == 0
 		}
 		switch (condition & 0xf) {
 		case 0: this.slot = 0; break;
@@ -780,6 +811,12 @@ public class Interpreter {
 		case EXT8:		this.doExt8(); break;
 
 		}
+		// check if there is some interrupt pending
+		if ((this.register[Register.FLAGS.ordinal()] & this.register[Register.INTE.ordinal()]) != 0) {
+			// there is some pending interrupt
+			triggerInterrupts();
+		}
+		//
 		if (this.slot > FINAL_SLOT) {
 			// load new instruction cell
 			this.register[Register.I.ordinal()] = this.getMemory(this.register[Register.P.ordinal()]);
@@ -792,7 +829,7 @@ public class Interpreter {
 	
 	public void doAddWithCarry() throws Exception
 	{
-		boolean carry = getFlag(Flag.Carry);
+		boolean carry = getFlag(Flag.CARRY);
 		long a = this.register[Register.S.ordinal()];
 		long b = this.register[Register.T.ordinal()];
 		long c = a+b;
@@ -802,12 +839,12 @@ public class Interpreter {
 		}
 		this.register[Register.T.ordinal()] = c;
 		this.register[Register.S.ordinal()] = this.popStack();
-		setFlag(Flag.Carry, overflow);
+		setFlag(Flag.CARRY, overflow);
 	}
 
 	public void doSubtractWithCarry() throws Exception
 	{
-		boolean carry = getFlag(Flag.Carry);
+		boolean carry = getFlag(Flag.CARRY);
 		long a = this.register[Register.S.ordinal()];
 		long b = ~this.register[Register.T.ordinal()];
 		long c = a+b;
@@ -817,7 +854,7 @@ public class Interpreter {
 		}
 		this.register[Register.T.ordinal()] = c;
 		this.register[Register.S.ordinal()] = this.popStack();
-		setFlag(Flag.Carry, overflow);
+		setFlag(Flag.CARRY, overflow);
 	}
 
 	public void doMultiplyStep() throws Exception
@@ -837,11 +874,11 @@ public class Interpreter {
 		long value = this.register[Register.T.ordinal()];
 		if (value < 0) {
 			this.register[Register.T.ordinal()] = (value << 1) | 1;
-			setFlag(Flag.Carry, true);
+			setFlag(Flag.CARRY, true);
 		}
 		else {
 			this.register[Register.T.ordinal()] = (value << 1);
-			setFlag(Flag.Carry, false);
+			setFlag(Flag.CARRY, false);
 		}
 	}
 
@@ -852,24 +889,24 @@ public class Interpreter {
 			long mask = 1;
 			mask <<= 63;
 			this.register[Register.T.ordinal()] = (value >> 1) | mask;
-			setFlag(Flag.Carry, true);
+			setFlag(Flag.CARRY, true);
 		}
 		else {
 			this.register[Register.T.ordinal()] = (value >>> 1);
-			setFlag(Flag.Carry, false);
+			setFlag(Flag.CARRY, false);
 		}
 	}
 
 	public void doRotateLeftWithCarry() throws Exception
 	{
 		long value = this.register[Register.T.ordinal()];
-		if (getFlag(Flag.Carry)) {
+		if (getFlag(Flag.CARRY)) {
 			this.register[Register.T.ordinal()] = (value << 1) | 1;
 		}
 		else {
 			this.register[Register.T.ordinal()] = (value << 1);
 		}
-		setFlag(Flag.Carry, (value < 0));
+		setFlag(Flag.CARRY, (value < 0));
 	}
 
 	public void doRotateRightWithCarry() throws Exception
@@ -877,13 +914,13 @@ public class Interpreter {
 		long value = this.register[Register.T.ordinal()];
 		long mask = 1;
 		mask <<= 63;
-		if (getFlag(Flag.Carry)) {
+		if (getFlag(Flag.CARRY)) {
 			this.register[Register.T.ordinal()] = (value >> 1) | mask;
 		}
 		else {
 			this.register[Register.T.ordinal()] = (value >>> 1);
 		}
-		setFlag(Flag.Carry, (value & mask) != 0);
+		setFlag(Flag.CARRY, (value & mask) != 0);
 	}
 
 	public void doSetBit(int bit) throws Exception
@@ -892,7 +929,7 @@ public class Interpreter {
 		mask <<= bit & 0x3f;
 		long value = this.register[Register.T.ordinal()];
 		this.register[Register.T.ordinal()] = value | mask;
-		setFlag(Flag.Carry, (value & mask) != 0);
+		setFlag(Flag.CARRY, (value & mask) != 0);
 	}
 
 	public void doClearBit(int bit) throws Exception
@@ -901,7 +938,7 @@ public class Interpreter {
 		mask <<= this.nextSlot();
 		long value = this.register[Register.T.ordinal()];
 		this.register[Register.T.ordinal()] = value & ~mask;
-		setFlag(Flag.Carry, (value & mask) != 0);
+		setFlag(Flag.CARRY, (value & mask) != 0);
 	}
 
 	public void doToggleBit(int bit) throws Exception
@@ -910,7 +947,7 @@ public class Interpreter {
 		mask <<= this.nextSlot();
 		long value = this.register[Register.T.ordinal()];
 		this.register[Register.T.ordinal()] = value ^ mask;
-		setFlag(Flag.Carry, (value & mask) != 0);
+		setFlag(Flag.CARRY, (value & mask) != 0);
 	}
 
 	public void doReadBit(int bit) throws Exception
@@ -918,12 +955,12 @@ public class Interpreter {
 		long mask = 1;
 		mask <<= this.nextSlot();
 		long value = this.register[Register.T.ordinal()];
-		setFlag(Flag.Carry, (value & mask) != 0);
+		setFlag(Flag.CARRY, (value & mask) != 0);
 	}
 
 	public void doWriteBit(int bit) throws Exception
 	{
-		if (getFlag(Flag.Carry)) {
+		if (getFlag(Flag.CARRY)) {
 			this.doSetBit(bit);
 		}
 		else {
@@ -938,9 +975,36 @@ public class Interpreter {
 		this.register[Register.MT.ordinal()] = this.getMemory(this.register[Register.SELF.ordinal()]);
 	}
 
+	public void doEnterInterrupt(int no) throws Exception
+	{
+		this.pushReturnStack(this.register[Register.R.ordinal()]);
+		// save flags (with current slot and interrupt)
+		this.setSlot(Register.FLAGS.ordinal(), 0, this.slot);
+		this.setSlot(Register.FLAGS.ordinal(), 1, no);
+		this.pushReturnStack(this.register[Register.FLAGS.ordinal()]);
+		// save I
+		this.register[Register.R.ordinal()] = this.register[Register.I.ordinal()];
+		// load instruction from interrupt vector table
+		this.register[Register.I.ordinal()] = this.getMemory(this.register[Register.INTV.ordinal()]+no);
+		this.slot = 0;
+		// mark interrupt as in service
+		this.setInterruptFlag(Register.INTS, no, true);
+		// clear interrupt flag register
+		this.setFlag(no, false);
+	}
+
 	public void doExitInterrupt() throws Exception
 	{
-		
+		// restore I
+		this.register[Register.I.ordinal()] = this.register[Register.R.ordinal()];
+		// restore flags with slot and clear the interrupt in the INTF register
+		this.register[Register.FLAGS.ordinal()] = this.popReturnStack();
+		this.slot = this.getSlot(Register.FLAGS.ordinal(), 0);
+		int no = this.getSlot(Register.FLAGS.ordinal(), 1);
+		this.setInterruptFlag(Register.INTS, no, false);
+		//
+		this.register[Register.R.ordinal()] = this.popReturnStack();
+		// restore slot
 	}
 
 	public void doExt1() throws Exception
@@ -974,8 +1038,57 @@ public class Interpreter {
 		}
 	}
 
+	/**
+	 * ( a - n )
+	 * Fetch a value and mark the location as reserved. Any write access to this location
+	 * may generate a RESERVED exception.
+	 * The RESERVE register is set to the observed address.
+	 * @throws Exception
+	 */
+	public void doFetchReserved() throws Exception
+	{
+		long adr = this.getRegister(Register.T);
+		if (this.getRegister(Register.RESERVE) != 0) {
+			// some memory has already been reserved
+			if (interrupt(Flag.TOUCHED)) {
+				return;
+			}
+//			this.setFlag(Flag.RESERVED, true);
+		}
+		this.setRegister(Register.RESERVE, adr);
+		this.setRegister(Register.T, this.getMemory(adr));
+	}
+
+	/**
+	 * ( n1 a - n2 )
+	 * Store the value n1 at address a, iff a is a reserved location and it has not been touched.
+	 * The result n2 is 0 if the store was successful, otherwise it contains an reason code.
+	 * The RESERVE register is reset to 0.
+	 */
+	public void doStoreConditional() throws Exception
+	{
+		long adr = this.getRegister(Register.T);
+		long value = this.getRegister(Register.S);
+		if (this.getRegister(Register.RESERVE) != adr) {
+			// memory has not been reserved
+		}
+		if (getFlag(Flag.TOUCHED)) {
+			this.setRegister(Register.T, -1);
+		}
+		else {
+			this.setMemory(adr, value);
+			this.setRegister(Register.T, 0);
+		}
+		this.setRegister(Register.RESERVE, 0);
+		this.doNip();
+	}
+
 	public void doExt2() throws Exception
 	{
+		switch (Ext2.values()[this.nextSlot()]) {
+		case FETCHRES:	this.doFetchReserved(); break;
+		case STORECOND:	this.doStoreConditional(); break;
+		}
 	}
 
 	public void doExt3() throws Exception
@@ -1002,44 +1115,80 @@ public class Interpreter {
 	{
 	}
 
-	public void interrupt(Interrupt no)
+	public boolean interrupt(Flag no)
 	{
 		// signaling interrupt
-		this.setInterruptFlag(Register.INTF, no, true);
-		if (this.getInterruptFlag(Register.INTE, no)) {
-			// interrupt is enabled
-			// save slot to flags register
-			this.setSlot(Register.FLAGS.ordinal(), 1, this.slot);
-			// load instruction from interrupt vector table
-			long value = this.getMemory(this.register[Register.INTV.ordinal()]+no.ordinal());
-			this.setRegister(Register.I, value);
-			this.slot = 0;
+		try {
+			this.setFlag(no, true);
+			if (!this.getFlag(Register.INTS, no)) {
+				// interrupt is enabled
+				// save slot to flags register
+				doEnterInterrupt(no.ordinal());
+				return true;
+			}
+		}
+		catch (Exception ex) {
+			
+		}
+		return false;
+	}
+
+	public void triggerInterrupts()
+	{
+		// scan interrupts in reverse priority
+		for (int i=Flag.values().length-1; i>=0; --i) {
+			if (this.getFlag(i) && this.getInterruptFlag(Register.INTE, i)) {
+				this.interrupt(Flag.values()[i]);
+			}
 		}
 	}
 
 	public void reset()
 	{
-		this.interrupt(Interrupt.Reset);
+		try {
+			this.interrupt(Flag.RESET);
+		}
+		catch (Exception ex) {
+		}
+	}
+
+	public void nmi() throws Exception
+	{
+		this.interrupt(Flag.NMI);
+	}
+
+	public void incrementExternalClock() throws Exception
+	{
+		this.inc(Register.CLK.ordinal());
+		if (this.getRegister(Register.CLK) == this.getRegister(Register.CLI)) {
+			this.setFlag(Flag.CLOCK, true);;
+		}
 	}
 
 	public void setup(long[] memory, int stack_size, int return_stack_size)
 	{
-		// initialize stack
+		this.memory = memory;
+		// initialize instruction pointer
+		this.setRegister(Register.P, 0);
+		this.setRegister(Register.I, this.getMemory(0));
+		this.setRegister(Register.FLAGS, 0);
+		this.slot = 0;
+		// initialize stackx
 		this.stack = new long[stack_size];
-		this.setRegister(Register.SP, 0);
+		this.setRegister(Register.SP, stack_size-1);
 		this.setRegister(Register.S0, 0);
 		this.setRegister(Register.SL, stack_size-1);
 		// initialize return stack
 		this.return_stack = new long[return_stack_size];
-		this.setRegister(Register.RP, 0);
+		this.setRegister(Register.RP, return_stack_size-1);
 		this.setRegister(Register.R0, 0);
 		this.setRegister(Register.RL, return_stack_size-1);
 		// memory
-		this.memory = memory;
 		this.setRegister(Register.INTV, 0);
-		this.reset();
+		this.setRegister(Register.INTE, 0);
 		// power-on reset clears the reset interrupt flag
-		this.setInterruptFlag(Register.INTF, Interrupt.Reset, false);
+		this.setFlag(Flag.RESET, false);
+		this.setFlag(Register.INTS, Flag.RESET, false);
 //		this.setRegister(Register.P, 0);
 //		try {
 //			for (;;) {
