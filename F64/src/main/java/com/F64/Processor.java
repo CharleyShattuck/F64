@@ -1,7 +1,7 @@
 package com.F64;
 
 public class Processor {
-	private System	sys;
+	private System	system;
 	private long[]	register;
 	private int		slot;
 	private int		max_slot;	// max # of slots
@@ -16,9 +16,9 @@ public class Processor {
 	public static final int NO_OF_SLOTS = FINAL_SLOT+1;
 	
 	
-	public Processor(System sys)
+	public Processor(System system)
 	{
-		this.sys = sys;
+		this.system = system;
 		this.register = new long[SLOT_SIZE];
 		this.register[Register.Z.ordinal()] = 0;
 		this.register[Register.INTE.ordinal()] = Flag.RESET.getMask() | Flag.NMI.getMask();
@@ -40,54 +40,47 @@ public class Processor {
 	public int getSlot() {return this.slot;}
 	public int getMaxSlot() {return this.max_slot;}
 
-	public void setSlot(int reg, int slot, int value)
+	public static long writeSlot(long data, int slot, int value)
 	{
 		long tmp1 = value & SLOT_MASK;
 		tmp1 <<= (BITS_PER_CELL-(slot*SLOT_BITS));
 		long tmp2 = SLOT_MASK;
 		tmp2 <<= (BITS_PER_CELL-(slot*SLOT_BITS));
 		tmp2 = ~tmp2;
-		tmp2 &= this.getRegister(reg);
-		this.setRegister(reg, tmp1 | tmp2);
+		tmp2 &= data;
+		return tmp1 | tmp2;
+	}
+
+	public static int readSlot(long value, int slot)
+	{
+		int res = 0;
+		if (slot < FINAL_SLOT) {
+			res = ((int)(value >> (BITS_PER_CELL-(slot*SLOT_BITS)))) & SLOT_MASK;
+		}
+		else if (slot == FINAL_SLOT) {
+			res = ((int)value) & FINAL_SLOT_MASK;
+		}
+		return res;
+	}
+
+	public void setSlot(int reg, int slot, int value)
+	{
+		this.setRegister(reg, writeSlot(this.getRegister(reg), slot, value));
 	}
 
 	public int getSlot(int reg, int slot)
 	{
-		int res = 0;
-		long tmp = this.getRegister(reg);
-		if (slot < FINAL_SLOT) {
-			res = ((int)(tmp >> (BITS_PER_CELL-(slot*SLOT_BITS)))) & SLOT_MASK;
-		}
-		else if (slot == FINAL_SLOT) {
-			res = ((int)tmp) & FINAL_SLOT_MASK;
-		}
-		return res;
+		return readSlot(this.getRegister(reg), slot);
 	}
 
 	public int getSlot(int slot)
 	{
-		int res = 0;
-		if (slot < FINAL_SLOT) {
-			res = ((int)(this.register[Register.I.ordinal()] >> (BITS_PER_CELL-(slot*SLOT_BITS)))) & SLOT_MASK;
-		}
-		else if (slot == FINAL_SLOT) {
-			res = ((int)(this.register[Register.I.ordinal()])) & FINAL_SLOT_MASK;
-		}
-		return res;
+		return readSlot(this.register[Register.I.ordinal()], slot);
 	}
 
 	public int nextSlot()
 	{
-		int res = 0;
-		if (slot < FINAL_SLOT) {
-			res = ((int)(this.register[Register.I.ordinal()] >> (BITS_PER_CELL-(slot*SLOT_BITS)))) & SLOT_MASK;
-			++slot;
-		}
-		else if (slot == FINAL_SLOT) {
-			res = ((int)(this.register[Register.I.ordinal()])) & FINAL_SLOT_MASK;
-			++slot;
-		}
-		return res;
+		return readSlot(this.register[Register.I.ordinal()], this.slot++);
 	}
 
 	public long getRegister(int reg)
@@ -103,13 +96,7 @@ public class Processor {
 
 	public long getRegister(Register reg)
 	{
-		long res = register[reg.ordinal()];
-		if (reg == Register.FLAGS) {
-			long mask = this.slot;
-			mask <<= (BITS_PER_CELL - SLOT_BITS);
-			res |= mask;
-		}
-		return res;
+		return this.getRegister(reg.ordinal());
 	}
 	
 	public void setRegister(int reg, long value)
@@ -118,18 +105,18 @@ public class Processor {
 			if (reg == Register.INTE.ordinal()) {
 				value |= Flag.RESET.getMask() | Flag.NMI.getMask();
 			}
+			else if (reg == Register.P.ordinal()) {
+				if (!system.isValidCodeAddress(value)) {
+					this.interrupt(Flag.CODE);
+				}
+			}
 			register[reg] = value;
 		}
 	}
 
 	public void setRegister(Register reg, long value)
 	{
-		if (reg != Register.Z) {
-			if (reg == Register.INTE) {
-				value |= Flag.RESET.getMask() | Flag.NMI.getMask();
-			}
-			register[reg.ordinal()] = value;
-		}
+		this.setRegister(reg.ordinal(), value);
 	}
 
 	public boolean getFlag(int fl)
@@ -219,7 +206,7 @@ public class Processor {
 		else {
 			--this.register[Register.SP.ordinal()];
 		}
-		sys.setStackMemory(this.register[Register.SP.ordinal()], value);
+		system.setStackMemory(this.register[Register.SP.ordinal()], value);
 	}
 
 	public void pushReturnStack(long value)
@@ -231,12 +218,12 @@ public class Processor {
 		else {
 			--this.register[Register.RP.ordinal()];
 		}
-		sys.setReturnStackMemory(this.register[Register.RP.ordinal()], value);
+		system.setReturnStackMemory(this.register[Register.RP.ordinal()], value);
 	}
 
 	public long popStack()
 	{
-		long res = sys.getStackMemory(this.register[Register.SP.ordinal()]);
+		long res = system.getStackMemory(this.register[Register.SP.ordinal()]);
 		if (this.register[Register.SP.ordinal()] == this.register[Register.SL.ordinal()]) {
 			this.register[Register.SP.ordinal()] = this.register[Register.S0.ordinal()];
 			this.setFlag(Flag.SUNDER, true);
@@ -249,7 +236,7 @@ public class Processor {
 	
 	public long popReturnStack()
 	{
-		long res = sys.getReturnStackMemory(this.register[Register.RP.ordinal()]);
+		long res = system.getReturnStackMemory(this.register[Register.RP.ordinal()]);
 		if (this.register[Register.RP.ordinal()] == this.register[Register.RL.ordinal()]) {
 			this.register[Register.RP.ordinal()] = this.register[Register.R0.ordinal()];
 			this.setFlag(Flag.RUNDER, true);
@@ -258,6 +245,21 @@ public class Processor {
 			++this.register[Register.RP.ordinal()];
 		}
 		return res;
+	}
+
+	public void pushT(long value)
+	{
+		this.pushStack(this.register[Register.S.ordinal()]);
+		this.register[Register.S.ordinal()] = this.register[Register.T.ordinal()];
+		this.register[Register.T.ordinal()] = value;
+	}
+
+	public long popT()
+	{
+		long value = this.register[Register.T.ordinal()];
+		this.register[Register.T.ordinal()] = this.register[Register.S.ordinal()];
+		this.register[Register.S.ordinal()] = this.popStack();
+		return value;
 	}
 
 //	public void storeRegister(int reg, long value)
@@ -352,7 +354,7 @@ public class Processor {
 		this.slot = NO_OF_SLOTS;
 	}
 
-	public long replaceNextSlot(long base) throws Exception
+	public long replaceNextSlot(long base)
 	{
 		long res = (-1 << SLOT_BITS) & base;
 		return res | nextSlot();
@@ -387,7 +389,7 @@ public class Processor {
 		return true;
 	}
 	
-	public long drop() throws Exception
+	public long drop()
 	{
 		long res = this.register[Register.T.ordinal()];
 		this.register[Register.T.ordinal()] = this.register[Register.S.ordinal()];
@@ -395,19 +397,19 @@ public class Processor {
 		return res;
 	}
 
-	public void doDrop() throws Exception
+	public void doDrop()
 	{
 		this.register[Register.T.ordinal()] = this.register[Register.S.ordinal()];
 		this.register[Register.S.ordinal()] = this.popStack();		
 	}
 
-	public void doDup() throws Exception
+	public void doDup()
 	{
 		this.pushStack(this.register[Register.S.ordinal()]);
 		this.register[Register.S.ordinal()] = this.register[Register.T.ordinal()];		
 	}
 
-	public void doNext() throws Exception
+	public void doNext()
 	{
 		if (this.register[Register.R.ordinal()] == 0) {
 			this.register[Register.R.ordinal()] = this.popReturnStack();
@@ -419,43 +421,35 @@ public class Processor {
 		}
 	}
 	
-	public void doCallMethod(long index) throws Exception
+	public void doCallMethod(long index)
 	{
 		// push P on return stack
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
 		this.register[Register.R.ordinal()] = this.register[Register.P.ordinal()];
 		// check index is in range of method table
-		if (index >= sys.getMemory(this.register[Register.MT.ordinal()] + MethodTable.OFFSET_TO_SIZE)) {
-			throw new Exception();
+		if (index >= system.getMemory(this.register[Register.MT.ordinal()] + MethodTable.OFFSET_TO_SIZE)) {
+			this.interrupt(Flag.BOUND);
+			return;
 		}
-//		// check if MT must be loaded
-//		if (this.register[Register.MT.ordinal()] == 0) {
-//			// load the method table register from SELF
-//			this.register[Register.MT.ordinal()] = this.memory[(int)this.register[Register.SELF.ordinal()]];
-//		}
 		// load address of method
-		this.register[Register.P.ordinal()] = sys.getMemory(this.register[Register.MT.ordinal()] + index + MethodTable.OFFSET_TO_METHOD_ARRAY);
+		this.register[Register.P.ordinal()] = system.getMemory(this.register[Register.MT.ordinal()] + index + MethodTable.OFFSET_TO_METHOD_ARRAY);
 		this.slot = NO_OF_SLOTS;
 	}
 
 	
-	public void doJumpMethod(long index) throws Exception
+	public void doJumpMethod(long index)
 	{
 		// check index is in range of method table
-		if (index >= sys.getMemory(this.register[Register.MT.ordinal()] + MethodTable.OFFSET_TO_SIZE)) {
-			throw new Exception();
+		if (index >= system.getMemory(this.register[Register.MT.ordinal()] + MethodTable.OFFSET_TO_SIZE)) {
+			this.interrupt(Flag.BOUND);
+			return;
 		}
-//		// check if MT must be loaded
-//		if (this.register[Register.MT.ordinal()] == 0) {
-//			// load the method table register from SELF
-//			this.register[Register.MT.ordinal()] = this.memory[(int)this.register[Register.SELF.ordinal()]];
-//		}
 		// load address of method
-		this.register[Register.P.ordinal()] = sys.getMemory(this.register[Register.MT.ordinal()] + index + MethodTable.OFFSET_TO_METHOD_ARRAY);
+		this.register[Register.P.ordinal()] = system.getMemory(this.register[Register.MT.ordinal()] + index + MethodTable.OFFSET_TO_METHOD_ARRAY);
 		this.slot = NO_OF_SLOTS;
 	}
 
-	public void doSwap() throws Exception
+	public void doSwap()
 	{
 		int src = nextSlot();
 		int dst = nextSlot();
@@ -464,14 +458,14 @@ public class Processor {
 		this.setRegister(src, tmp);
 	}
 
-	public void doMove() throws Exception
+	public void doMove()
 	{
 		int dst = nextSlot();
 		int src = nextSlot();
 		this.setRegister(dst, this.register[src]);
 	}
 
-	public void doMoveStack() throws Exception
+	public void doMoveStack()
 	{
 		int dst = nextSlot();
 		int src = nextSlot();
@@ -497,73 +491,73 @@ public class Processor {
 		}
 	}
 
-	public void doRFetch(int reg) throws Exception
+	public void doRFetch(int reg)
 	{
 		long tmp = this.getRegister(reg);
 		this.doDup();
 		this.register[Register.T.ordinal()] = tmp;
 	}
 
-	public void doRStore(int reg) throws Exception
+	public void doRStore(int reg)
 	{
 		long tmp = this.register[Register.T.ordinal()];
 		this.doDrop();
 		this.setRegister(reg, tmp);
 	}
 
-	public void doFetchR(int reg) throws Exception
+	public void doFetchR(int reg)
 	{
 		this.doDup();
-		this.register[Register.T.ordinal()] = sys.getMemory(this.getRegister(reg));
+		this.register[Register.T.ordinal()] = system.getMemory(this.getRegister(reg));
 	}
 	
 
-	public void doStoreR(int reg) throws Exception
+	public void doStoreR(int reg)
 	{
-		sys.setMemory(this.getRegister(reg), this.register[Register.T.ordinal()]);
+		system.setMemory(this.getRegister(reg), this.register[Register.T.ordinal()]);
 		this.doDrop();
 	}
 
-	public void doFetchPInc() throws Exception
+	public void doFetchPInc()
 	{
 		int reg = Register.P.ordinal();
 		doDup();
-		this.register[Register.T.ordinal()] = sys.getMemory(this.getRegister(reg));
+		this.register[Register.T.ordinal()] = system.getMemory(this.getRegister(reg));
 		incPointer(reg);
 	}
 	
 
-	public void doStorePInc() throws Exception
+	public void doStorePInc()
 	{
 		int reg = Register.P.ordinal();
-		sys.setMemory(this.getRegister(reg), this.register[Register.T.ordinal()]);
+		system.setMemory(this.getRegister(reg), this.register[Register.T.ordinal()]);
 		doDrop();
 		incPointer(reg);
 	}
 
-	public void doFetchAInc() throws Exception
+	public void doFetchAInc()
 	{
 		doDup();
-		this.register[Register.T.ordinal()] = sys.getMemory(this.register[Register.A.ordinal()]);
+		this.register[Register.T.ordinal()] = system.getMemory(this.register[Register.A.ordinal()]);
 		this.incPointer(Register.A.ordinal());
 	}
 	
 
-	public void doStoreBInc() throws Exception
+	public void doStoreBInc()
 	{
-		sys.setMemory(this.register[Register.B.ordinal()], this.register[Register.T.ordinal()]);
+		system.setMemory(this.register[Register.B.ordinal()], this.register[Register.T.ordinal()]);
 		doDrop();
 		this.incPointer(Register.B.ordinal());
 	}
 
-	public void doExit() throws Exception
+	public void doExit()
 	{
 		this.register[Register.P.ordinal()] = this.register[Register.R.ordinal()];
 		this.register[Register.R.ordinal()] = this.popReturnStack();
 		this.slot = NO_OF_SLOTS;
 	}
 
-	public void doUNext() throws Exception
+	public void doUNext()
 	{
 		if (this.register[Register.R.ordinal()] == 0) {
 			this.register[Register.R.ordinal()] = this.popReturnStack();
@@ -574,7 +568,7 @@ public class Processor {
 		}
 	}
 
-	public void doCont() throws Exception
+	public void doCont()
 	{
 		this.register[Register.I.ordinal()] = this.register[Register.T.ordinal()];
 		this.doDrop();
@@ -582,7 +576,7 @@ public class Processor {
 		this.slot = 0;		
 	}
 
-	public void doAdd(int d, int s1, int s2) throws Exception
+	public void doAdd(int d, int s1, int s2)
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
@@ -591,7 +585,7 @@ public class Processor {
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 	
-	public void doAddWithCarry(int d, int s1, int s2) throws Exception
+	public void doAddWithCarry(int d, int s1, int s2)
 	{
 		boolean carry = getFlag(Flag.CARRY);
 		long a = this.getRegister(s1);
@@ -607,7 +601,7 @@ public class Processor {
 	}
 
 	
-	public void doSubtract(int d, int s1, int s2) throws Exception
+	public void doSubtract(int d, int s1, int s2)
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
@@ -616,7 +610,7 @@ public class Processor {
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 
-	public void doSubtractWithCarry(int d, int s1, int s2) throws Exception
+	public void doSubtractWithCarry(int d, int s1, int s2)
 	{
 		boolean carry = getFlag(Flag.CARRY);
 		long a = this.getRegister(s1);
@@ -631,7 +625,7 @@ public class Processor {
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 
-	public void doAnd(int d, int s1, int s2) throws Exception
+	public void doAnd(int d, int s1, int s2)
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
@@ -640,7 +634,7 @@ public class Processor {
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 
-	public void doOr(int d, int s1, int s2) throws Exception
+	public void doOr(int d, int s1, int s2)
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
@@ -649,7 +643,7 @@ public class Processor {
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 
-	public void doXor(int d, int s1, int s2) throws Exception
+	public void doXor(int d, int s1, int s2)
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
@@ -658,7 +652,7 @@ public class Processor {
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 
-	public void doXNor(int d, int s1, int s2) throws Exception
+	public void doXNor(int d, int s1, int s2)
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
@@ -668,7 +662,7 @@ public class Processor {
 	}
 
 
-	public void doAsl(int d, int s1, int s2) throws Exception
+	public void doAsl(int d, int s1, int s2)
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
@@ -685,7 +679,7 @@ public class Processor {
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 
-	public void doAsr(int d, int s1, int s2) throws Exception
+	public void doAsr(int d, int s1, int s2)
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
@@ -702,7 +696,7 @@ public class Processor {
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 
-	public void doLsl(int d, int s1, int s2) throws Exception
+	public void doLsl(int d, int s1, int s2)
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
@@ -728,7 +722,7 @@ public class Processor {
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 
-	public void doLsr(int d, int s1, int s2) throws Exception
+	public void doLsr(int d, int s1, int s2)
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
@@ -744,7 +738,7 @@ public class Processor {
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 
-	public void doMul2Add(int d, int s1, int s2) throws Exception
+	public void doMul2Add(int d, int s1, int s2)
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
@@ -753,7 +747,7 @@ public class Processor {
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 
-	public void doDiv2Sub(int d, int s1, int s2) throws Exception
+	public void doDiv2Sub(int d, int s1, int s2)
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
@@ -762,7 +756,7 @@ public class Processor {
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 
-	public void doOver() throws Exception
+	public void doOver()
 	{
 		this.pushStack(this.register[Register.S.ordinal()]);
 		long tmp = this.register[Register.S.ordinal()];
@@ -770,37 +764,37 @@ public class Processor {
 		this.register[Register.T.ordinal()] = tmp;
 	}
 
-	public void doNip() throws Exception
+	public void doNip()
 	{
 		this.register[Register.S.ordinal()] = this.popStack();
 	}
 
-	public void doLit() throws Exception
+	public void doLit()
 	{
 		this.doDup();
 		this.register[Register.T.ordinal()] = this.nextSlot();
 	}
 
-	public void doBitLit() throws Exception
+	public void doBitLit()
 	{
 		this.doDup();
 		long tmp = 1;
 		this.register[Register.T.ordinal()] = tmp << this.nextSlot();
 	}
 
-	public void doExtendLiteral() throws Exception
+	public void doExtendLiteral()
 	{
 		this.register[Register.T.ordinal()] <<= SLOT_BITS;
 		this.register[Register.T.ordinal()] |= this.nextSlot();
 	}
 
-	public void doShortJump() throws Exception
+	public void doShortJump()
 	{
 		this.register[Register.P.ordinal()] = this.replaceNextSlot(this.register[Register.P.ordinal()]);
 		this.slot = NO_OF_SLOTS;		
 	}
 
-	public void doCall() throws Exception
+	public void doCall()
 	{
 		// push P on return stack
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
@@ -809,7 +803,7 @@ public class Processor {
 		this.jumpRemainigSlots();		
 	}
 
-	public void doPush(int reg) throws Exception
+	public void doPush(int reg)
 	{
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
 		this.register[Register.R.ordinal()] = this.getRegister(reg);
@@ -821,7 +815,7 @@ public class Processor {
 		}
 	}
 
-	public void doPop(int reg) throws Exception
+	public void doPop(int reg)
 	{
 		if (reg == Register.S.ordinal()) {
 			this.pushStack(this.register[Register.S.ordinal()]);
@@ -833,7 +827,7 @@ public class Processor {
 		this.register[Register.P.ordinal()] = this.popReturnStack();
 	}
 
-	public void doLoadSelf() throws Exception
+	public void doLoadSelf()
 	{
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
 		this.register[Register.R.ordinal()] = this.register[Register.SELF.ordinal()];
@@ -841,12 +835,12 @@ public class Processor {
 		this.doDrop();
 	}
 
-	public void doLoadMT() throws Exception
+	public void doLoadMT()
 	{
-		this.register[Register.MT.ordinal()] = sys.getMemory(this.register[Register.SELF.ordinal()]);
+		this.register[Register.MT.ordinal()] = system.getMemory(this.register[Register.SELF.ordinal()]);
 	}
 
-	public void step() throws Exception
+	public void step()
 	{
 		switch (ISA.values()[this.nextSlot()]) {
 		case NOP:		break;
@@ -923,7 +917,7 @@ public class Processor {
 		//
 		if (this.slot > FINAL_SLOT) {
 			// load new instruction cell
-			this.register[Register.I.ordinal()] = sys.getMemory(this.register[Register.P.ordinal()]);
+			this.register[Register.I.ordinal()] = system.getMemory(this.register[Register.P.ordinal()]);
 			// increment P
 			incPointer(Register.P.ordinal());
 			// begin with first slot
@@ -931,19 +925,17 @@ public class Processor {
 		}
 	}
 
-	public void doMultiplyStep() throws Exception
+	public void doMultiplyStep()
 	{
 		//TODO
-		throw new Exception();
 	}
 
-	public void doDivideStep() throws Exception
+	public void doDivideStep()
 	{
 		//TODO
-		throw new Exception();
 	}
 
-	public void doRotateLeft() throws Exception
+	public void doRotateLeft()
 	{
 		long value = this.register[Register.T.ordinal()];
 		if (value < 0) {
@@ -956,7 +948,7 @@ public class Processor {
 		}
 	}
 
-	public void doRotateRight() throws Exception
+	public void doRotateRight()
 	{
 		long value = this.register[Register.T.ordinal()];
 		if ((value & 1) != 0) {
@@ -971,7 +963,7 @@ public class Processor {
 		}
 	}
 
-	public void doRotateLeftWithCarry() throws Exception
+	public void doRotateLeftWithCarry()
 	{
 		long value = this.register[Register.T.ordinal()];
 		if (getFlag(Flag.CARRY)) {
@@ -983,7 +975,7 @@ public class Processor {
 		setFlag(Flag.CARRY, (value < 0));
 	}
 
-	public void doRotateRightWithCarry() throws Exception
+	public void doRotateRightWithCarry()
 	{
 		long value = this.register[Register.T.ordinal()];
 		long mask = 1;
@@ -997,7 +989,7 @@ public class Processor {
 		setFlag(Flag.CARRY, (value & mask) != 0);
 	}
 
-	public void doSetBit(int reg, int bit, boolean bit_is_reg, boolean swap_source) throws Exception
+	public void doSetBit(int reg, int bit, boolean bit_is_reg, boolean swap_source)
 	{
 		long mask = 1;
 		int bitpos = bit_is_reg ? (int)(swap_source ? this.getRegister(reg) : this.getRegister(bit)) & 0x3f : bit;
@@ -1008,7 +1000,7 @@ public class Processor {
 		if (bit_is_reg && ((swap_source ? reg : bit) == Register.S.ordinal())) {this.doNip();}
 	}
 
-	public void doClearBit(int reg, int bit, boolean bit_is_reg, boolean swap_source) throws Exception
+	public void doClearBit(int reg, int bit, boolean bit_is_reg, boolean swap_source)
 	{
 		long mask = 1;
 		int bitpos = bit_is_reg ? (int)(swap_source ? this.getRegister(reg) : this.getRegister(bit)) & 0x3f : bit;
@@ -1019,7 +1011,7 @@ public class Processor {
 		if (bit_is_reg && ((swap_source ? reg : bit) == Register.S.ordinal())) {this.doNip();}
 	}
 
-	public void doToggleBit(int reg, int bit, boolean bit_is_reg, boolean swap_source) throws Exception
+	public void doToggleBit(int reg, int bit, boolean bit_is_reg, boolean swap_source)
 	{
 		long mask = 1;
 		int bitpos = bit_is_reg ? (int)(swap_source ? this.getRegister(reg) : this.getRegister(bit)) & 0x3f : bit;
@@ -1030,7 +1022,7 @@ public class Processor {
 		if (bit_is_reg && ((swap_source ? reg : bit) == Register.S.ordinal())) {this.doNip();}
 	}
 
-	public void doReadBit(int reg, int bit, boolean bit_is_reg, boolean swap_source) throws Exception
+	public void doReadBit(int reg, int bit, boolean bit_is_reg, boolean swap_source)
 	{
 		long mask = 1;
 		int bitpos = bit_is_reg ? (int)(swap_source ? this.getRegister(reg) : this.getRegister(bit)) & 0x3f : bit;
@@ -1039,7 +1031,7 @@ public class Processor {
 		setFlag(Flag.CARRY, (value & mask) != 0);
 	}
 
-	public void doWriteBit(int reg, int bit, boolean bit_is_reg, boolean swap_source) throws Exception
+	public void doWriteBit(int reg, int bit, boolean bit_is_reg, boolean swap_source)
 	{
 		if (getFlag(Flag.CARRY)) {
 			this.doSetBit(reg, bit, bit_is_reg, swap_source);
@@ -1049,14 +1041,14 @@ public class Processor {
 		}
 	}
 
-	public void doEnterM() throws Exception
+	public void doEnterM()
 	{
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
 		this.register[Register.R.ordinal()] = this.register[Register.MT.ordinal()];
-		this.register[Register.MT.ordinal()] = sys.getMemory(this.register[Register.SELF.ordinal()]);
+		this.register[Register.MT.ordinal()] = system.getMemory(this.register[Register.SELF.ordinal()]);
 	}
 
-	public void doEnterInterrupt(int no) throws Exception
+	public void doEnterInterrupt(int no)
 	{
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
 		// save flags (with current slot and interrupt)
@@ -1066,7 +1058,7 @@ public class Processor {
 		// save I
 		this.register[Register.R.ordinal()] = this.register[Register.I.ordinal()];
 		// load instruction from interrupt vector table
-		this.register[Register.I.ordinal()] = sys.getMemory(this.register[Register.INTV.ordinal()]+no);
+		this.register[Register.I.ordinal()] = system.getMemory(this.register[Register.INTV.ordinal()]+no);
 		this.slot = 0;
 		// mark interrupt as in service
 		this.setInterruptFlag(Register.INTS, no, true);
@@ -1074,7 +1066,7 @@ public class Processor {
 		this.setFlag(no, false);
 	}
 
-	public void doExitInterrupt() throws Exception
+	public void doExitInterrupt()
 	{
 		// restore I
 		this.register[Register.I.ordinal()] = this.register[Register.R.ordinal()];
@@ -1088,7 +1080,7 @@ public class Processor {
 		// restore slot
 	}
 
-	public void doExt1() throws Exception
+	public void doExt1()
 	{
 		switch (Ext1.values()[this.nextSlot()]) {
 		case NOP:		break;
@@ -1136,18 +1128,17 @@ public class Processor {
 	 * The RESERVE register is set to the observed address.
 	 * @throws Exception
 	 */
-	public void doFetchReserved() throws Exception
+	public void doFetchReserved()
 	{
 		long adr = this.getRegister(Register.T);
 		if (this.getRegister(Register.RESERVE) != 0) {
 			// some memory has already been reserved
-			if (interrupt(Flag.TOUCHED)) {
-				return;
-			}
+			interrupt(Flag.TOUCHED);
+			return;
 //			this.setFlag(Flag.RESERVED, true);
 		}
 		this.setRegister(Register.RESERVE, adr);
-		this.setRegister(Register.T, sys.getMemory(adr));
+		this.setRegister(Register.T, system.getMemory(adr));
 	}
 
 	/**
@@ -1156,7 +1147,7 @@ public class Processor {
 	 * The result n2 is 0 if the store was successful, otherwise it contains an reason code.
 	 * The RESERVE register is reset to 0.
 	 */
-	public void doStoreConditional() throws Exception
+	public void doStoreConditional()
 	{
 		long adr = this.getRegister(Register.T);
 		long value = this.getRegister(Register.S);
@@ -1167,14 +1158,14 @@ public class Processor {
 			this.setRegister(Register.T, -1);
 		}
 		else {
-			sys.setMemory(adr, value);
+			system.setMemory(adr, value);
 			this.setRegister(Register.T, 0);
 		}
 		this.setRegister(Register.RESERVE, 0);
 		this.doNip();
 	}
 
-	public void doExt2() throws Exception
+	public void doExt2()
 	{
 		switch (Ext2.values()[this.nextSlot()]) {
 		case FETCHRES:	this.doFetchReserved(); break;
@@ -1182,42 +1173,30 @@ public class Processor {
 		}
 	}
 
-	public void doExt3() throws Exception
+	public void doExt3()
 	{
 	}
 
-	public void doExt4() throws Exception
+	public void doExt4()
 	{
 	}
 
-	public void doExt5() throws Exception
+	public void doExt5()
 	{
 	}
 
-	public void doExt6() throws Exception
+	public void doExt6()
 	{
 	}
 
-	public void doExt7() throws Exception
+	public void doExt7()
 	{
 	}
 
-	public boolean interrupt(Flag no)
+	public void interrupt(Flag no)
 	{
 		// signaling interrupt
-		try {
-			this.setFlag(no, true);
-			if (!this.getFlag(Register.INTS, no)) {
-				// interrupt is enabled
-				// save slot to flags register
-				doEnterInterrupt(no.ordinal());
-				return true;
-			}
-		}
-		catch (Exception ex) {
-			
-		}
-		return false;
+		this.setFlag(no, true);
 	}
 
 	public void triggerInterrupts()
@@ -1225,7 +1204,11 @@ public class Processor {
 		// scan interrupts in reverse priority
 		for (int i=Flag.values().length-1; i>=0; --i) {
 			if (this.getFlag(i) && this.getInterruptFlag(Register.INTE, i)) {
-				this.interrupt(Flag.values()[i]);
+				// interrupt is enabled
+				if (!this.getFlag(Register.INTS, Flag.values()[i])) {
+					// interrupt is not serviced yet
+					doEnterInterrupt(i);
+				}
 			}
 		}
 	}
@@ -1239,12 +1222,12 @@ public class Processor {
 		}
 	}
 
-	public void nmi() throws Exception
+	public void nmi()
 	{
 		this.interrupt(Flag.NMI);
 	}
 
-	public void incrementExternalClock() throws Exception
+	public void incrementExternalClock()
 	{
 		this.inc(Register.CLK.ordinal());
 		if (this.getRegister(Register.CLK) == this.getRegister(Register.CLI)) {
@@ -1256,34 +1239,26 @@ public class Processor {
 	{
 		// initialize instruction pointer
 		this.setRegister(Register.P, 0);
-		this.setRegister(Register.I, sys.getMemory(0));
+		this.setRegister(Register.I, system.getMemory(0));
 		this.setRegister(Register.FLAGS, 0);
 		this.slot = 0;
 		// initialize stack
-		this.setRegister(Register.SP, sys.getStackSize()-1);
-		this.setRegister(Register.S0, 0);
-		this.setRegister(Register.SL, sys.getStackSize()-1);
+		this.setRegister(Register.SP, system.getStackTop(0, false));
+		this.setRegister(Register.S0, system.getStackBottom(0, false));
+		this.setRegister(Register.SL, system.getStackTop(0, false));
 		// initialize return stack
-		this.setRegister(Register.RP, sys.getReturnStackSize()-1);
-		this.setRegister(Register.R0, 0);
-		this.setRegister(Register.RL, sys.getReturnStackSize()-1);
+		this.setRegister(Register.RP, system.getStackTop(0, true));
+		this.setRegister(Register.R0, system.getStackBottom(0, true));
+		this.setRegister(Register.RL, system.getStackTop(0, true));
 		// memory
 		this.setRegister(Register.INTV, 0);
 		this.setRegister(Register.INTE, 0);
-		// power-on reset clears the reset interrupt flag
+		// power-on reset clears the reset interrupt flags
 		this.setFlag(Flag.RESET, false);
 		this.setFlag(Register.INTS, Flag.RESET, false);
-//		this.setRegister(Register.P, 0);
-//		try {
-//			for (;;) {
-//				step();
-//			}
-//		}
-//		catch (Exception ex) {
-//		}
 	}
 	
-	public void doRegisterOperation(int op, int s1, int s2, int d) throws Exception
+	public void doRegisterOperation(int op, int s1, int s2, int d)
 	{
 		switch (RegOp1.values()[op]) {
 		case ADD: this.doAdd(d, s1, s2);; break;

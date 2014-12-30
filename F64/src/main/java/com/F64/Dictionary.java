@@ -1,10 +1,96 @@
 package com.F64;
 
+import com.F64.word.*;
+
 public class Dictionary {
+	private Dictionary							parent;
+	private System								system;
+	private java.util.Map<String, Word>			compile_map;
+	private java.util.Map<String, Word>			normal_map;
+	private java.util.Map<String, Dictionary>	package_map;
+
+	public static String[] splitName(String name) {return name.split("|");}
+	
+	public Dictionary(System system)
+	{
+		this.system = system;
+	}
+	
+	public Dictionary(Dictionary parent)
+	{
+		this.system = parent.system;
+		this.parent = parent;
+	}
+	
+	public Dictionary getParent() {return parent;}
+	
+	public void register(String[] name_list, boolean compiling, Word w)
+	{
+		Dictionary next, current = this;
+		int last = name_list.length -1;
+		int i = 0;
+		while (i<last) {
+			if (current.package_map == null) {
+				current.package_map = new java.util.TreeMap<String, Dictionary>();
+			}
+			next = current.package_map.get(name_list[i]);
+			if (next == null) {
+				next = new Dictionary(current);
+				current.package_map.put(name_list[i], next);
+			}
+			current = next;
+			++i;
+		}
+		if (compiling) {
+			if (current.compile_map == null) {
+				current.compile_map = new java.util.TreeMap<String, Word>();
+			}
+			current.compile_map.put(name_list[last], w);
+		}
+		else {
+			if (current.normal_map == null) {
+				current.normal_map = new java.util.TreeMap<String, Word>();
+			}
+			current.normal_map.put(name_list[last], w);			
+		}
+	}
+
+	public void register(String name, boolean compiling, Word w)
+	{
+		this.register(Dictionary.splitName(name), compiling, w);
+	}
 
 	
-	public Word lookup(String[] name_list)
+	public Word lookup(String[] name_list, boolean compiling)
 	{
-		return null;
+		Word res = null;
+		Dictionary current = this;
+		int last = name_list.length -1;
+		int i = 0;
+		if ((last > 0) && (current.package_map == null)) {return null;}
+		while (i<last) {
+			current = current.package_map.get(name_list[i]);
+			if (current == null) {return null;}
+			++i;
+		}
+		if (compiling && (current.compile_map != null)) {res = current.compile_map.get(name_list[last]);}
+		if ((res == null) && (current.normal_map != null)) {res = current.normal_map.get(name_list[last]);}
+		return res;
 	}
+
+	public Word lookup(String name, boolean compiling)
+	{
+		return this.lookup(Dictionary.splitName(name), compiling);
+	}
+
+	public void createStandardWords()
+	{
+		this.register("+",			false, new Add());
+		this.register("-",			false, new Sub());
+		this.register("and",		false, new And());
+		this.register("not",		false, new Not());
+		this.register("or",			false, new Or());
+		this.register("xor",		false, new Xor());
+	}
+
 }
