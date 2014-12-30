@@ -23,6 +23,7 @@ public enum Register {
 	FLAGS("flags register"),
 	INTS("interrupt service register"),
 	INTV("interrupt vector register"),
+	MD("multiply/divide register"),
 	CLK("external clock counter"),
 	CLI("external clock interrupt");
 

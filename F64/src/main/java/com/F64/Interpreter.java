@@ -1,10 +1,8 @@
 package com.F64;
 
 public class Interpreter {
+	private System	sys;
 	private long[]	register;
-	private long[]	memory;
-	private long[]	stack;
-	private long[]	return_stack;
 	private int		slot;
 	private int		max_slot;	// max # of slots
 	public static final int BITS_PER_CELL = 64;
@@ -18,9 +16,10 @@ public class Interpreter {
 	public static final int NO_OF_SLOTS = FINAL_SLOT+1;
 	
 	
-	public Interpreter()
+	public Interpreter(System sys)
 	{
-		this.register = new long[64];
+		this.sys = sys;
+		this.register = new long[SLOT_SIZE];
 		this.register[Register.Z.ordinal()] = 0;
 		this.register[Register.INTE.ordinal()] = Flag.RESET.getMask() | Flag.NMI.getMask();
 		//this.setInterruptFlag(Register.INTF, Interrupt.Reset, true);
@@ -210,35 +209,6 @@ public class Interpreter {
 		}
 	}
 
-	public void setMemory(long adr, long value)
-	{
-		this.memory[(int)adr] = value;
-	}
-
-	public long getMemory(long adr)
-	{
-		return this.memory[(int)adr];
-	}
-
-	public void setStackMemory(long adr, long value)
-	{
-		this.stack[(int)adr] = value;
-	}
-
-	public long getStackMemory(long adr)
-	{
-		return this.stack[(int)adr];
-	}
-
-	public void setReturnStackMemory(long adr, long value)
-	{
-		this.return_stack[(int)adr] = value;
-	}
-
-	public long getReturnStackMemory(long adr)
-	{
-		return this.return_stack[(int)adr];
-	}
 
 	public void pushStack(long value)
 	{
@@ -249,7 +219,7 @@ public class Interpreter {
 		else {
 			--this.register[Register.SP.ordinal()];
 		}
-		this.setStackMemory(this.register[Register.SP.ordinal()], value);
+		sys.setStackMemory(this.register[Register.SP.ordinal()], value);
 	}
 
 	public void pushReturnStack(long value)
@@ -261,12 +231,12 @@ public class Interpreter {
 		else {
 			--this.register[Register.RP.ordinal()];
 		}
-		this.setReturnStackMemory(this.register[Register.RP.ordinal()], value);
+		sys.setReturnStackMemory(this.register[Register.RP.ordinal()], value);
 	}
 
 	public long popStack()
 	{
-		long res = this.getStackMemory(this.register[Register.SP.ordinal()]);
+		long res = sys.getStackMemory(this.register[Register.SP.ordinal()]);
 		if (this.register[Register.SP.ordinal()] == this.register[Register.SL.ordinal()]) {
 			this.register[Register.SP.ordinal()] = this.register[Register.S0.ordinal()];
 			this.setFlag(Flag.SUNDER, true);
@@ -279,7 +249,7 @@ public class Interpreter {
 	
 	public long popReturnStack()
 	{
-		long res = this.getReturnStackMemory(this.register[Register.RP.ordinal()]);
+		long res = sys.getReturnStackMemory(this.register[Register.RP.ordinal()]);
 		if (this.register[Register.RP.ordinal()] == this.register[Register.RL.ordinal()]) {
 			this.register[Register.RP.ordinal()] = this.register[Register.R0.ordinal()];
 			this.setFlag(Flag.RUNDER, true);
@@ -455,7 +425,7 @@ public class Interpreter {
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
 		this.register[Register.R.ordinal()] = this.register[Register.P.ordinal()];
 		// check index is in range of method table
-		if (index >= this.getMemory(this.register[Register.MT.ordinal()] + MethodTable.OFFSET_TO_SIZE)) {
+		if (index >= sys.getMemory(this.register[Register.MT.ordinal()] + MethodTable.OFFSET_TO_SIZE)) {
 			throw new Exception();
 		}
 //		// check if MT must be loaded
@@ -464,7 +434,7 @@ public class Interpreter {
 //			this.register[Register.MT.ordinal()] = this.memory[(int)this.register[Register.SELF.ordinal()]];
 //		}
 		// load address of method
-		this.register[Register.P.ordinal()] = this.getMemory(this.register[Register.MT.ordinal()] + index + MethodTable.OFFSET_TO_METHOD_ARRAY);
+		this.register[Register.P.ordinal()] = sys.getMemory(this.register[Register.MT.ordinal()] + index + MethodTable.OFFSET_TO_METHOD_ARRAY);
 		this.slot = NO_OF_SLOTS;
 	}
 
@@ -472,7 +442,7 @@ public class Interpreter {
 	public void doJumpMethod(long index) throws Exception
 	{
 		// check index is in range of method table
-		if (index >= this.getMemory(this.register[Register.MT.ordinal()] + MethodTable.OFFSET_TO_SIZE)) {
+		if (index >= sys.getMemory(this.register[Register.MT.ordinal()] + MethodTable.OFFSET_TO_SIZE)) {
 			throw new Exception();
 		}
 //		// check if MT must be loaded
@@ -481,7 +451,7 @@ public class Interpreter {
 //			this.register[Register.MT.ordinal()] = this.memory[(int)this.register[Register.SELF.ordinal()]];
 //		}
 		// load address of method
-		this.register[Register.P.ordinal()] = this.getMemory(this.register[Register.MT.ordinal()] + index + MethodTable.OFFSET_TO_METHOD_ARRAY);
+		this.register[Register.P.ordinal()] = sys.getMemory(this.register[Register.MT.ordinal()] + index + MethodTable.OFFSET_TO_METHOD_ARRAY);
 		this.slot = NO_OF_SLOTS;
 	}
 
@@ -544,13 +514,13 @@ public class Interpreter {
 	public void doFetchR(int reg) throws Exception
 	{
 		this.doDup();
-		this.register[Register.T.ordinal()] = this.getMemory(this.getRegister(reg));
+		this.register[Register.T.ordinal()] = sys.getMemory(this.getRegister(reg));
 	}
 	
 
 	public void doStoreR(int reg) throws Exception
 	{
-		this.setMemory(this.getRegister(reg), this.register[Register.T.ordinal()]);
+		sys.setMemory(this.getRegister(reg), this.register[Register.T.ordinal()]);
 		this.doDrop();
 	}
 
@@ -558,7 +528,7 @@ public class Interpreter {
 	{
 		int reg = Register.P.ordinal();
 		doDup();
-		this.register[Register.T.ordinal()] = this.getMemory(this.getRegister(reg));
+		this.register[Register.T.ordinal()] = sys.getMemory(this.getRegister(reg));
 		incPointer(reg);
 	}
 	
@@ -566,7 +536,7 @@ public class Interpreter {
 	public void doStorePInc() throws Exception
 	{
 		int reg = Register.P.ordinal();
-		this.setMemory(this.getRegister(reg), this.register[Register.T.ordinal()]);
+		sys.setMemory(this.getRegister(reg), this.register[Register.T.ordinal()]);
 		doDrop();
 		incPointer(reg);
 	}
@@ -574,14 +544,14 @@ public class Interpreter {
 	public void doFetchAInc() throws Exception
 	{
 		doDup();
-		this.register[Register.T.ordinal()] = this.getMemory(this.register[Register.A.ordinal()]);
+		this.register[Register.T.ordinal()] = sys.getMemory(this.register[Register.A.ordinal()]);
 		this.incPointer(Register.A.ordinal());
 	}
 	
 
 	public void doStoreBInc() throws Exception
 	{
-		this.setMemory(this.register[Register.B.ordinal()], this.register[Register.T.ordinal()]);
+		sys.setMemory(this.register[Register.B.ordinal()], this.register[Register.T.ordinal()]);
 		doDrop();
 		this.incPointer(Register.B.ordinal());
 	}
@@ -612,50 +582,212 @@ public class Interpreter {
 		this.slot = 0;		
 	}
 
-	public void doAdd() throws Exception
+	public void doAdd(int d, int s1, int s2) throws Exception
 	{
-		this.register[Register.T.ordinal()] += this.register[Register.S.ordinal()];
-		this.register[Register.S.ordinal()] = this.popStack();		
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest = src1 + src2;
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
+	}
+	
+	public void doAddWithCarry(int d, int s1, int s2) throws Exception
+	{
+		boolean carry = getFlag(Flag.CARRY);
+		long a = this.getRegister(s1);
+		long b = this.getRegister(s2);
+		long c = a+b;
+		boolean overflow = (a > 0 && b > 0 && c < 0) || (a < 0 && b < 0 && c > 0);
+		if (carry) {
+			if (++c == 0) {overflow = true;}
+		}
+		this.setRegister(d, c);
+		setFlag(Flag.CARRY, overflow);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
 	}
 
 	
-	public void doSubtract() throws Exception
+	public void doSubtract(int d, int s1, int s2) throws Exception
 	{
-		this.register[Register.T.ordinal()] = this.register[Register.S.ordinal()] - this.register[Register.T.ordinal()];
-		this.register[Register.S.ordinal()] = this.popStack();		
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest = src1 - src2;
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
 	}
 
-	public void doAnd() throws Exception
+	public void doSubtractWithCarry(int d, int s1, int s2) throws Exception
 	{
-		this.register[Register.T.ordinal()] &= this.register[Register.S.ordinal()];
-		this.register[Register.S.ordinal()] = this.popStack();		
+		boolean carry = getFlag(Flag.CARRY);
+		long a = this.getRegister(s1);
+		long b = ~this.getRegister(s2);
+		long c = a+b;
+		boolean overflow = (a > 0 && b > 0 && c < 0) || (a < 0 && b < 0 && c > 0);
+		if (carry) {
+			if (++c == 0) {overflow = true;}
+		}
+		this.setRegister(d, c);
+		setFlag(Flag.CARRY, overflow);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
 	}
 
-	public void doOr() throws Exception
+	public void doAnd(int d, int s1, int s2) throws Exception
 	{
-		this.register[Register.T.ordinal()] |= this.register[Register.S.ordinal()];
-		this.register[Register.S.ordinal()] = this.popStack();
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest = src1 & src2;
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
 	}
 
-	public void doXor() throws Exception
+	public void doOr(int d, int s1, int s2) throws Exception
 	{
-		this.register[Register.T.ordinal()] ^= this.register[Register.S.ordinal()];
-		this.register[Register.S.ordinal()] = this.popStack();
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest = src1 | src2;
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
 	}
 
-	public void doNot() throws Exception
+	public void doXor(int d, int s1, int s2) throws Exception
 	{
-		this.register[Register.T.ordinal()] = ~this.register[Register.T.ordinal()];
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest = src1 ^ src2;
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
 	}
 
-	public void doMul2() throws Exception
+	public void doXNor(int d, int s1, int s2) throws Exception
 	{
-		this.register[Register.T.ordinal()] <<= 1;
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest = src1 ^ ~src2;
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
 	}
 
-	public void doDiv2() throws Exception
+
+	public void doAsl(int d, int s1, int s2) throws Exception
 	{
-		this.register[Register.T.ordinal()] >>= 1;
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest;
+		if (src2 < 0) {dest = src1;}
+		else if (src2 >= BITS_PER_CELL) {
+			if (src1 >= 0) {dest = 0;}
+			else {dest = -1; dest <<= BITS_PER_CELL-1;}
+		}
+		else {
+			dest = src1 << src2;
+		}
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
+	}
+
+	public void doAsr(int d, int s1, int s2) throws Exception
+	{
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest;
+		if (src2 < 0) {dest = src1;}
+		else if (src2 >= BITS_PER_CELL) {
+			if (src1 >= 0) {dest = 0;}
+			else {dest = -1;;}
+		}
+		else {
+			dest = src1 >> src2;
+		}
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
+	}
+
+	public void doLsl(int d, int s1, int s2) throws Exception
+	{
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest;
+		if (src2 < 0) {dest = src1;}
+		else if (src2 >= BITS_PER_CELL) {
+			dest = 0;
+		}
+		else {
+			dest = src1;
+			while (src2 > 0) {
+				if (dest >= 0) {
+					dest <<= 1;
+				}
+				else {
+					dest = ~(~dest << 1);
+					dest ^= 1;
+				}
+				--src2;
+			}
+		}
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
+	}
+
+	public void doLsr(int d, int s1, int s2) throws Exception
+	{
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest;
+		if (src2 < 0) {dest = src1;}
+		else if (src2 >= BITS_PER_CELL) {
+			dest = 0;
+		}
+		else {
+			dest = src1 >>> src2;
+		}
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
+	}
+
+	public void doMul2Add(int d, int s1, int s2) throws Exception
+	{
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest = (src1 << 1) + src2;
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
+	}
+
+	public void doDiv2Sub(int d, int s1, int s2) throws Exception
+	{
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest = (src1 >> 1) - src2;
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {
+			this.register[Register.S.ordinal()] = this.popStack();
+		}
 	}
 
 	public void doOver() throws Exception
@@ -739,7 +871,7 @@ public class Interpreter {
 
 	public void doLoadMT() throws Exception
 	{
-		this.register[Register.MT.ordinal()] = this.getMemory(this.register[Register.SELF.ordinal()]);
+		this.register[Register.MT.ordinal()] = sys.getMemory(this.register[Register.SELF.ordinal()]);
 	}
 
 	public void step() throws Exception
@@ -755,8 +887,8 @@ public class Interpreter {
 		case UJMP3:		this.slot = 3; break;
 		case UJMP4:		this.slot = 4; break;
 		case UJMP5:		this.slot = 5; break;
-		case AND:		this.doAnd(); break;
-		case XOR:		this.doXor(); break;
+		case AND:		this.doAnd(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
+		case XOR:		this.doXor(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
 		case DUP:		this.doDup(); break;
 		case DROP:		this.doDrop(); break;
 		case OVER:		this.doOver(); break;
@@ -793,12 +925,12 @@ public class Interpreter {
 		case RPDEC:		this.decPointer(this.nextSlot()); break;
 		case FETCHPINC:	this.doFetchPInc(); break;
 		case STOREPINC:	this.doStorePInc(); break;
-		case ADD:		this.doAdd(); break;
-		case SUB:		this.doSubtract(); break;
-		case OR:		this.doOr(); break;
-		case NOT:		this.doNot(); break;
-		case MUL2:		this.doMul2(); break;
-		case DIV2:		this.doDiv2(); break;
+		case ADD:		this.doAdd(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
+		case SUB:		this.doSubtract(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
+		case OR:		this.doOr(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
+		case NOT:		this.doXNor(Register.T.ordinal(), Register.S.ordinal(), Register.Z.ordinal()); break;
+		case MUL2:		this.doMul2Add(Register.T.ordinal(), Register.T.ordinal(), Register.Z.ordinal()); break;
+		case DIV2:		this.doDiv2Sub(Register.T.ordinal(), Register.T.ordinal(), Register.Z.ordinal()); break;
 		case PUSH:		this.doPush(this.nextSlot()); break;
 		case POP:		this.doPop(this.nextSlot()); break;
 		case EXT1:		this.doExt1(); break;
@@ -808,7 +940,7 @@ public class Interpreter {
 		case EXT5:		this.doExt5(); break;
 		case EXT6:		this.doExt6(); break;
 		case EXT7:		this.doExt7(); break;
-		case EXT8:		this.doExt8(); break;
+		case REGOP:		this.doRegisterOperation(this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot()); break;
 
 		}
 		// check if there is some interrupt pending
@@ -819,42 +951,12 @@ public class Interpreter {
 		//
 		if (this.slot > FINAL_SLOT) {
 			// load new instruction cell
-			this.register[Register.I.ordinal()] = this.getMemory(this.register[Register.P.ordinal()]);
+			this.register[Register.I.ordinal()] = sys.getMemory(this.register[Register.P.ordinal()]);
 			// increment P
 			incPointer(Register.P.ordinal());
 			// begin with first slot
 			this.slot = 0;
 		}
-	}
-	
-	public void doAddWithCarry() throws Exception
-	{
-		boolean carry = getFlag(Flag.CARRY);
-		long a = this.register[Register.S.ordinal()];
-		long b = this.register[Register.T.ordinal()];
-		long c = a+b;
-		boolean overflow = (a > 0 && b > 0 && c < 0) || (a < 0 && b < 0 && c > 0);
-		if (carry) {
-			if (++c == 0) {overflow = true;}
-		}
-		this.register[Register.T.ordinal()] = c;
-		this.register[Register.S.ordinal()] = this.popStack();
-		setFlag(Flag.CARRY, overflow);
-	}
-
-	public void doSubtractWithCarry() throws Exception
-	{
-		boolean carry = getFlag(Flag.CARRY);
-		long a = this.register[Register.S.ordinal()];
-		long b = ~this.register[Register.T.ordinal()];
-		long c = a+b;
-		boolean overflow = (a > 0 && b > 0 && c < 0) || (a < 0 && b < 0 && c > 0);
-		if (carry) {
-			if (++c == 0) {overflow = true;}
-		}
-		this.register[Register.T.ordinal()] = c;
-		this.register[Register.S.ordinal()] = this.popStack();
-		setFlag(Flag.CARRY, overflow);
 	}
 
 	public void doMultiplyStep() throws Exception
@@ -972,7 +1074,7 @@ public class Interpreter {
 	{
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
 		this.register[Register.R.ordinal()] = this.register[Register.MT.ordinal()];
-		this.register[Register.MT.ordinal()] = this.getMemory(this.register[Register.SELF.ordinal()]);
+		this.register[Register.MT.ordinal()] = sys.getMemory(this.register[Register.SELF.ordinal()]);
 	}
 
 	public void doEnterInterrupt(int no) throws Exception
@@ -985,7 +1087,7 @@ public class Interpreter {
 		// save I
 		this.register[Register.R.ordinal()] = this.register[Register.I.ordinal()];
 		// load instruction from interrupt vector table
-		this.register[Register.I.ordinal()] = this.getMemory(this.register[Register.INTV.ordinal()]+no);
+		this.register[Register.I.ordinal()] = sys.getMemory(this.register[Register.INTV.ordinal()]+no);
 		this.slot = 0;
 		// mark interrupt as in service
 		this.setInterruptFlag(Register.INTS, no, true);
@@ -1012,8 +1114,8 @@ public class Interpreter {
 		switch (Ext1.values()[this.nextSlot()]) {
 		case NOP:		break;
 		case EXITI:		this.doExitInterrupt(); break;
-		case ADDC:		this.doAddWithCarry(); break;
-		case SUBC:		this.doSubtractWithCarry(); break;
+		case ADDC:		this.doAddWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
+		case SUBC:		this.doSubtractWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
 		case MULS:		this.doMultiplyStep(); break;
 		case DIVS:		this.doDivideStep(); break;
 		case ROL:		this.doRotateLeft(); break;
@@ -1056,7 +1158,7 @@ public class Interpreter {
 //			this.setFlag(Flag.RESERVED, true);
 		}
 		this.setRegister(Register.RESERVE, adr);
-		this.setRegister(Register.T, this.getMemory(adr));
+		this.setRegister(Register.T, sys.getMemory(adr));
 	}
 
 	/**
@@ -1076,7 +1178,7 @@ public class Interpreter {
 			this.setRegister(Register.T, -1);
 		}
 		else {
-			this.setMemory(adr, value);
+			sys.setMemory(adr, value);
 			this.setRegister(Register.T, 0);
 		}
 		this.setRegister(Register.RESERVE, 0);
@@ -1108,10 +1210,6 @@ public class Interpreter {
 	}
 
 	public void doExt7() throws Exception
-	{
-	}
-
-	public void doExt8() throws Exception
 	{
 	}
 
@@ -1165,24 +1263,21 @@ public class Interpreter {
 		}
 	}
 
-	public void setup(long[] memory, int stack_size, int return_stack_size)
+	public void powerOn()
 	{
-		this.memory = memory;
 		// initialize instruction pointer
 		this.setRegister(Register.P, 0);
-		this.setRegister(Register.I, this.getMemory(0));
+		this.setRegister(Register.I, sys.getMemory(0));
 		this.setRegister(Register.FLAGS, 0);
 		this.slot = 0;
-		// initialize stackx
-		this.stack = new long[stack_size];
-		this.setRegister(Register.SP, stack_size-1);
+		// initialize stack
+		this.setRegister(Register.SP, sys.getStackSize()-1);
 		this.setRegister(Register.S0, 0);
-		this.setRegister(Register.SL, stack_size-1);
+		this.setRegister(Register.SL, sys.getStackSize()-1);
 		// initialize return stack
-		this.return_stack = new long[return_stack_size];
-		this.setRegister(Register.RP, return_stack_size-1);
+		this.setRegister(Register.RP, sys.getReturnStackSize()-1);
 		this.setRegister(Register.R0, 0);
-		this.setRegister(Register.RL, return_stack_size-1);
+		this.setRegister(Register.RL, sys.getReturnStackSize()-1);
 		// memory
 		this.setRegister(Register.INTV, 0);
 		this.setRegister(Register.INTE, 0);
@@ -1199,6 +1294,25 @@ public class Interpreter {
 //		}
 	}
 	
-	
+	public void doRegisterOperation(int op, int s1, int s2, int d) throws Exception
+	{
+		switch (RegOp1.values()[op]) {
+		case ADD: this.doAdd(d, s1, s2);; break;
+		case ADDC: this.doAddWithCarry(d, s1, s2);; break;
+		case SUB: this.doSubtract(d, s1, s2);; break;
+		case SUBC: this.doSubtractWithCarry(d, s1, s2); break;
+		case AND: this.doAnd(d, s1, s2);; break;
+		case OR: this.doOr(d, s1, s2);; break;
+		case XOR: this.doXor(d, s1, s2);; break;
+		case XNOR: this.doXNor(d, s1, s2);; break;
+		case ASL: this.doAsl(d, s1, s2);; break;
+		case ASR: this.doAsr(d, s1, s2);; break;
+		case LSL: this.doLsl(d, s1, s2);; break;
+		case LSR: this.doLsr(d, s1, s2);; break;
+		case MUL2ADD: this.doMul2Add(d, s1, s2);; break;
+		case DIV2SUB: this.doDiv2Sub(d, s1, s2);; break;
+		}
+	}
+
 
 }

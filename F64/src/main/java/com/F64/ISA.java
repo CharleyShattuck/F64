@@ -64,7 +64,7 @@ public enum ISA {
 	EXT5(0,"code extension 5"),
 	EXT6(0,"code extension 6"),
 	EXT7(0,"code extension 7"),
-	EXT8(0,"code extension 8");
+	REGOP(5,"register operation set 1 (operation in next slot, source 1 in next slot+1, source 2 in next slot+2, destination in next slot+3)");
 
 	private int size;
 	private String tooltip;

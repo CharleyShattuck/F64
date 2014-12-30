@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.IOException;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -24,6 +25,7 @@ import javax.swing.UIManager;
 @SuppressWarnings("serial")
 public class View extends JFrame implements ActionListener, ItemListener, Runnable {
 	private Interpreter		vm;
+	private Compiler		compiler;
 	private JSplitPane		split_pane;
 	private JToolBar		toolbar;
 	private JButton			run;
@@ -45,7 +47,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {
-			System.err.println("Couldn't use system look and feel.");
+			java.lang.System.err.println("Couldn't use system look and feel.");
 		}		
 	}
 
@@ -290,10 +292,11 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		return slots.length;
 	}
 
-	public View()
+	public View(Interpreter i, Compiler c, System s, Dictionary d)
 	{
+		vm = i;
+		compiler = c;
 		int x, y;
-		vm = new Interpreter();
 		this.setSize(1000,800);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -336,15 +339,8 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 
 		setVisible(true);
 	}
-
-	public Interpreter getInterpreter() {return vm;}
-
-	public void setup(int memory_size, int stack_size, int return_stack_size)
-	{
-		vm.setup(new long[memory_size], stack_size, return_stack_size);
-		update();
-	}
 	
+	public Interpreter getInterpreter() {return vm;}	
 	
 	public void update()
 	{
@@ -379,8 +375,6 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 	
 	}
 
-	public void setInterpreter(Interpreter value) {vm = value;}
-	
 	public boolean step()
 	{
 		try {
@@ -466,4 +460,5 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		}
 	}
 	
+
 }
