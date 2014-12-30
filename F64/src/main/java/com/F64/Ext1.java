@@ -2,7 +2,7 @@ package com.F64;
 
 public enum Ext1 {
 	NOP(2,"no operation"),
-	EXITI(2,"return from interrupt"),
+	EXITI(3,"return from interrupt (interrupt # in next slot)"),
 	ADDC(2,"add with carry"),
 	SUBC(2,"subtract with carry"),
 	MULS(2,"multiply step"),

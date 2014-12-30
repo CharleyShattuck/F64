@@ -4,6 +4,7 @@ public class Processor {
 	private System	system;
 	private long[]	register;
 	private int		slot;
+	private int		saved_slot;
 	private int		max_slot;	// max # of slots
 	public static final int BITS_PER_CELL = 64;
 	public static final int SLOT_BITS = 6;
@@ -87,8 +88,11 @@ public class Processor {
 	{
 		long res = register[reg];
 		if (reg == Register.FLAG.ordinal()) {
-			long mask = this.slot;
-			mask <<= (BITS_PER_CELL - SLOT_BITS);
+			// fill in the slot bits into the upper 4 bits
+			long mask = -1;
+			res &= mask >>> 4;
+			mask = this.slot;
+			mask <<= (BITS_PER_CELL - 4);
 			res |= mask;
 		}
 		return res;
@@ -99,7 +103,7 @@ public class Processor {
 		return this.getRegister(reg.ordinal());
 	}
 	
-	public void setRegister(int reg, long value)
+	public boolean setRegister(int reg, long value)
 	{
 		if (reg > 0) {
 			if (reg == Register.INTE.ordinal()) {
@@ -107,11 +111,18 @@ public class Processor {
 			}
 			else if (reg == Register.P.ordinal()) {
 				if (!system.isValidCodeAddress(value)) {
-					this.interrupt(Flag.CODE);
+					if (this.interrupt(Flag.CODE)) {
+						return false;
+					}
 				}
 			}
+			else if (reg == Register.FLAG.ordinal()) {
+				// upper 4 bits contain slot #
+				this.slot = (int)(value >>> (BITS_PER_CELL - 4));
+			}				
 			register[reg] = value;
 		}
+		return true;
 	}
 
 	public void setRegister(Register reg, long value)
@@ -152,7 +163,6 @@ public class Processor {
 			this.register[Register.FLAG.ordinal()] &= ~fl.getMask();			
 		}
 	}
-
 
 	public boolean getFlag(Register reg, Flag fl)
 	{
@@ -195,7 +205,6 @@ public class Processor {
 			this.register[Register.INTE.ordinal()] |= Flag.RESET.getMask() | Flag.NMI.getMask();
 		}
 	}
-
 
 	public void pushStack(long value)
 	{
@@ -421,32 +430,36 @@ public class Processor {
 		}
 	}
 	
-	public void doCallMethod(long index)
+	public boolean doCallMethod(long index)
 	{
 		// push P on return stack
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
 		this.register[Register.R.ordinal()] = this.register[Register.P.ordinal()];
 		// check index is in range of method table
 		if (index >= system.getMemory(this.register[Register.MT.ordinal()] + MethodTable.OFFSET_TO_SIZE)) {
-			this.interrupt(Flag.BOUND);
-			return;
+			if (this.interrupt(Flag.BOUND)) {
+				return false;
+			}
 		}
 		// load address of method
 		this.register[Register.P.ordinal()] = system.getMemory(this.register[Register.MT.ordinal()] + index + MethodTable.OFFSET_TO_METHOD_ARRAY);
 		this.slot = NO_OF_SLOTS;
+		return true;
 	}
 
 	
-	public void doJumpMethod(long index)
+	public boolean doJumpMethod(long index)
 	{
 		// check index is in range of method table
 		if (index >= system.getMemory(this.register[Register.MT.ordinal()] + MethodTable.OFFSET_TO_SIZE)) {
-			this.interrupt(Flag.BOUND);
-			return;
+			if (this.interrupt(Flag.BOUND)) {
+				return false;
+			}
 		}
 		// load address of method
 		this.register[Register.P.ordinal()] = system.getMemory(this.register[Register.MT.ordinal()] + index + MethodTable.OFFSET_TO_METHOD_ARRAY);
 		this.slot = NO_OF_SLOTS;
+		return true;
 	}
 
 	public void doSwap()
@@ -842,6 +855,7 @@ public class Processor {
 
 	public void step()
 	{
+		this.saved_slot = this.slot; // save slot # in case of an interrupt before the operation
 		switch (ISA.values()[this.nextSlot()]) {
 		case NOP:		break;
 		case EXIT:		this.doExit(); break;
@@ -907,7 +921,7 @@ public class Processor {
 		case EXT6:		this.doExt6(); break;
 		case REGOP:		this.doRegisterOperation(this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot()); break;
 		case SIMD:		this.doSIMDOperation(this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot()); break;
-		default: this.interrupt(Flag.ILLEGAL);
+		default: if (this.interrupt(Flag.ILLEGAL)) {return;}
 		}
 		// check if there is some interrupt pending
 		if ((this.register[Register.FLAG.ordinal()] & this.register[Register.INTE.ordinal()]) != 0) {
@@ -1052,13 +1066,12 @@ public class Processor {
 	{
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
 		// save flags (with current slot and interrupt)
-		this.setSlot(Register.FLAG.ordinal(), 0, this.slot);
-		this.setSlot(Register.FLAG.ordinal(), 1, no);
-		this.pushReturnStack(this.register[Register.FLAG.ordinal()]);
+		this.pushReturnStack(this.getRegister(Register.FLAG));
 		// save I
 		this.register[Register.R.ordinal()] = this.register[Register.I.ordinal()];
 		// load instruction from interrupt vector table
 		this.register[Register.I.ordinal()] = system.getMemory(this.register[Register.INTV.ordinal()]+no);
+		// start with slot 0
 		this.slot = 0;
 		// mark interrupt as in service
 		this.setInterruptFlag(Register.INTS, no, true);
@@ -1066,25 +1079,23 @@ public class Processor {
 		this.setFlag(no, false);
 	}
 
-	public void doExitInterrupt()
+	public void doExitInterrupt(int no)
 	{
 		// restore I
 		this.register[Register.I.ordinal()] = this.register[Register.R.ordinal()];
-		// restore flags with slot and clear the interrupt in the INTF register
-		this.register[Register.FLAG.ordinal()] = this.popReturnStack();
-		this.slot = this.getSlot(Register.FLAG.ordinal(), 0);
-		int no = this.getSlot(Register.FLAG.ordinal(), 1);
-		this.setInterruptFlag(Register.INTS, no, false);
-		//
+		// restore flags with slot
+		this.setRegister(Register.FLAG, this.popReturnStack());
+		// restore R
 		this.register[Register.R.ordinal()] = this.popReturnStack();
-		// restore slot
+		// clear interrupt service register
+		this.setInterruptFlag(Register.INTS, no, false);
 	}
 
 	public void doExt1()
 	{
 		switch (Ext1.values()[this.nextSlot()]) {
 		case NOP:		break;
-		case EXITI:		this.doExitInterrupt(); break;
+		case EXITI:		this.doExitInterrupt(this.nextSlot()); break;
 		case ADDC:		this.doAddWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
 		case SUBC:		this.doSubtractWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
 		case MULS:		this.doMultiplyStep(); break;
@@ -1129,17 +1140,19 @@ public class Processor {
 	 * The RESERVE register is set to the observed address.
 	 * @throws Exception
 	 */
-	public void doFetchReserved()
+	public boolean doFetchReserved()
 	{
 		long adr = this.getRegister(Register.T);
 		if (this.getRegister(Register.RES) != 0) {
 			// some memory has already been reserved
-			interrupt(Flag.TOUCHED);
-			return;
+			if (interrupt(Flag.TOUCHED)) {
+				return false;
+			}
 //			this.setFlag(Flag.RESERVED, true);
 		}
 		this.setRegister(Register.RES, adr);
 		this.setRegister(Register.T, system.getMemory(adr));
+		return true;
 	}
 
 	/**
@@ -1191,10 +1204,20 @@ public class Processor {
 	{
 	}
 
-	public void interrupt(Flag no)
+	public boolean interrupt(Flag no)
 	{
 		// signaling interrupt
 		this.setFlag(no, true);
+		if (this.getInterruptFlag(Register.INTE, no.ordinal())) {
+			// interrupt is enabled
+			if (!this.getFlag(Register.INTS, Flag.values()[no.ordinal()])) {
+				// interrupt is not serviced yet
+				this.slot = this.saved_slot;
+				this.doEnterInterrupt(no.ordinal());
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void triggerInterrupts()
@@ -1282,8 +1305,29 @@ public class Processor {
 		}
 	}
 
-	public void doSIMDOperation(int op, int par, int s1, int s2, int d)
+	public boolean doSIMDOperation(int op, int par, int s1, int s2, int d)
 	{
+		SimdSize size = SimdSize.values()[par & 3];
+		switch (size) {
+		case BIT64:
+			break;
+		case BIT128:
+			if (((s1 & 1) != 0) || ((s2 & 1) != 0) || ((d & 1) != 0)) {
+				if (this.interrupt(Flag.ALIGNED)) {return false;}
+			}
+			break;
+		case BIT256:
+			if (((s1 & 3) != 0) || ((s2 & 3) != 0) || ((d & 3) != 0)) {
+				if (this.interrupt(Flag.ALIGNED)) {return false;}
+			}
+			break;
+		case BIT512:
+			if (((s1 & 7) != 0) || ((s2 & 7) != 0) || ((d & 7) != 0)) {
+				if (this.interrupt(Flag.ALIGNED)) {return false;}
+			}
+			break;
+		}
+		return true;
 	}
 
 }
