@@ -7,21 +7,22 @@ import java.io.IOException;
 
 public class Machine {
 	private View		view;
-	private Processor	vm;
-	private System		sys;
-	private Compiler	comp;
-	private Dictionary	dict;
+	private Processor	processor;
+	private System		system;
+	private Compiler	compiler;
+	private Interpreter	interpreter;
+	private Dictionary	dictionary;
 
 	Machine(int memory_size, int stack_size, int return_stack_size)
 	{
-		sys = new System(memory_size, stack_size, return_stack_size);
-		vm = new Processor(sys);
-		dict = new Dictionary();
-		comp = new Compiler();
-		comp.setEnvironment(sys, dict);
-		comp.setEnvironment(sys, dict);
-		vm.powerOn();
-		view = new View(vm, comp, sys, dict);
+		system = new System(memory_size, stack_size, return_stack_size);
+		processor = new Processor(system);
+		dictionary = new Dictionary();
+		compiler = new Compiler();
+		interpreter = new Interpreter();
+		interpreter.setEnvironment(system, dictionary);
+		processor.powerOn();
+		view = new View(processor, interpreter, compiler, system, dictionary);
 		View.systemLookAndFeel();
 		javax.swing.SwingUtilities.invokeLater(view);
 	}
@@ -29,7 +30,7 @@ public class Machine {
 	public void interpret(String txt)
 	{
 		try {
-			comp.interpret(new java.io.ByteArrayInputStream(txt.getBytes()));
+			interpreter.interpret(new java.io.ByteArrayInputStream(txt.getBytes()));
 		}
 		catch (IOException ex) {
 			

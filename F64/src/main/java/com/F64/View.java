@@ -67,8 +67,8 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 	{
 		JLabel label;
 		int i;
-		register_labels = new JLabel[Interpreter.SLOT_SIZE];
-		register_fields = new JTextField[Interpreter.SLOT_SIZE];
+		register_labels = new JLabel[Processor.SLOT_SIZE];
+		register_fields = new JTextField[Processor.SLOT_SIZE];
 		Insets label_insets = new Insets( 0, 6, 0, 4);
 		Insets field_insets = new Insets( 0,  0, 0, 0);
 		Dimension registerFieldMin = new Dimension(100, 10);
@@ -99,7 +99,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			)
 		);
 		y += 1;
-		for (i=0; i<Interpreter.SLOT_SIZE; ++i) {
+		for (i=0; i<Processor.SLOT_SIZE; ++i) {
 			label = new JLabel();
 			JTextField field = new JTextField();
 			field.setMinimumSize(registerFieldMin);
@@ -115,7 +115,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			panel.add(
 				label,
 				new GridBagConstraints(
-					i < (Interpreter.SLOT_SIZE/2) ? x : x+2, i < (Interpreter.SLOT_SIZE/2) ? y+i : y+i - (Interpreter.SLOT_SIZE/2),
+					i < (Processor.SLOT_SIZE/2) ? x : x+2, i < (Processor.SLOT_SIZE/2) ? y+i : y+i - (Processor.SLOT_SIZE/2),
 					1, 1,
 					0.0, 1.0,
 					GridBagConstraints.WEST,
@@ -127,7 +127,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			panel.add(
 				field,
 				new GridBagConstraints(
-					i < (Interpreter.SLOT_SIZE/2) ? x+1 : x+3, i < (Interpreter.SLOT_SIZE/2) ? y+i : y+i - (Interpreter.SLOT_SIZE/2),
+					i < (Processor.SLOT_SIZE/2) ? x+1 : x+3, i < (Processor.SLOT_SIZE/2) ? y+i : y+i - (Processor.SLOT_SIZE/2),
 					1, 1,
 					0.0, 1.0,
 					GridBagConstraints.EAST,
@@ -292,7 +292,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		return slots.length;
 	}
 
-	public View(Processor p, Compiler c, System s, Dictionary d)
+	public View(Processor p, Interpreter i, Compiler c, System s, Dictionary d)
 	{
 		processor = p;
 		int x, y;
@@ -344,7 +344,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 	public void update()
 	{
 		int i;
-		for (i=0; i<Interpreter.SLOT_SIZE; ++i) {
+		for (i=0; i<Processor.SLOT_SIZE; ++i) {
 			long value = processor.getRegister(i);
 			register_fields[i].setText(convertLongToString(value));
 		}
