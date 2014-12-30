@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public class Machine {
 	private View		view;
-	private Interpreter	vm;
+	private Processor	vm;
 	private System		sys;
 	private Compiler	comp;
 	private Dictionary	dict;
@@ -15,7 +15,7 @@ public class Machine {
 	Machine(int memory_size, int stack_size, int return_stack_size)
 	{
 		sys = new System(memory_size, stack_size, return_stack_size);
-		vm = new Interpreter(sys);
+		vm = new Processor(sys);
 		dict = new Dictionary();
 		comp = new Compiler();
 		comp.setEnvironment(sys, dict);

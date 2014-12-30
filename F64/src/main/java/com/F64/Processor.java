@@ -1,6 +1,6 @@
 package com.F64;
 
-public class Interpreter {
+public class Processor {
 	private System	sys;
 	private long[]	register;
 	private int		slot;
@@ -16,7 +16,7 @@ public class Interpreter {
 	public static final int NO_OF_SLOTS = FINAL_SLOT+1;
 	
 	
-	private Interpreter(System sys)
+	public Processor(System sys)
 	{
 		this.sys = sys;
 		this.register = new long[SLOT_SIZE];

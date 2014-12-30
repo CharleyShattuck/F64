@@ -3,8 +3,12 @@ package com.F64;
 public enum RegOp1 {
 	ADD("Add. dest = src1 + src2. If either src2 or src2 is register S then a nip operation is appended"),
 	ADDC("Add with carry. C,dest = src1 + src2 + C. If either src2 or src2 is register S then a nip operation is appended"),
+	ADDCC("Add with carry clear. C,dest = src1 + src2. If either src2 or src2 is register S then a nip operation is appended"),
+	ADDCS("Add with carry set. C,dest = src1 + src2 + 1. If either src2 or src2 is register S then a nip operation is appended"),
 	SUB("Subtract. dest = src1 - src2. If either src2 or src2 is register S then a nip operation is appended"),
 	SUBC("Subtract with carry. C,dest = src1 + ~src2 + C. If either src2 or src2 is register S then a nip operation is appended"),
+	SUBCC("Subtract with carry clear. C,dest = src1 + ~src2. If either src2 or src2 is register S then a nip operation is appended"),
+	SUBCS("Subtract with carry set. C,dest = src1 + ~src2 + 1. If either src2 or src2 is register S then a nip operation is appended"),
 	AND("Bitwise and. dest = src1 & src2. If either src2 or src2 is register S then a nip operation is appended"),
 	OR("Bitwise or. dest = src1 | src2. If either src2 or src2 is register S then a nip operation is appended"),
 	XOR("Bitwise exclusive or. dest = src1 ^ src2. If either src2 or src2 is register S then a nip operation is appended"),

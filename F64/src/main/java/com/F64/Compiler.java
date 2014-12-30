@@ -5,6 +5,7 @@ import java.io.IOException;
 public class Compiler {
 	private byte[]		buffer;
 	private int			buffer_pos;
+	private long		number;
 	private	System		target;
 	private	Dictionary	dictionary;
 	
@@ -23,6 +24,13 @@ public class Compiler {
 
 	public boolean processNumber(int offset, int base)
 	{
+		String txt = new String(buffer, offset, buffer_pos, java.nio.charset.StandardCharsets.UTF_8);
+		try {
+			number = Long.parseLong(txt, base);
+			return true;
+		}
+		catch (NumberFormatException ex) {
+		}
 		return false;
 	}
 
@@ -31,12 +39,21 @@ public class Compiler {
 		if (buffer_pos > 0) {
 			if (buffer[0] == '$') {
 				// try hex number
+				if (processNumber(1, 16)) {
+					
+				}
 			}
 			else if (buffer[0] == '#') {
 				// try decimal number
+				if (processNumber(1, 10)) {
+					
+				}
 			}
 			else if (buffer[0] == '%') {
 				// try binary number
+				if (processNumber(1, 10)) {
+					
+				}
 			}
 			String name = new String(buffer, 0, buffer_pos, java.nio.charset.StandardCharsets.UTF_8);
 			Word word = this.dictionary.lookup(name.split("|"));

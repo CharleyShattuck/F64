@@ -9,7 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.IOException;
+//import java.io.IOException;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -24,21 +24,21 @@ import javax.swing.UIManager;
 
 @SuppressWarnings("serial")
 public class View extends JFrame implements ActionListener, ItemListener, Runnable {
-	private Interpreter		vm;
-	private Compiler		compiler;
-	private JSplitPane		split_pane;
-	private JToolBar		toolbar;
-	private JButton			run;
-	private JButton			step;
-	private JButton			stop;
-	private JScrollPane 	scroll;
-	private JPanel			panel;
-	private JCheckBox[]		flags;
+	private Processor			processor;
+//	private Compiler		compiler;
+	private JSplitPane			split_pane;
+	private JToolBar			toolbar;
+	private JButton				run;
+	private JButton				step;
+	private JButton				stop;
+	private JScrollPane 		scroll;
+	private JPanel				panel;
+	private JCheckBox[]			flags;
 //	private JCheckBox[]		interrupts;
-	private JLabel[]		register_labels;
-	private JTextField[]	register_fields;
-	private JTextField		slot_no;
-	private JTextField[]	slots;
+	private JLabel[]			register_labels;
+	private JTextField[]		register_fields;
+	private JTextField			slot_no;
+	private JTextField[]		slots;
 	private volatile boolean	is_running;
 
 
@@ -259,7 +259,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			)
 		);
 		x += 1;
-		slots = new JTextField[vm.getMaxSlot()];
+		slots = new JTextField[processor.getMaxSlot()];
 		for (i=0; i<slots.length; ++i) {
 			label = new JLabel("slot "+i);
 			panel.add(
@@ -292,10 +292,9 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		return slots.length;
 	}
 
-	public View(Interpreter i, Compiler c, System s, Dictionary d)
+	public View(Processor p, Compiler c, System s, Dictionary d)
 	{
-		vm = i;
-		compiler = c;
+		processor = p;
 		int x, y;
 		this.setSize(1000,800);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -340,25 +339,25 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		setVisible(true);
 	}
 	
-	public Interpreter getInterpreter() {return vm;}	
+//	public Interpreter getInterpreter() {return vm;}	
 	
 	public void update()
 	{
 		int i;
 		for (i=0; i<Interpreter.SLOT_SIZE; ++i) {
-			long value = vm.getRegister(i);
+			long value = processor.getRegister(i);
 			register_fields[i].setText(convertLongToString(value));
 		}
 		for (i=0; i<Flag.values().length; ++i) {
-			flags[i].setSelected(vm.getFlag(i));
+			flags[i].setSelected(processor.getFlag(i));
 		}
 //		for (i=0; i<Interrupt.values().length; ++i) {
 //			interrupts[i].setSelected(vm.getInterruptFlag(Register.INTF, Interrupt.values()[i]));
 //		}
-		int slot = this.vm.getSlot();
+		int slot = this.processor.getSlot();
 		slot_no.setText(Integer.toString(slot));
 
-		ISA instr = ISA.values()[vm.getSlot(slot)];
+		ISA instr = ISA.values()[processor.getSlot(slot)];
 		i = 0;
 		slots[i].setToolTipText(instr.getTooltip());
 		slots[i++].setText(instr.name());
@@ -367,7 +366,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			// extension instruction
 		}
 		while (i<no_of_slots) {
-			slots[i++].setText(Integer.toString(this.vm.getSlot(slot+i)));
+			slots[i++].setText(Integer.toString(this.processor.getSlot(slot+i)));
 		}
 		while (i<slots.length) {
 			slots[i++].setText("");
@@ -378,7 +377,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 	public boolean step()
 	{
 		try {
-			this.vm.step();
+			this.processor.step();
 			return true;
 		}
 		catch (Exception ex) {
@@ -412,7 +411,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		for (i=0; i<Flag.values().length; ++i) {
 			if (source == flags[i]) {
 				// toggle flag bit
-				vm.setFlag(i, !vm.getFlag(i));
+				processor.setFlag(i, !processor.getFlag(i));
 				this.update();
 			}
 		}
