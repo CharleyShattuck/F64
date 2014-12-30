@@ -18,12 +18,13 @@ public enum Register {
 	SELF("current object"),
 	MT("current method table"),
 	IT("current interface table"),
-	RESERVE("address of reserved memory location"),
+	RES("address of reserved memory location"),
 	INTE("interrupt enable register"),
-	FLAGS("flags register"),
+	FLAG("flags register"),
 	INTS("interrupt service register"),
 	INTV("interrupt vector register"),
 	MD("multiply/divide register"),
+	EX("exception register. Contains last exception thrown"),
 	CLK("external clock counter"),
 	CLI("external clock interrupt");
 

@@ -85,12 +85,14 @@ public class Dictionary {
 
 	public void createStandardWords()
 	{
-		this.register("+",			false, new Add());
-		this.register("-",			false, new Sub());
-		this.register("and",		false, new And());
-		this.register("not",		false, new Not());
-		this.register("or",			false, new Or());
-		this.register("xor",		false, new Xor());
+		this.register(".",			false,	new Dot());
+		this.register("+",			false,	new Add());
+		this.register("-",			false,	new Sub());
+		this.register("and",		false,	new And());
+		this.register("exit",		true,	new Exit());
+		this.register("not",		false,	new Not());
+		this.register("or",			false,	new Or());
+		this.register("xor",		false,	new Xor());
 	}
 
 }

@@ -11,6 +11,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 //import java.io.IOException;
 
+
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -20,33 +21,39 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 
 @SuppressWarnings("serial")
 public class View extends JFrame implements ActionListener, ItemListener, Runnable {
 	private Processor			processor;
 //	private Compiler		compiler;
-	private JSplitPane			split_pane;
+	private JSplitPane			main_split_pane;
+	private JSplitPane			register_split_pane;
+	private JSplitPane			flag_split_pane;
 	private JToolBar			toolbar;
 	private JButton				run;
 	private JButton				step;
 	private JButton				stop;
 	private JScrollPane 		scroll;
-	private JPanel				panel;
+	private JPanel				register_panel;
+	private JPanel				flag_panel;
+	private JPanel				other_panel;
 	private JCheckBox[]			flags;
 //	private JCheckBox[]		interrupts;
 	private JLabel[]			register_labels;
 	private JTextField[]		register_fields;
 	private JTextField			slot_no;
 	private JTextField[]		slots;
-	private volatile boolean	is_running;
-
+	private volatile boolean	running;
+	private volatile boolean	updating;
 
 	public static void systemLookAndFeel()
 	{
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e) {
+		}
+		catch (java.lang.Exception ex) {
 			java.lang.System.err.println("Couldn't use system look and feel.");
 		}		
 	}
@@ -63,14 +70,14 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			);
 	}
 
-	private int addRegister(int x, int y)
+	private int addRegister(JPanel panel, int x, int y)
 	{
 		JLabel label;
 		int i;
 		register_labels = new JLabel[Processor.SLOT_SIZE];
 		register_fields = new JTextField[Processor.SLOT_SIZE];
-		Insets label_insets = new Insets( 0, 6, 0, 4);
-		Insets field_insets = new Insets( 0,  0, 0, 0);
+		Insets label_insets = new Insets( 0, 2, 0, 4);
+		Insets field_insets = new Insets( 0,  0, 0, 4);
 		Dimension registerFieldMin = new Dimension(100, 10);
 		label = new JLabel("Register");
 		panel.add(
@@ -101,6 +108,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		y += 1;
 		for (i=0; i<Processor.SLOT_SIZE; ++i) {
 			label = new JLabel();
+			label.setHorizontalAlignment(SwingConstants.RIGHT);
 			JTextField field = new JTextField();
 			field.setMinimumSize(registerFieldMin);
 			if (i < Register.values().length) {
@@ -141,12 +149,12 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		return 4;
 	}
 	
-	private int addFlags(int x, int y)
+	private int addFlags(JPanel panel, int x, int y)
 	{
 		JLabel label;
 		int i;
-		Insets label_insets = new Insets( 0, 10, 0, 4);
-		Insets field_insets = new Insets( 0, 10, 0, 4);
+		Insets label_insets = new Insets( -2, 10, 0, 4);
+		Insets field_insets = new Insets( -8, 10, 0, 4);
 		label = new JLabel("Flags");
 		panel.add(
 			label,
@@ -225,7 +233,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 //		return 1;
 //	}
 
-	private int addSlots(int x, int y)
+	private int addSlots(JPanel panel, int x, int y)
 	{
 		JLabel label;
 		int i;
@@ -237,7 +245,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			new GridBagConstraints(
 				x, y,
 				1, 1,
-				0.0, 1.0,
+				0.0, 0.0,
 				GridBagConstraints.WEST,
 				GridBagConstraints.BOTH,
 				label_insets,
@@ -251,7 +259,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			new GridBagConstraints(
 				x, y+1,
 				1, 1,
-				0.0, 1.0,
+				0.0, 0.0,
 				GridBagConstraints.WEST,
 				GridBagConstraints.BOTH,
 				field_insets,
@@ -267,7 +275,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 				new GridBagConstraints(
 					x+i, y,
 					1, 1,
-					0.0, 1.0,
+					0.0, 0.0,
 					GridBagConstraints.WEST,
 					GridBagConstraints.BOTH,
 					label_insets,
@@ -281,7 +289,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 				new GridBagConstraints(
 					x+i, y+1,
 					1, 1,
-					0.0, 1.0,
+					0.0, 0.0,
 					GridBagConstraints.WEST,
 					GridBagConstraints.BOTH,
 					field_insets,
@@ -300,7 +308,9 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		toolbar = new JToolBar();
-		split_pane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		main_split_pane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		register_split_pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+		flag_split_pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 		run = new JButton("Run");
 		step = new JButton("Step");
 		stop = new JButton("Stop");
@@ -309,20 +319,27 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		toolbar.add(run);
 		toolbar.add(step);
 		toolbar.add(stop);
-		split_pane.setTopComponent(toolbar);
-		panel = new JPanel( new GridBagLayout() );
+		main_split_pane.setTopComponent(toolbar);
+		scroll = new JScrollPane(register_split_pane);
+		main_split_pane.setBottomComponent(scroll);
+		register_panel = new JPanel( new GridBagLayout() );
+		flag_panel = new JPanel( new GridBagLayout() );
+		other_panel = new JPanel( new GridBagLayout() );
+		register_split_pane.setTopComponent(register_panel);
+		register_split_pane.setBottomComponent(flag_split_pane);
+		flag_split_pane.setTopComponent(flag_panel);
+		flag_split_pane.setBottomComponent(other_panel);
 		x = 0; y = 0;
 		// register
-		x += this.addRegister(x, y);
+		x += this.addRegister(register_panel, x, y);
 		// Flags
-		x += this.addFlags(x, y);
+		x = 0; y = 0;
+		x += this.addFlags(flag_panel, x, y);
 		//
 //		x += this.addInterrupts(x, y);
 		// slots
-		x += this.addSlots(x, y);
+		x += this.addSlots(other_panel, x, y);
 		//
-		scroll = new JScrollPane(panel);
-		split_pane.setBottomComponent(scroll);
 //		split_pane.setResizeWeight(0.0);
 		stop.setEnabled(false);
 //		step.setEnabled(false);
@@ -334,7 +351,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 
 		update();
 		
-		this.add(split_pane);
+		this.add(main_split_pane);
 
 		setVisible(true);
 	}
@@ -343,6 +360,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 	
 	public void update()
 	{
+		this.updating = true;
 		int i;
 		for (i=0; i<Processor.SLOT_SIZE; ++i) {
 			long value = processor.getRegister(i);
@@ -371,7 +389,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		while (i<slots.length) {
 			slots[i++].setText("");
 		}
-	
+		this.updating = false;
 	}
 
 	public boolean step()
@@ -380,8 +398,8 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			this.processor.step();
 			return true;
 		}
-		catch (Exception ex) {
-			this.panel.setBackground(Color.RED);
+		catch (java.lang.Exception ex) {
+			this.register_panel.setBackground(Color.RED);
 //			this.setTitle(ex.getMessage());
 		}
 		return false;
@@ -406,6 +424,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 	@Override
 	public void itemStateChanged(ItemEvent ev)
 	{
+		if (updating) {return;}
 		int i;
 		Object source = ev.getItemSelectable();
 		for (i=0; i<Flag.values().length; ++i) {
@@ -427,8 +446,8 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 
 	public void start()
 	{
-		if (!is_running) {
-			is_running = true;
+		if (!running) {
+			running = true;
 			step.setEnabled(false);
 			run.setEnabled(false);
 			stop.setEnabled(true);
@@ -439,7 +458,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 
 	public void stop()
 	{
-		is_running = false;
+		running = false;
 		step.setEnabled(true);
 		run.setEnabled(true);
 		stop.setEnabled(false);
@@ -449,7 +468,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 	public void run()
 	{
 		int cnt = 0;
-		while (is_running) {
+		while (running) {
 			if (!this.step()) {
 				this.stop();
 			}

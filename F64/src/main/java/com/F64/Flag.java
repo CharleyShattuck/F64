@@ -3,13 +3,16 @@ package com.F64;
 public enum Flag {
 	// interrupt flags
 	RESET("power-on reset interrupt"),
+	NMI("non-maskable interrupt"),
 	COLD("cold restart interrupt"),
 	WARM("warm restart interrupt"),
-	NMI("non-maskable interrupt"),
+	EXCEPTION("some exception has been thrown"),
 	MEMORY("invalid memory access"),
 	ILLEGAL("illegal instruction"),
-	ARITHMETIC("arithmetic exception"),
+	ARITHMETIC("arithmetic exception, e.g. division by 0"),
+	ALIGNED("a value is not aligned properly"),
 	BOUND("a value is out of bound"),
+	PRIVILEDGE("priviledge violation"),
 	CODE("cannot execute code out of code area"),
 	TOUCHED("a reserved memory location has been touched"),
 	SOVER("parameter stack overflow"),

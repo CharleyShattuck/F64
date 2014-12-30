@@ -15,11 +15,15 @@ public class Machine {
 
 	Machine(int dictionary_size, int heap_size, int stack_size, int return_stack_size, int no_of_threads)
 	{
+		assert(ISA.values().length <= Processor.SLOT_SIZE);
+		assert(Ext1.values().length <= Processor.SLOT_SIZE);
+		assert(Ext2.values().length <= Processor.SLOT_SIZE);
+		assert(RegOp1.values().length <= Processor.SLOT_SIZE);
 		system = new System(dictionary_size, heap_size, stack_size, return_stack_size, no_of_threads);
 		processor = new Processor(system);
 		dictionary = new Dictionary(system);
 		dictionary.createStandardWords();
-		compiler = new Compiler(system);
+		compiler = new Compiler(system, processor);
 		interpreter = new Interpreter(system, processor, compiler, dictionary);
 		processor.powerOn();
 		view = new View(processor, interpreter, compiler, system, dictionary);
@@ -27,21 +31,28 @@ public class Machine {
 		javax.swing.SwingUtilities.invokeLater(view);
 	}
 	
-	public void interpret(String txt)
+	public void interpret()
 	{
-		try {
-			interpreter.interpret(new java.io.ByteArrayInputStream(txt.getBytes()));
-			view.update();
-		}
-		catch (IOException ex) {
-			
+		java.util.Scanner scanner = new java.util.Scanner(java.lang.System.in);
+		java.lang.System.out.println("F64 Forth (c) 2014 by S. Mauerhofer (Switzerland)");
+		for (;;) {
+			try {
+				java.lang.System.out.print(">");
+				String line = scanner.nextLine();
+				interpreter.interpret(new java.io.ByteArrayInputStream(line.getBytes()));
+				view.update();
+				java.lang.System.out.println(" ok");
+			}
+			catch (IOException ex) {
+				
+			}
 		}
 	}
 	
 	public static void main(String[] args)
 	{
 		Machine main = new Machine(10000, 100000, 1024, 1024, 10);
-		main.interpret("1 2 + .");
+		main.interpret();
 	}
 
 }

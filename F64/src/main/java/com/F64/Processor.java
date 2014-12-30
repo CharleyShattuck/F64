@@ -86,7 +86,7 @@ public class Processor {
 	public long getRegister(int reg)
 	{
 		long res = register[reg];
-		if (reg == Register.FLAGS.ordinal()) {
+		if (reg == Register.FLAG.ordinal()) {
 			long mask = this.slot;
 			mask <<= (BITS_PER_CELL - SLOT_BITS);
 			res |= mask;
@@ -123,12 +123,12 @@ public class Processor {
 	{
 		long mask = 1;
 		mask <<= fl;
-		return (this.register[Register.FLAGS.ordinal()] & mask) != 0;
+		return (this.register[Register.FLAG.ordinal()] & mask) != 0;
 	}
 
 	public boolean getFlag(Flag fl)
 	{
-		return (this.register[Register.FLAGS.ordinal()] & fl.getMask()) != 0;
+		return (this.register[Register.FLAG.ordinal()] & fl.getMask()) != 0;
 	}
 	
 	public void setFlag(int fl, boolean value)
@@ -136,20 +136,20 @@ public class Processor {
 		long mask = 1;
 		mask <<= fl;
 		if (value) {
-			this.register[Register.FLAGS.ordinal()] |= mask;
+			this.register[Register.FLAG.ordinal()] |= mask;
 		}
 		else {
-			this.register[Register.FLAGS.ordinal()] &= ~mask;			
+			this.register[Register.FLAG.ordinal()] &= ~mask;			
 		}
 	}
 
 	public void setFlag(Flag fl, boolean value)
 	{
 		if (value) {
-			this.register[Register.FLAGS.ordinal()] |= fl.getMask();
+			this.register[Register.FLAG.ordinal()] |= fl.getMask();
 		}
 		else {
-			this.register[Register.FLAGS.ordinal()] &= ~fl.getMask();			
+			this.register[Register.FLAG.ordinal()] &= ~fl.getMask();			
 		}
 	}
 
@@ -687,7 +687,7 @@ public class Processor {
 		if (src2 < 0) {dest = src1;}
 		else if (src2 >= BITS_PER_CELL) {
 			if (src1 >= 0) {dest = 0;}
-			else {dest = -1;;}
+			else {dest = -1;}
 		}
 		else {
 			dest = src1 >> src2;
@@ -905,12 +905,12 @@ public class Processor {
 		case EXT4:		this.doExt4(); break;
 		case EXT5:		this.doExt5(); break;
 		case EXT6:		this.doExt6(); break;
-		case EXT7:		this.doExt7(); break;
 		case REGOP:		this.doRegisterOperation(this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot()); break;
-
+		case SIMD:		this.doSIMDOperation(this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot()); break;
+		default: this.interrupt(Flag.ILLEGAL);
 		}
 		// check if there is some interrupt pending
-		if ((this.register[Register.FLAGS.ordinal()] & this.register[Register.INTE.ordinal()]) != 0) {
+		if ((this.register[Register.FLAG.ordinal()] & this.register[Register.INTE.ordinal()]) != 0) {
 			// there is some pending interrupt
 			triggerInterrupts();
 		}
@@ -1052,9 +1052,9 @@ public class Processor {
 	{
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
 		// save flags (with current slot and interrupt)
-		this.setSlot(Register.FLAGS.ordinal(), 0, this.slot);
-		this.setSlot(Register.FLAGS.ordinal(), 1, no);
-		this.pushReturnStack(this.register[Register.FLAGS.ordinal()]);
+		this.setSlot(Register.FLAG.ordinal(), 0, this.slot);
+		this.setSlot(Register.FLAG.ordinal(), 1, no);
+		this.pushReturnStack(this.register[Register.FLAG.ordinal()]);
 		// save I
 		this.register[Register.R.ordinal()] = this.register[Register.I.ordinal()];
 		// load instruction from interrupt vector table
@@ -1071,9 +1071,9 @@ public class Processor {
 		// restore I
 		this.register[Register.I.ordinal()] = this.register[Register.R.ordinal()];
 		// restore flags with slot and clear the interrupt in the INTF register
-		this.register[Register.FLAGS.ordinal()] = this.popReturnStack();
-		this.slot = this.getSlot(Register.FLAGS.ordinal(), 0);
-		int no = this.getSlot(Register.FLAGS.ordinal(), 1);
+		this.register[Register.FLAG.ordinal()] = this.popReturnStack();
+		this.slot = this.getSlot(Register.FLAG.ordinal(), 0);
+		int no = this.getSlot(Register.FLAG.ordinal(), 1);
 		this.setInterruptFlag(Register.INTS, no, false);
 		//
 		this.register[Register.R.ordinal()] = this.popReturnStack();
@@ -1118,6 +1118,7 @@ public class Processor {
 		case RRTBIT:	this.doToggleBit(this.nextSlot(), this.nextSlot(), true, false); break;
 		case RRRBIT:	this.doReadBit(this.nextSlot(), this.nextSlot(), true, false); break;
 		case RRWBIT:	this.doWriteBit(this.nextSlot(), this.nextSlot(), true, false); break;
+		default: this.interrupt(Flag.ILLEGAL);
 		}
 	}
 
@@ -1131,13 +1132,13 @@ public class Processor {
 	public void doFetchReserved()
 	{
 		long adr = this.getRegister(Register.T);
-		if (this.getRegister(Register.RESERVE) != 0) {
+		if (this.getRegister(Register.RES) != 0) {
 			// some memory has already been reserved
 			interrupt(Flag.TOUCHED);
 			return;
 //			this.setFlag(Flag.RESERVED, true);
 		}
-		this.setRegister(Register.RESERVE, adr);
+		this.setRegister(Register.RES, adr);
 		this.setRegister(Register.T, system.getMemory(adr));
 	}
 
@@ -1151,7 +1152,7 @@ public class Processor {
 	{
 		long adr = this.getRegister(Register.T);
 		long value = this.getRegister(Register.S);
-		if (this.getRegister(Register.RESERVE) != adr) {
+		if (this.getRegister(Register.RES) != adr) {
 			// memory has not been reserved
 		}
 		if (getFlag(Flag.TOUCHED)) {
@@ -1161,7 +1162,7 @@ public class Processor {
 			system.setMemory(adr, value);
 			this.setRegister(Register.T, 0);
 		}
-		this.setRegister(Register.RESERVE, 0);
+		this.setRegister(Register.RES, 0);
 		this.doNip();
 	}
 
@@ -1170,6 +1171,7 @@ public class Processor {
 		switch (Ext2.values()[this.nextSlot()]) {
 		case FETCHRES:	this.doFetchReserved(); break;
 		case STORECOND:	this.doStoreConditional(); break;
+		default: this.interrupt(Flag.ILLEGAL);
 		}
 	}
 
@@ -1186,10 +1188,6 @@ public class Processor {
 	}
 
 	public void doExt6()
-	{
-	}
-
-	public void doExt7()
 	{
 	}
 
@@ -1213,13 +1211,14 @@ public class Processor {
 		}
 	}
 
+	public void doThrow(Exception ex)
+	{
+		
+	}
+	
 	public void reset()
 	{
-		try {
-			this.interrupt(Flag.RESET);
-		}
-		catch (Exception ex) {
-		}
+		this.interrupt(Flag.RESET);
 	}
 
 	public void nmi()
@@ -1231,7 +1230,7 @@ public class Processor {
 	{
 		this.inc(Register.CLK.ordinal());
 		if (this.getRegister(Register.CLK) == this.getRegister(Register.CLI)) {
-			this.setFlag(Flag.CLOCK, true);;
+			this.setFlag(Flag.CLOCK, true);
 		}
 	}
 
@@ -1240,7 +1239,7 @@ public class Processor {
 		// initialize instruction pointer
 		this.setRegister(Register.P, 0);
 		this.setRegister(Register.I, system.getMemory(0));
-		this.setRegister(Register.FLAGS, 0);
+		this.setRegister(Register.FLAG, 0);
 		this.slot = 0;
 		// initialize stack
 		this.setRegister(Register.SP, system.getStackTop(0, false));
@@ -1261,26 +1260,30 @@ public class Processor {
 	public void doRegisterOperation(int op, int s1, int s2, int d)
 	{
 		switch (RegOp1.values()[op]) {
-		case ADD: this.doAdd(d, s1, s2);; break;
-		case ADDC: this.doAddWithCarry(d, s1, s2);; break;
-		case ADDCC: this.setFlag(Flag.CARRY, false); this.doAddWithCarry(d, s1, s2);; break;
-		case ADDCS: this.setFlag(Flag.CARRY, true); this.doAddWithCarry(d, s1, s2);; break;
-		case SUB: this.doSubtract(d, s1, s2);; break;
+		case ADD: this.doAdd(d, s1, s2); break;
+		case ADDC: this.doAddWithCarry(d, s1, s2); break;
+		case ADDCC: this.setFlag(Flag.CARRY, false); this.doAddWithCarry(d, s1, s2); break;
+		case ADDCS: this.setFlag(Flag.CARRY, true); this.doAddWithCarry(d, s1, s2); break;
+		case SUB: this.doSubtract(d, s1, s2); break;
 		case SUBC: this.doSubtractWithCarry(d, s1, s2); break;
 		case SUBCC: this.setFlag(Flag.CARRY, false); this.doSubtractWithCarry(d, s1, s2); break;
 		case SUBCS: this.setFlag(Flag.CARRY, true); this.doSubtractWithCarry(d, s1, s2); break;
-		case AND: this.doAnd(d, s1, s2);; break;
-		case OR: this.doOr(d, s1, s2);; break;
-		case XOR: this.doXor(d, s1, s2);; break;
-		case XNOR: this.doXNor(d, s1, s2);; break;
-		case ASL: this.doAsl(d, s1, s2);; break;
-		case ASR: this.doAsr(d, s1, s2);; break;
-		case LSL: this.doLsl(d, s1, s2);; break;
-		case LSR: this.doLsr(d, s1, s2);; break;
-		case MUL2ADD: this.doMul2Add(d, s1, s2);; break;
-		case DIV2SUB: this.doDiv2Sub(d, s1, s2);; break;
+		case AND: this.doAnd(d, s1, s2); break;
+		case OR: this.doOr(d, s1, s2); break;
+		case XOR: this.doXor(d, s1, s2); break;
+		case XNOR: this.doXNor(d, s1, s2); break;
+		case ASL: this.doAsl(d, s1, s2); break;
+		case ASR: this.doAsr(d, s1, s2); break;
+		case LSL: this.doLsl(d, s1, s2); break;
+		case LSR: this.doLsr(d, s1, s2); break;
+		case MUL2ADD: this.doMul2Add(d, s1, s2); break;
+		case DIV2SUB: this.doDiv2Sub(d, s1, s2); break;
+		default: this.interrupt(Flag.ILLEGAL);
 		}
 	}
 
+	public void doSIMDOperation(int op, int par, int s1, int s2, int d)
+	{
+	}
 
 }
