@@ -12,8 +12,6 @@ public class System {
 	private long		code_position;
 	private long		data_position;
 
-	
-	
 	public System(int dictionary_size, int heap_size, int stack_size, int return_stack_size, int no_of_threads)
 	{
 		this.dictionary_size = dictionary_size;
@@ -57,8 +55,6 @@ public class System {
 		return this.data_position;
 	}
 
-	
-	
 	public void setMemory(long adr, long value)
 	{
 		this.memory[(int)adr] = value;

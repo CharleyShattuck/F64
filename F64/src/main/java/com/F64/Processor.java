@@ -1,26 +1,64 @@
 package com.F64;
 
 public class Processor {
-	private System	system;
-	private long[]	register;
-	private int		slot;
-	private int		saved_slot;
-	private int		max_slot;	// max # of slots
-	public static final int BITS_PER_CELL = 64;
-	public static final int SLOT_BITS = 6;
-	public static final int SLOT_SIZE = 1 << SLOT_BITS;
-	public static final int SLOT_MASK = SLOT_SIZE - 1;
-	public static final int FINAL_SLOT_BITS = 4;
-	public static final int FINAL_SLOT_SIZE = 1 << FINAL_SLOT_BITS;
-	public static final int FINAL_SLOT_MASK = FINAL_SLOT_SIZE - 1;
-	public static final int FINAL_SLOT = 10;
-	public static final int NO_OF_SLOTS = FINAL_SLOT+1;
-	
+	private System			system;
+	private long[]			register;
+	private long[]			read_port;
+	private long[]			write_port;
+	private Processor[]		port_partner;
+	private long			communication;
+	private Processor		communication_source;
+	private int				port_read_mask;
+	private int				port_write_mask;
+	private int				slot;
+	private int				saved_slot;
+	private int				max_slot;	// max # of slots
+	public static final int	BITS_PER_CELL = 64;
+	public static final int	SLOT_BITS = 6;
+	public static final int	SLOT_SIZE = 1 << SLOT_BITS;
+	public static final int	SLOT_MASK = SLOT_SIZE - 1;
+	public static final int	FINAL_SLOT_BITS = 4;
+	public static final int	FINAL_SLOT_SIZE = 1 << FINAL_SLOT_BITS;
+	public static final int	FINAL_SLOT_MASK = FINAL_SLOT_SIZE - 1;
+	public static final int	FINAL_SLOT = 10;
+	public static final int	NO_OF_SLOTS = FINAL_SLOT+1;
+
+	public static long writeSlot(long data, int slot, int value)
+	{
+		assert(slot >= 0);
+		assert(value >= 0);
+		if (slot > FINAL_SLOT) {
+			assert(value == 0);
+			return data;
+		}
+		if (slot == FINAL_SLOT) {assert(value < FINAL_SLOT_SIZE);}
+		else {assert(value < SLOT_SIZE);}
+		long tmp1 = value & SLOT_MASK;
+		tmp1 <<= (BITS_PER_CELL-(slot*SLOT_BITS));
+		long tmp2 = SLOT_MASK;
+		tmp2 <<= (BITS_PER_CELL-(slot*SLOT_BITS));
+		tmp2 = ~tmp2;
+		tmp2 &= data;
+		return tmp1 | tmp2;
+	}
+
+	public static int readSlot(long value, int slot)
+	{
+		assert(slot >= 0);
+		int res = 0;
+		if (slot < FINAL_SLOT) {res = ((int)(value >> (BITS_PER_CELL-(slot*SLOT_BITS)))) & SLOT_MASK;}
+		else if (slot == FINAL_SLOT) {res = ((int)value) & FINAL_SLOT_MASK;}
+		return res;
+	}
+
 	
 	public Processor(System system)
 	{
 		this.system = system;
 		this.register = new long[SLOT_SIZE];
+		this.read_port = new long[Port.values().length];
+		this.write_port = new long[Port.values().length];
+		this.port_partner = new Processor[Port.values().length];
 		this.register[Register.Z.ordinal()] = 0;
 		this.register[Register.INTE.ordinal()] = Flag.RESET.getMask() | Flag.NMI.getMask();
 		//this.setInterruptFlag(Register.INTF, Interrupt.Reset, true);
@@ -40,53 +78,137 @@ public class Processor {
 
 	public int getSlot() {return this.slot;}
 	public int getMaxSlot() {return this.max_slot;}
+	public void setSlot(int reg, int slot, int value) {this.setRegister(reg, writeSlot(this.getRegister(reg), slot, value));}
+	public int getSlot(int reg, int slot) {return readSlot(this.getRegister(reg), slot);}
+	public int getSlot(int slot) {return readSlot(this.register[Register.I.ordinal()], slot);}
+	public int nextSlot() {return readSlot(this.register[Register.I.ordinal()], this.slot++);}
+	public Processor getPortPartner(int p) {return this.port_partner[p];}
+	public Processor getPortPartner(Port p) {return this.getPortPartner(p.ordinal());}
+	public void setPortPartner(int p, Processor value) {this.port_partner[p] = value;}
+	public void setPortPartner(Port p, Processor value) {this.setPortPartner(p.ordinal(), value);}
+	public long getPort(Port p, boolean writing) {return this.getPort(p.ordinal(), writing);}
+	public void setPort(Port p, boolean writing, long value) {this.setPort(p.ordinal(), writing, value);}
+	public long getRegister(Register reg) {return this.getRegister(reg.ordinal());}
+	public void setRegister(Register reg, long value) {this.setRegister(reg.ordinal(), value);}
+	public int getPortReadMask() {return this.port_read_mask;}
+	public int getPortWriteMask() {return this.port_write_mask;}
 
-	public static long writeSlot(long data, int slot, int value)
+	public boolean handshake(Processor target, long value)
 	{
-		long tmp1 = value & SLOT_MASK;
-		tmp1 <<= (BITS_PER_CELL-(slot*SLOT_BITS));
-		long tmp2 = SLOT_MASK;
-		tmp2 <<= (BITS_PER_CELL-(slot*SLOT_BITS));
-		tmp2 = ~tmp2;
-		tmp2 &= data;
-		return tmp1 | tmp2;
-	}
-
-	public static int readSlot(long value, int slot)
-	{
-		int res = 0;
-		if (slot < FINAL_SLOT) {
-			res = ((int)(value >> (BITS_PER_CELL-(slot*SLOT_BITS)))) & SLOT_MASK;
+		synchronized (target) {
+			if (target.communication_source == null) {
+				for (int i=0; i<Port.values().length; ++i) {
+					if ((target.port_read_mask & (1 << i)) != 0) {
+						// target wait for input on this port
+						if (target.port_partner[i] == this) {
+							// target expects input through this port from this
+							target.communication = value;
+							target.communication_source = this;
+							target.notify();
+							return true;
+						}
+					}
+				}
+			}
 		}
-		else if (slot == FINAL_SLOT) {
-			res = ((int)value) & FINAL_SLOT_MASK;
+		return false;
+	}
+	
+	public void writePort(int mask, boolean wait, long value)
+	{
+		Processor partner;
+		int i,limit = Port.values().length;
+		this.port_write_mask = mask;
+		for (;;) {
+			synchronized (this) {
+				partner = null;
+				i = 0;
+				while ((i<limit) && (partner == null)) {
+					if ((mask & (1 << i)) != 0) {partner = this.port_partner[i];}
+					++i;
+				}
+				if (wait && (partner == null)) {
+					try {this.wait();} catch (InterruptedException e) {}
+				}
+			}
+			if (partner != null) {
+				if (this.handshake(partner, value)) {
+					this.setFlag(Flag.UPWRITE.ordinal()+i, true);
+					this.setPort(i, true, value);
+					this.port_write_mask = 0;
+					return;
+				}
+			}
+			else if (!wait) {
+				this.port_write_mask = 0;
+				return;
+			}
 		}
-		return res;
 	}
 
-	public void setSlot(int reg, int slot, int value)
+	public long readPort(int mask, boolean wait)
 	{
-		this.setRegister(reg, writeSlot(this.getRegister(reg), slot, value));
+		int i,limit = Port.values().length;
+		synchronized (this) {
+			this.port_read_mask = mask;
+			for (;;) {
+				for (i=0; i<limit; ++i) {
+					if ((mask & (1 << i)) != 0) {
+						if (this.port_partner[i] != null) {
+							this.port_partner[i].notify();
+						}
+					}
+				}
+				if (wait) {
+					try {this.wait();} catch (InterruptedException e) {}
+				}
+				else {
+					// wait a short time (10 ms) to allow synchronization
+					try {this.wait(10);} catch (InterruptedException e) {}
+				}
+				if (this.communication_source != null) {
+					// someone has communicated with us
+					this.port_read_mask = 0;
+					for (i=0; i<limit; ++i) {
+						if ((mask & (1 << i)) != 0) {
+							if (this.port_partner[i] == this.communication_source) {
+								long value = this.communication;
+								this.communication = 0;
+								this.setFlag(Flag.UPREAD.ordinal()+i, true);
+								this.setPort(i, false, value);
+								this.port_partner[i].notify();
+								return value;
+							}
+						}
+					}
+				}
+				if (!wait) {
+					this.port_read_mask = 0;
+					return 0;
+				}
+			}
+		}
 	}
 
-	public int getSlot(int reg, int slot)
+	public long getPort(int p, boolean writing)
 	{
-		return readSlot(this.getRegister(reg), slot);
+		if (writing) {return this.write_port[p];}
+		return this.read_port[p];
 	}
 
-	public int getSlot(int slot)
+	public void setPort(int p, boolean writing, long value)
 	{
-		return readSlot(this.register[Register.I.ordinal()], slot);
+		if (writing) {this.write_port[p] = value;}
+		else {this.read_port[p] = value;}
 	}
 
-	public int nextSlot()
-	{
-		return readSlot(this.register[Register.I.ordinal()], this.slot++);
-	}
+	
+	
 
+	
 	public long getRegister(int reg)
 	{
-		long res = register[reg];
+		long res = this.register[reg];
 		if (reg == Register.FLAG.ordinal()) {
 			// fill in the slot bits into the upper 4 bits
 			long mask = -1;
@@ -98,10 +220,6 @@ public class Processor {
 		return res;
 	}
 
-	public long getRegister(Register reg)
-	{
-		return this.getRegister(reg.ordinal());
-	}
 	
 	public boolean setRegister(int reg, long value)
 	{
@@ -125,10 +243,6 @@ public class Processor {
 		return true;
 	}
 
-	public void setRegister(Register reg, long value)
-	{
-		this.setRegister(reg.ordinal(), value);
-	}
 
 	public boolean getFlag(int fl)
 	{
@@ -1179,11 +1293,27 @@ public class Processor {
 		this.doNip();
 	}
 
+	public void doFetchPort(int mask, boolean wait)
+	{
+		this.doDup();
+		this.setRegister(Register.T, this.readPort(mask, wait));
+	}
+
+	public void doStorePort(int mask, boolean wait)
+	{
+		this.writePort(mask, wait, this.getRegister(Register.T));
+		this.doDrop();
+	}
+
 	public void doExt2()
 	{
 		switch (Ext2.values()[this.nextSlot()]) {
 		case FETCHRES:	this.doFetchReserved(); break;
 		case STORECOND:	this.doStoreConditional(); break;
+		case FETCHPORT: this.doFetchPort(this.nextSlot(), false); break;
+		case STOREPORT: this.doStorePort(this.nextSlot(), false); break;
+		case FETCHPORTWAIT: this.doFetchPort(this.nextSlot(), true); break;
+		case STOREPORTWAIT: this.doStorePort(this.nextSlot(), true); break;
 		default: this.interrupt(Flag.ILLEGAL);
 		}
 	}

@@ -20,7 +20,7 @@ public class Xor extends com.F64.Word {
 	@Override
 	public void compile(Compiler c)
 	{
-		c.compile(ISA.XOR);
+		c.compile(ISA.XOR.ordinal());
 	}
 
 }

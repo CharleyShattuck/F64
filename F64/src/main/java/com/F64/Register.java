@@ -25,6 +25,7 @@ public enum Register {
 	INTV("interrupt vector register"),
 	MD("multiply/divide register"),
 	EX("exception register. Contains last exception thrown"),
+	EXF("exception frame register"),
 	CLK("external clock counter"),
 	CLI("external clock interrupt");
 

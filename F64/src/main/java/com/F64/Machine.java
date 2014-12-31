@@ -6,52 +6,54 @@ import java.io.IOException;
 
 
 public class Machine {
-	private View		view;
-	private Processor	processor;
-	private System		system;
-	private Compiler	compiler;
-	private Interpreter	interpreter;
-	private Dictionary	dictionary;
+	private ArrayView		view;
+	private ProcessorArray	processor_array;
+	private Processor		processor;
+	private System			system;
+	private Compiler		compiler;
+	private Interpreter		interpreter;
+	private Dictionary		dictionary;
 
-	Machine(int dictionary_size, int heap_size, int stack_size, int return_stack_size, int no_of_threads)
+	Machine(int columns, int rows, int dictionary_size, int heap_size, int stack_size, int return_stack_size, int no_of_threads)
 	{
 		assert(ISA.values().length <= Processor.SLOT_SIZE);
 		assert(Ext1.values().length <= Processor.SLOT_SIZE);
 		assert(Ext2.values().length <= Processor.SLOT_SIZE);
 		assert(RegOp1.values().length <= Processor.SLOT_SIZE);
 		system = new System(dictionary_size, heap_size, stack_size, return_stack_size, no_of_threads);
-		processor = new Processor(system);
+		processor_array = new ProcessorArray(columns, rows, system);
+		processor = processor_array.getProcessor(0, 0);
 		dictionary = new Dictionary(system);
 		dictionary.createStandardWords();
 		compiler = new Compiler(system, processor);
 		interpreter = new Interpreter(system, processor, compiler, dictionary);
 		processor.powerOn();
-		view = new View(processor, interpreter, compiler, system, dictionary);
+		view = new ArrayView(processor_array, compiler, system, dictionary);
 		View.systemLookAndFeel();
 		javax.swing.SwingUtilities.invokeLater(view);
 	}
 	
 	public void interpret()
 	{
-		java.util.Scanner scanner = new java.util.Scanner(java.lang.System.in);
-		java.lang.System.out.println("F64 Forth (c) 2014 by S. Mauerhofer (Switzerland)");
-		for (;;) {
-			try {
-				java.lang.System.out.print(">");
-				String line = scanner.nextLine();
-				interpreter.interpret(new java.io.ByteArrayInputStream(line.getBytes()));
-				view.update();
-				java.lang.System.out.println(" ok");
-			}
-			catch (IOException ex) {
-				
-			}
-		}
+//		java.util.Scanner scanner = new java.util.Scanner(java.lang.System.in);
+//		java.lang.System.out.println("F64 Forth (c) 2014 by S. Mauerhofer (Switzerland)");
+//		for (;;) {
+//			try {
+//				java.lang.System.out.print(">");
+//				String line = scanner.nextLine();
+//				interpreter.interpret(new java.io.ByteArrayInputStream(line.getBytes()));
+//				view.update();
+//				java.lang.System.out.println(" ok");
+//			}
+//			catch (IOException ex) {
+//				
+//			}
+//		}
 	}
 	
 	public static void main(String[] args)
 	{
-		Machine main = new Machine(10000, 100000, 1024, 1024, 10);
+		Machine main = new Machine(8, 4, 10000, 100000, 1024, 1024, 10);
 		main.interpret();
 	}
 

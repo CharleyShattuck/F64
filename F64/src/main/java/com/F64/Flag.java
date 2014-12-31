@@ -28,10 +28,14 @@ public enum Flag {
 	DOWNREAD("data was fetched from down port"),
 	LEFTREAD("data was fetched from left port"),
 	RIGHTREAD("data was fetched from right port"),
+	FRONTREAD("data was fetched from front port"),
+	BACKREAD("data was fetched from back port"),
 	UPWRITE("data was stored into up port"),
 	DOWNWRITE("data was stored into down port"),
 	LEFTWRITE("data was stored into left port"),
-	RIGHTWRITE("data was stored into right port");
+	RIGHTWRITE("data was stored into right port"),
+	FRONTWRITE("data was stored into front port"),
+	BACKWRITE("data was stored into back port");
 
 	private String tooltip;
 

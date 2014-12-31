@@ -12,6 +12,7 @@ import java.awt.event.ItemListener;
 //import java.io.IOException;
 
 
+
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -27,25 +28,26 @@ import javax.swing.UIManager;
 @SuppressWarnings("serial")
 public class View extends JFrame implements ActionListener, ItemListener, Runnable {
 	private Processor			processor;
-//	private Compiler		compiler;
 	private JSplitPane			main_split_pane;
-	private JSplitPane			register_split_pane;
-	private JSplitPane			flag_split_pane;
 	private JToolBar			toolbar;
 	private JButton				run;
+	private JButton				trace;
 	private JButton				step;
 	private JButton				stop;
 	private JScrollPane 		scroll;
+	private JPanel				main_panel;
 	private JPanel				register_panel;
 	private JPanel				flag_panel;
+	private JPanel				port_panel;
 	private JPanel				other_panel;
 	private JCheckBox[]			flags;
-//	private JCheckBox[]		interrupts;
 	private JLabel[]			register_labels;
 	private JTextField[]		register_fields;
 	private JTextField			slot_no;
 	private JTextField[]		slots;
+	private JTextField[]		ports;
 	private volatile boolean	running;
+	private volatile boolean	tracing;
 	private volatile boolean	updating;
 
 	public static void systemLookAndFeel()
@@ -72,10 +74,11 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 
 	private int addRegister(JPanel panel, int x, int y)
 	{
+		int limit = Processor.SLOT_SIZE;
 		JLabel label;
 		int i;
-		register_labels = new JLabel[Processor.SLOT_SIZE];
-		register_fields = new JTextField[Processor.SLOT_SIZE];
+		this.register_labels = new JLabel[limit];
+		this.register_fields = new JTextField[limit];
 		Insets label_insets = new Insets( 0, 2, 0, 4);
 		Insets field_insets = new Insets( 0,  0, 0, 4);
 		Dimension registerFieldMin = new Dimension(100, 10);
@@ -106,7 +109,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			)
 		);
 		y += 1;
-		for (i=0; i<Processor.SLOT_SIZE; ++i) {
+		for (i=0; i<limit; ++i) {
 			label = new JLabel();
 			label.setHorizontalAlignment(SwingConstants.RIGHT);
 			JTextField field = new JTextField();
@@ -118,8 +121,8 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			else {
 				label.setText(" X"+i);
 			}
-			register_labels[i] = label;
-			register_fields[i] = field;
+			this.register_labels[i] = label;
+			this.register_fields[i] = field;
 			panel.add(
 				label,
 				new GridBagConstraints(
@@ -149,12 +152,13 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		return 4;
 	}
 	
-	private int addFlags(JPanel panel, int x, int y)
+	private void addFlags(JPanel panel, int x, int y)
 	{
+		int limit = Flag.values().length;
 		JLabel label;
 		int i;
-		Insets label_insets = new Insets( -2, 10, 0, 4);
-		Insets field_insets = new Insets( -8, 10, 0, 4);
+		Insets label_insets = new Insets( 0, 10, 0, 4);
+		Insets field_insets = new Insets( -4, 10, 0, 4);
 		label = new JLabel("Flags");
 		panel.add(
 			label,
@@ -169,13 +173,13 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			)
 		);
 		y += 1;
-		flags = new JCheckBox[Flag.values().length];
-		for (i=0; i<Flag.values().length; ++i) {
-			flags[i] = new JCheckBox(Flag.values()[i].name());
-			flags[i].setToolTipText(Flag.values()[i].getTooltip());
-			flags[i].addItemListener(this);
+		this.flags = new JCheckBox[limit];
+		for (i=0; i<limit; ++i) {
+			this.flags[i] = new JCheckBox(Flag.values()[i].name());
+			this.flags[i].setToolTipText(Flag.values()[i].getTooltip());
+			this.flags[i].addItemListener(this);
 			panel.add(
-				flags[i],
+					this.flags[i],
 				new GridBagConstraints(
 					x, y+i,
 					1, 1,
@@ -187,54 +191,11 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 				)
 			);
 		}
-		y -= 1;
-		return 1;
 	}
 
-//	private int addInterrupts(int x, int y)
-//	{
-//		JLabel label;
-//		int i;
-//		Insets label_insets = new Insets( 0, 10, 0, 4);
-//		Insets field_insets = new Insets( 0,  0, 0, 0);
-//		label = new JLabel("Interrupts");
-//		panel.add(
-//			label,
-//			new GridBagConstraints(
-//				x, y,
-//				1, 1,
-//				0.0, 1.0,
-//				GridBagConstraints.WEST,
-//				GridBagConstraints.BOTH,
-//				label_insets,
-//				2, 0
-//			)
-//		);
-//		y += 1;
-//		interrupts = new JCheckBox[Interrupt.values().length];
-//		for (i=0; i<Interrupt.values().length; ++i) {
-//			interrupts[i] = new JCheckBox(Interrupt.values()[i].name());
-//			interrupts[i].setToolTipText(Interrupt.values()[i].getTooltip());
-//			interrupts[i].addItemListener(this);
-//			panel.add(
-//				interrupts[i],
-//				new GridBagConstraints(
-//					x, y+i,
-//					1, 1,
-//					0.0, 1.0,
-//					GridBagConstraints.WEST,
-//					GridBagConstraints.BOTH,
-//					field_insets,
-//					2, 0
-//				)
-//			);
-//		}
-//		y -= 1;
-//		return 1;
-//	}
-
-	private int addSlots(JPanel panel, int x, int y)
+	private void addSlots(JPanel panel, int x, int y)
 	{
+		int limit = this.processor.getMaxSlot();
 		JLabel label;
 		int i;
 		Insets label_insets = new Insets( 0, 10, 0, 4);
@@ -252,10 +213,10 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 				2, 0
 			)
 		);
-		slot_no = new JTextField();
-		slot_no.setHorizontalAlignment(JTextField.RIGHT);
+		this.slot_no = new JTextField();
+		this.slot_no.setHorizontalAlignment(JTextField.RIGHT);
 		panel.add(
-			slot_no,
+			this.slot_no,
 			new GridBagConstraints(
 				x, y+1,
 				1, 1,
@@ -267,8 +228,8 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			)
 		);
 		x += 1;
-		slots = new JTextField[processor.getMaxSlot()];
-		for (i=0; i<slots.length; ++i) {
+		this.slots = new JTextField[limit];
+		for (i=0; i<limit; ++i) {
 			label = new JLabel("slot "+i);
 			panel.add(
 				label,
@@ -282,10 +243,10 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 					2, 0
 				)
 			);
-			slots[i] = new JTextField();
-			slots[i].setHorizontalAlignment(JTextField.RIGHT);
+			this.slots[i] = new JTextField();
+			this.slots[i].setHorizontalAlignment(JTextField.RIGHT);
 			panel.add(
-				slots[i],
+				this.slots[i],
 				new GridBagConstraints(
 					x+i, y+1,
 					1, 1,
@@ -297,61 +258,203 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 				)
 			);
 		}
-		return slots.length;
+	}
+
+	private void addPorts(JPanel panel, int x, int y)
+	{
+		int limit = Port.values().length;
+
+		JLabel label;
+		int i;
+		Insets label_insets = new Insets( 0, 10, 0, 4);
+		Insets field_insets = new Insets( 0, 10, 0, 4);
+		label = new JLabel("Read Ports");
+		panel.add(
+			label,
+			new GridBagConstraints(
+				x+1, y,
+				1, 1,
+				0.0, 1.0,
+				GridBagConstraints.WEST,
+				GridBagConstraints.BOTH,
+				label_insets,
+				2, 0
+			)
+		);
+		y += 1;
+		this.ports = new JTextField[limit+limit];
+		for (i=0; i<limit; ++i) {
+			label = new JLabel(Port.values()[i].name());
+			panel.add(
+				label,
+				new GridBagConstraints(
+					x, y+i,
+					1, 1,
+					0.0, 1.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.BOTH,
+					label_insets,
+					2, 0
+				)
+			);
+			this.ports[i] = new JTextField(Port.values()[i].name());
+			this.ports[i].setToolTipText(Port.values()[i].getTooltip());
+			panel.add(
+					this.ports[i],
+				new GridBagConstraints(
+					x+1, y+i,
+					1, 1,
+					0.0, 0.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.BOTH,
+					field_insets,
+					2, 0
+				)
+			);
+		}
+		y += limit;
+		label = new JLabel("Write Ports");
+		panel.add(
+			label,
+			new GridBagConstraints(
+				x+1, y,
+				1, 1,
+				0.0, 1.0,
+				GridBagConstraints.WEST,
+				GridBagConstraints.BOTH,
+				label_insets,
+				2, 0
+			)
+		);
+		y += 1;
+		for (i=0; i<limit; ++i) {
+			label = new JLabel(Port.values()[i].name());
+			panel.add(
+				label,
+				new GridBagConstraints(
+					x, y+i,
+					1, 1,
+					0.0, 1.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.BOTH,
+					label_insets,
+					2, 0
+				)
+			);
+			this.ports[i+limit] = new JTextField(Port.values()[i].name());
+			this.ports[i+limit].setToolTipText(Port.values()[i].getTooltip());
+			panel.add(
+				this.ports[i+limit],
+				new GridBagConstraints(
+					x+1, y+i,
+					1, 1,
+					0.0, 0.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.BOTH,
+					field_insets,
+					2, 0
+				)
+			);
+		}
 	}
 
 	public View(Processor p, Interpreter i, Compiler c, System s, Dictionary d)
 	{
-		processor = p;
-		int x, y;
+		this.processor = p;
 		this.setSize(1000,800);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		Insets panel_insets = new Insets( 0, 0, 0, 0);
 
-		toolbar = new JToolBar();
-		main_split_pane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		register_split_pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-		flag_split_pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-		run = new JButton("Run");
-		step = new JButton("Step");
-		stop = new JButton("Stop");
+		this.toolbar = new JToolBar();
+		this.main_split_pane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		this.run = new JButton("Run");
+		this.trace = new JButton("Trace");
+		this.step = new JButton("Step");
+		this.stop = new JButton("Stop");
 
-		toolbar.setFloatable(false);
-		toolbar.add(run);
-		toolbar.add(step);
-		toolbar.add(stop);
-		main_split_pane.setTopComponent(toolbar);
-		scroll = new JScrollPane(register_split_pane);
-		main_split_pane.setBottomComponent(scroll);
-		register_panel = new JPanel( new GridBagLayout() );
-		flag_panel = new JPanel( new GridBagLayout() );
-		other_panel = new JPanel( new GridBagLayout() );
-		register_split_pane.setTopComponent(register_panel);
-		register_split_pane.setBottomComponent(flag_split_pane);
-		flag_split_pane.setTopComponent(flag_panel);
-		flag_split_pane.setBottomComponent(other_panel);
-		x = 0; y = 0;
+		this.toolbar.setFloatable(false);
+		this.toolbar.add(this.run);
+		this.toolbar.add(this.trace);
+		this.toolbar.add(this.step);
+		this.toolbar.add(this.stop);
+		this.main_panel = new JPanel( new GridBagLayout() );
+		this.main_split_pane.setTopComponent(this.toolbar);
+		this.scroll = new JScrollPane(this.main_panel);
+		this.main_split_pane.setBottomComponent(this.scroll);
+		this.register_panel = new JPanel( new GridBagLayout() );
+		this.flag_panel = new JPanel( new GridBagLayout() );
+		this.port_panel = new JPanel( new GridBagLayout() );
+		this.other_panel = new JPanel( new GridBagLayout() );
 		// register
-		x += this.addRegister(register_panel, x, y);
-		// Flags
-		x = 0; y = 0;
-		x += this.addFlags(flag_panel, x, y);
-		//
-//		x += this.addInterrupts(x, y);
+		this.addRegister(this.register_panel, 0, 0);
+		this.main_panel.add(
+				this.register_panel,
+				new GridBagConstraints(
+					0, 0,
+					1, 2,
+					0.0, 1.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.BOTH,
+					panel_insets,
+					0, 0
+				)
+			);
+		// flags
+		this.addFlags(this.flag_panel, 0, 0);
+		this.main_panel.add(
+				this.flag_panel,
+				new GridBagConstraints(
+					1, 0,
+					1, 2,
+					0.0, 1.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.BOTH,
+					panel_insets,
+					0, 0
+				)
+			);
 		// slots
-		x += this.addSlots(other_panel, x, y);
+		this.addSlots(this.other_panel, 0, 0);
+		this.main_panel.add(
+				this.other_panel,
+				new GridBagConstraints(
+					2, 0,
+					1, 1,
+					0.0, 0.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.NONE,
+					panel_insets,
+					0, 0
+				)
+			);
+		// ports
+		this.addPorts(this.port_panel, 0, 0);
+		this.main_panel.add(
+				this.port_panel,
+				new GridBagConstraints(
+					2, 1,
+					1, 1,
+					0.0, 0.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.NONE,
+					panel_insets,
+					0, 0
+				)
+			);
 		//
 //		split_pane.setResizeWeight(0.0);
-		stop.setEnabled(false);
+		this.stop.setEnabled(false);
 //		step.setEnabled(false);
 //		run.setBackground(getBackground());
 //		step.setBackground(getBackground());
-		run.addActionListener(this);
-		step.addActionListener(this);
-		stop.addActionListener(this);
+		this.run.addActionListener(this);
+		this.trace.addActionListener(this);
+		this.step.addActionListener(this);
+		this.stop.addActionListener(this);
 
-		update();
+		this.update();
 		
-		this.add(main_split_pane);
+		this.add(this.main_split_pane);
 
 		setVisible(true);
 	}
@@ -361,35 +464,46 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 	public void update()
 	{
 		this.updating = true;
-		int i;
+		int i, limit;
 		for (i=0; i<Processor.SLOT_SIZE; ++i) {
 			long value = processor.getRegister(i);
-			register_fields[i].setText(convertLongToString(value));
+			this.register_fields[i].setText(convertLongToString(value));
 		}
 		for (i=0; i<Flag.values().length; ++i) {
-			flags[i].setSelected(processor.getFlag(i));
+			this.flags[i].setSelected(processor.getFlag(i));
+		}
+		limit = Port.values().length;
+		for (i=0; i<limit; ++i) {
+			this.ports[i].setText(convertLongToString(processor.getPort(i, false)));
+			this.ports[i+limit].setText(convertLongToString(processor.getPort(i, true)));
 		}
 //		for (i=0; i<Interrupt.values().length; ++i) {
 //			interrupts[i].setSelected(vm.getInterruptFlag(Register.INTF, Interrupt.values()[i]));
 //		}
 		int slot = this.processor.getSlot();
-		slot_no.setText(Integer.toString(slot));
+		this.slot_no.setText(Integer.toString(slot));
 
 		ISA instr = ISA.values()[processor.getSlot(slot)];
 		i = 0;
-		slots[i].setToolTipText(instr.getTooltip());
-		slots[i++].setText(instr.name());
+		this.slots[i].setToolTipText(instr.getTooltip());
+		this.slots[i++].setText(instr.name());
 		int no_of_slots = instr.size();
 		if (no_of_slots == 0) {
 			// extension instruction
 		}
 		while (i<no_of_slots) {
-			slots[i++].setText(Integer.toString(this.processor.getSlot(slot+i)));
+			this.slots[i++].setText(Integer.toString(this.processor.getSlot(slot+i)));
 		}
-		while (i<slots.length) {
-			slots[i++].setText("");
+		while (i<this.slots.length) {
+			this.slots[i++].setText("");
 		}
 		this.updating = false;
+	}
+
+	public void setProcessor(Processor p)
+	{
+		this.processor = p;
+		this.update();
 	}
 
 	public boolean step()
@@ -399,7 +513,11 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			return true;
 		}
 		catch (java.lang.Exception ex) {
+			this.main_panel.setBackground(Color.RED);
 			this.register_panel.setBackground(Color.RED);
+			this.flag_panel.setBackground(Color.RED);
+			this.port_panel.setBackground(Color.RED);
+			this.other_panel.setBackground(Color.RED);
 //			this.setTitle(ex.getMessage());
 		}
 		return false;
@@ -409,14 +527,17 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 	public void actionPerformed(ActionEvent ev)
 	{
 		Object source = ev.getSource();
-		if (source == step) {
+		if (source == this.step) {
 			step();
 			this.update();
 		}
-		else if (source == run) {
+		else if (source == this.run) {
 			this.start();
 		}
-		if (source == stop) {
+		else if (source == this.trace) {
+			this.trace();
+		}
+		if (source == this.stop) {
 			this.stop();
 		}
 	}
@@ -424,13 +545,13 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 	@Override
 	public void itemStateChanged(ItemEvent ev)
 	{
-		if (updating) {return;}
+		if (this.updating) {return;}
 		int i;
 		Object source = ev.getItemSelectable();
 		for (i=0; i<Flag.values().length; ++i) {
 			if (source == flags[i]) {
 				// toggle flag bit
-				processor.setFlag(i, !processor.getFlag(i));
+				this.processor.setFlag(i, !this.processor.getFlag(i));
 				this.update();
 			}
 		}
@@ -446,11 +567,27 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 
 	public void start()
 	{
-		if (!running) {
-			running = true;
-			step.setEnabled(false);
-			run.setEnabled(false);
-			stop.setEnabled(true);
+		if (!this.running) {
+			this.running = true;
+			this.tracing = false;
+			this.step.setEnabled(false);
+			this.run.setEnabled(false);
+			this.trace.setEnabled(false);
+			this.stop.setEnabled(true);
+			Thread thread = new Thread(this);
+			thread.start();
+		}
+	}
+
+	public void trace()
+	{
+		if (!this.running) {
+			this.running = true;
+			this.tracing = true;
+			this.step.setEnabled(false);
+			this.run.setEnabled(false);
+			this.trace.setEnabled(false);
+			this.stop.setEnabled(true);
 			Thread thread = new Thread(this);
 			thread.start();
 		}
@@ -458,22 +595,32 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 
 	public void stop()
 	{
-		running = false;
-		step.setEnabled(true);
-		run.setEnabled(true);
-		stop.setEnabled(false);
+		this.running = false;
+		this.step.setEnabled(true);
+		this.run.setEnabled(true);
+		this.trace.setEnabled(true);
+		this.stop.setEnabled(false);
 	}
 
 	@Override
 	public void run()
 	{
 		int cnt = 0;
-		while (running) {
+		while (this.running) {
 			if (!this.step()) {
 				this.stop();
 			}
-			if ((++cnt & 0xff) == 0) {
+			if (this.tracing) {
 				this.update();
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+				}
+			}
+			else {
+				if ((++cnt & 0xff) == 0) {
+					this.update();
+				}
 			}
 		}
 	}

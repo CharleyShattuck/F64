@@ -20,7 +20,7 @@ public class Sub extends com.F64.Word {
 	@Override
 	public void compile(Compiler c)
 	{
-		c.compile(ISA.SUB);
+		c.compile(ISA.SUB.ordinal());
 	}
 
 }

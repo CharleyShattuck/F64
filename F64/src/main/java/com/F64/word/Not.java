@@ -19,7 +19,7 @@ public class Not extends com.F64.Word {
 	@Override
 	public void compile(Compiler c)
 	{
-		c.compile(ISA.NOT);
+		c.compile(ISA.NOT.ordinal());
 	}
 
 }

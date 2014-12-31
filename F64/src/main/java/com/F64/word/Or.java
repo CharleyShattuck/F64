@@ -20,7 +20,7 @@ public class Or extends com.F64.Word {
 	@Override
 	public void compile(Compiler c)
 	{
-		c.compile(ISA.OR);
+		c.compile(ISA.OR.ordinal());
 	}
 
 }

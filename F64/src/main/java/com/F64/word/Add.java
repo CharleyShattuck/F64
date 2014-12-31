@@ -20,7 +20,7 @@ public class Add extends com.F64.Word {
 	@Override
 	public void compile(Compiler c)
 	{
-		c.compile(ISA.ADD);
+		c.compile(ISA.ADD.ordinal());
 	}
 
 }
