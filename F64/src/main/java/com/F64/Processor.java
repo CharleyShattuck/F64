@@ -1,27 +1,34 @@
 package com.F64;
 
-public class Processor {
-	private System			system;
-	private long[]			register;
-	private long[]			read_port;
-	private long[]			write_port;
-	private Processor[]		port_partner;
-	private long			communication;
-	private Processor		communication_source;
-	private int				port_read_mask;
-	private int				port_write_mask;
-	private int				slot;
-	private int				saved_slot;
-	private int				max_slot;	// max # of slots
-	public static final int	BITS_PER_CELL = 64;
-	public static final int	SLOT_BITS = 6;
-	public static final int	SLOT_SIZE = 1 << SLOT_BITS;
-	public static final int	SLOT_MASK = SLOT_SIZE - 1;
-	public static final int	FINAL_SLOT_BITS = 4;
-	public static final int	FINAL_SLOT_SIZE = 1 << FINAL_SLOT_BITS;
-	public static final int	FINAL_SLOT_MASK = FINAL_SLOT_SIZE - 1;
-	public static final int	FINAL_SLOT = 10;
-	public static final int	NO_OF_SLOTS = FINAL_SLOT+1;
+public class Processor implements Runnable {
+	private System				system;
+	private long[]				register;
+	private long[]				read_port;
+	private long[]				write_port;
+	private Processor[]			port_partner;
+	private long				communication;
+	private Processor			communication_source;
+	private int					x;
+	private int					y;
+	private int					z;
+	private int					port_read_mask;
+	private int					port_write_mask;
+	private int					slot;
+	private int					saved_slot;
+	private int					max_slot;	// max # of slots
+	private boolean				failed;
+	private volatile boolean	running;
+
+	public static final int		VERSION = 0x010000;
+	public static final int		BIT_PER_CELL = 64;
+	public static final int		SLOT_BITS = 6;
+	public static final int		SLOT_SIZE = 1 << SLOT_BITS;
+	public static final int		SLOT_MASK = SLOT_SIZE - 1;
+	public static final int		FINAL_SLOT_BITS = 4;
+	public static final int		FINAL_SLOT_SIZE = 1 << FINAL_SLOT_BITS;
+	public static final int		FINAL_SLOT_MASK = FINAL_SLOT_SIZE - 1;
+	public static final int		FINAL_SLOT = 10;
+	public static final int		NO_OF_SLOTS = FINAL_SLOT+1;
 
 	public static long writeSlot(long data, int slot, int value)
 	{
@@ -34,9 +41,9 @@ public class Processor {
 		if (slot == FINAL_SLOT) {assert(value < FINAL_SLOT_SIZE);}
 		else {assert(value < SLOT_SIZE);}
 		long tmp1 = value & SLOT_MASK;
-		tmp1 <<= (BITS_PER_CELL-(slot*SLOT_BITS));
+		tmp1 <<= (BIT_PER_CELL-(slot*SLOT_BITS));
 		long tmp2 = SLOT_MASK;
-		tmp2 <<= (BITS_PER_CELL-(slot*SLOT_BITS));
+		tmp2 <<= (BIT_PER_CELL-(slot*SLOT_BITS));
 		tmp2 = ~tmp2;
 		tmp2 &= data;
 		return tmp1 | tmp2;
@@ -46,15 +53,18 @@ public class Processor {
 	{
 		assert(slot >= 0);
 		int res = 0;
-		if (slot < FINAL_SLOT) {res = ((int)(value >> (BITS_PER_CELL-(slot*SLOT_BITS)))) & SLOT_MASK;}
+		if (slot < FINAL_SLOT) {res = ((int)(value >> (BIT_PER_CELL-(slot*SLOT_BITS)))) & SLOT_MASK;}
 		else if (slot == FINAL_SLOT) {res = ((int)value) & FINAL_SLOT_MASK;}
 		return res;
 	}
 
 	
-	public Processor(System system)
+	public Processor(System system, int x, int y, int z)
 	{
 		this.system = system;
+		this.x = x;
+		this.y = y;
+		this.z = z;
 		this.register = new long[SLOT_SIZE];
 		this.read_port = new long[Port.values().length];
 		this.write_port = new long[Port.values().length];
@@ -76,6 +86,7 @@ public class Processor {
 		}
 	}
 
+	public boolean hasFailed() {return this.failed;}
 	public int getSlot() {return this.slot;}
 	public int getMaxSlot() {return this.max_slot;}
 	public void setSlot(int reg, int slot, int value) {this.setRegister(reg, writeSlot(this.getRegister(reg), slot, value));}
@@ -214,7 +225,7 @@ public class Processor {
 			long mask = -1;
 			res &= mask >>> 4;
 			mask = this.slot;
-			mask <<= (BITS_PER_CELL - 4);
+			mask <<= (BIT_PER_CELL - 4);
 			res |= mask;
 		}
 		return res;
@@ -236,7 +247,7 @@ public class Processor {
 			}
 			else if (reg == Register.FLAG.ordinal()) {
 				// upper 4 bits contain slot #
-				this.slot = (int)(value >>> (BITS_PER_CELL - 4));
+				this.slot = (int)(value >>> (BIT_PER_CELL - 4));
 			}				
 			register[reg] = value;
 		}
@@ -576,10 +587,8 @@ public class Processor {
 		return true;
 	}
 
-	public void doSwap()
+	public void doSwap(int src, int dst)
 	{
-		int src = nextSlot();
-		int dst = nextSlot();
 		long tmp = this.register[dst];
 		this.setRegister(dst, this.register[src]);
 		this.setRegister(src, tmp);
@@ -795,9 +804,9 @@ public class Processor {
 		long src2 = this.getRegister(s2);
 		long dest;
 		if (src2 < 0) {dest = src1;}
-		else if (src2 >= BITS_PER_CELL) {
+		else if (src2 >= BIT_PER_CELL) {
 			if (src1 >= 0) {dest = 0;}
-			else {dest = -1; dest <<= BITS_PER_CELL-1;}
+			else {dest = -1; dest <<= BIT_PER_CELL-1;}
 		}
 		else {
 			dest = src1 << src2;
@@ -812,7 +821,7 @@ public class Processor {
 		long src2 = this.getRegister(s2);
 		long dest;
 		if (src2 < 0) {dest = src1;}
-		else if (src2 >= BITS_PER_CELL) {
+		else if (src2 >= BIT_PER_CELL) {
 			if (src1 >= 0) {dest = 0;}
 			else {dest = -1;}
 		}
@@ -829,7 +838,7 @@ public class Processor {
 		long src2 = this.getRegister(s2);
 		long dest;
 		if (src2 < 0) {dest = src1;}
-		else if (src2 >= BITS_PER_CELL) {
+		else if (src2 >= BIT_PER_CELL) {
 			dest = 0;
 		}
 		else {
@@ -855,7 +864,7 @@ public class Processor {
 		long src2 = this.getRegister(s2);
 		long dest;
 		if (src2 < 0) {dest = src1;}
-		else if (src2 >= BITS_PER_CELL) {
+		else if (src2 >= BIT_PER_CELL) {
 			dest = 0;
 		}
 		else {
@@ -969,87 +978,93 @@ public class Processor {
 
 	public void step()
 	{
-		this.saved_slot = this.slot; // save slot # in case of an interrupt before the operation
-		switch (ISA.values()[this.nextSlot()]) {
-		case NOP:		break;
-		case EXIT:		this.doExit(); break;
-		case UNEXT:		this.doUNext(); break;
-		case CONT:		this.doCont(); break;
-		case UJMP0:		this.slot = 0; break;
-		case UJMP1:		this.slot = 1; break;
-		case UJMP2:		this.slot = 2; break;
-		case UJMP3:		this.slot = 3; break;
-		case UJMP4:		this.slot = 4; break;
-		case UJMP5:		this.slot = 5; break;
-		case AND:		this.doAnd(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
-		case XOR:		this.doXor(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
-		case DUP:		this.doDup(); break;
-		case DROP:		this.doDrop(); break;
-		case OVER:		this.doOver(); break;
-		case NIP:		this.doNip(); break;
-		case LIT:		this.doLit(); break;
-		case BLIT:		this.doBitLit(); break;
-		case EXT:		this.doExtendLiteral(); break;
-		case NEXT:		this.doNext(); break;
-		case BRANCH:	this.conditionalJump(this.nextSlot()); break;
-		case CALLM:		this.doCallMethod(this.remainingSlots()); break;
-		case JMPM:		this.doJumpMethod(this.remainingSlots()); break;
-		case SJMP:		this.doShortJump(); break;
-		case CALL:		this.doCall(); break;
-		case JMP:		this.jumpRemainigSlots(); break;
-		case USKIP:		this.slot = NO_OF_SLOTS; break;
-		case UJMP6:		this.slot = 6; break;
-		case UJMP7:		this.slot = 7; break;
-		case UJMP8:		this.slot = 8; break;
-		case UJMP9:		this.slot = 9; break;
-		case UJMP10:	this.slot = 10; break;
-		case SWAP:		this.doSwap(); break;
-		case SWAP0:		this.doSwap(); this.slot = 0; break;
-		case MOV:		this.doMove(); break;
-		case MOVS:		this.doMoveStack(); break;
-		case LOADSELF:	this.doLoadSelf(); break;
-		case LOADMT:	this.doLoadMT(); break;
-		case RFETCH:	this.doRFetch(this.nextSlot()); break;
-		case RSTORE:	this.doRStore(this.nextSlot()); break;
-		case FETCHR:	this.doFetchR(this.nextSlot()); break;
-		case STORER:	this.doStoreR(this.nextSlot()); break;
-		case RINC:		this.inc(this.nextSlot()); break;
-		case RDEC:		this.dec(this.nextSlot()); break;
-		case RPINC:		this.incPointer(this.nextSlot()); break;
-		case RPDEC:		this.decPointer(this.nextSlot()); break;
-		case FETCHPINC:	this.doFetchPInc(); break;
-		case STOREPINC:	this.doStorePInc(); break;
-		case ADD:		this.doAdd(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
-		case SUB:		this.doSubtract(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
-		case OR:		this.doOr(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
-		case NOT:		this.doXNor(Register.T.ordinal(), Register.S.ordinal(), Register.Z.ordinal()); break;
-		case MUL2:		this.doMul2Add(Register.T.ordinal(), Register.T.ordinal(), Register.Z.ordinal()); break;
-		case DIV2:		this.doDiv2Sub(Register.T.ordinal(), Register.T.ordinal(), Register.Z.ordinal()); break;
-		case PUSH:		this.doPush(this.nextSlot()); break;
-		case POP:		this.doPop(this.nextSlot()); break;
-		case EXT1:		this.doExt1(); break;
-		case EXT2:		this.doExt2(); break;
-		case EXT3:		this.doExt3(); break;
-		case EXT4:		this.doExt4(); break;
-		case EXT5:		this.doExt5(); break;
-		case EXT6:		this.doExt6(); break;
-		case REGOP:		this.doRegisterOperation(this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot()); break;
-		case SIMD:		this.doSIMDOperation(this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot()); break;
-		default: if (this.interrupt(Flag.ILLEGAL)) {return;}
+		try {
+			this.saved_slot = this.slot; // save slot # in case of an interrupt before the operation
+			switch (ISA.values()[this.nextSlot()]) {
+			case NOP:		break;
+			case EXIT:		this.doExit(); break;
+			case UNEXT:		this.doUNext(); break;
+			case CONT:		this.doCont(); break;
+			case UJMP0:		this.slot = 0; break;
+			case UJMP1:		this.slot = 1; break;
+			case UJMP2:		this.slot = 2; break;
+			case UJMP3:		this.slot = 3; break;
+			case UJMP4:		this.slot = 4; break;
+			case UJMP5:		this.slot = 5; break;
+			case AND:		this.doAnd(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
+			case XOR:		this.doXor(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
+			case DUP:		this.doDup(); break;
+			case DROP:		this.doDrop(); break;
+			case OVER:		this.doOver(); break;
+			case NIP:		this.doNip(); break;
+			case LIT:		this.doLit(); break;
+			case BLIT:		this.doBitLit(); break;
+			case EXT:		this.doExtendLiteral(); break;
+			case NEXT:		this.doNext(); break;
+			case BRANCH:	this.conditionalJump(this.nextSlot()); break;
+			case CALLM:		this.doCallMethod(this.remainingSlots()); break;
+			case JMPM:		this.doJumpMethod(this.remainingSlots()); break;
+			case SJMP:		this.doShortJump(); break;
+			case CALL:		this.doCall(); break;
+			case JMP:		this.jumpRemainigSlots(); break;
+			case USKIP:		this.slot = NO_OF_SLOTS; break;
+			case UJMP6:		this.slot = 6; break;
+			case UJMP7:		this.slot = 7; break;
+			case UJMP8:		this.slot = 8; break;
+			case UJMP9:		this.slot = 9; break;
+			case UJMP10:	this.slot = 10; break;
+			case SWAP:		this.doSwap(this.nextSlot(), this.nextSlot()); break;
+			case SWAP0:		this.doSwap(this.nextSlot(), this.nextSlot()); this.slot = 0; break;
+			case MOV:		this.doMove(); break;
+			case MOVS:		this.doMoveStack(); break;
+			case LOADSELF:	this.doLoadSelf(); break;
+			case LOADMT:	this.doLoadMT(); break;
+			case RFETCH:	this.doRFetch(this.nextSlot()); break;
+			case RSTORE:	this.doRStore(this.nextSlot()); break;
+			case FETCHR:	this.doFetchR(this.nextSlot()); break;
+			case STORER:	this.doStoreR(this.nextSlot()); break;
+			case RINC:		this.inc(this.nextSlot()); break;
+			case RDEC:		this.dec(this.nextSlot()); break;
+			case RPINC:		this.incPointer(this.nextSlot()); break;
+			case RPDEC:		this.decPointer(this.nextSlot()); break;
+			case FETCHPINC:	this.doFetchPInc(); break;
+			case STOREPINC:	this.doStorePInc(); break;
+			case ADD:		this.doAdd(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
+			case SUB:		this.doSubtract(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
+			case OR:		this.doOr(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
+			case NOT:		this.doXNor(Register.T.ordinal(), Register.S.ordinal(), Register.Z.ordinal()); break;
+			case MUL2:		this.doMul2Add(Register.T.ordinal(), Register.T.ordinal(), Register.Z.ordinal()); break;
+			case DIV2:		this.doDiv2Sub(Register.T.ordinal(), Register.T.ordinal(), Register.Z.ordinal()); break;
+			case PUSH:		this.doPush(this.nextSlot()); break;
+			case POP:		this.doPop(this.nextSlot()); break;
+			case EXT1:		this.doExt1(); break;
+			case EXT2:		this.doExt2(); break;
+			case EXT3:		this.doExt3(); break;
+			case EXT4:		this.doExt4(); break;
+			case EXT5:		this.doExt5(); break;
+			case EXT6:		this.doExt6(); break;
+			case REGOP:		this.doRegisterOperation(this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot()); break;
+			case SIMD:		this.doSIMDOperation(this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot()); break;
+			default: if (this.interrupt(Flag.ILLEGAL)) {return;}
+			}
+			// check if there is some interrupt pending
+			if ((this.register[Register.FLAG.ordinal()] & this.register[Register.INTE.ordinal()]) != 0) {
+				// there is some pending interrupt
+				triggerInterrupts();
+			}
+			//
+			if (this.slot > FINAL_SLOT) {
+				// load new instruction cell
+				this.register[Register.I.ordinal()] = system.getMemory(this.register[Register.P.ordinal()]);
+				// increment P
+				incPointer(Register.P.ordinal());
+				// begin with first slot
+				this.slot = 0;
+			}
 		}
-		// check if there is some interrupt pending
-		if ((this.register[Register.FLAG.ordinal()] & this.register[Register.INTE.ordinal()]) != 0) {
-			// there is some pending interrupt
-			triggerInterrupts();
-		}
-		//
-		if (this.slot > FINAL_SLOT) {
-			// load new instruction cell
-			this.register[Register.I.ordinal()] = system.getMemory(this.register[Register.P.ordinal()]);
-			// increment P
-			incPointer(Register.P.ordinal());
-			// begin with first slot
-			this.slot = 0;
+		catch (java.lang.Exception ex) {
+			this.failed = true;
+			throw ex;
 		}
 	}
 
@@ -1205,6 +1220,25 @@ public class Processor {
 		this.setInterruptFlag(Register.INTS, no, false);
 	}
 
+	public void doConfigFetch(int no)
+	{
+		this.doDup(); 
+		if (no > Config.values().length) {
+			this.register[Register.T.ordinal()] = 0;
+			return;
+		}
+		switch (Config.values()[no]) {
+		case VERSION:		this.register[Register.T.ordinal()] = VERSION; break;
+		case BITPERCELL:	this.register[Register.T.ordinal()] = BIT_PER_CELL; break;
+		case BITPERSLOT:	this.register[Register.T.ordinal()] = SLOT_BITS; break;
+		case FLAGS:			this.register[Register.T.ordinal()] = Flag.values().length; break;
+		case X:				this.register[Register.T.ordinal()] = x; break;
+		case Y:				this.register[Register.T.ordinal()] = y; break;
+		case Z:				this.register[Register.T.ordinal()] = z; break;
+		default: this.interrupt(Flag.ILLEGAL);
+		}
+	}
+	
 	public void doExt1()
 	{
 		switch (Ext1.values()[this.nextSlot()]) {
@@ -1243,6 +1277,7 @@ public class Processor {
 		case RRTBIT:	this.doToggleBit(this.nextSlot(), this.nextSlot(), true, false); break;
 		case RRRBIT:	this.doReadBit(this.nextSlot(), this.nextSlot(), true, false); break;
 		case RRWBIT:	this.doWriteBit(this.nextSlot(), this.nextSlot(), true, false); break;
+		case CONFIGFETCH:	this.doConfigFetch(this.nextSlot()); break;
 		default: this.interrupt(Flag.ILLEGAL);
 		}
 	}
@@ -1458,6 +1493,34 @@ public class Processor {
 			break;
 		}
 		return true;
+	}
+	
+	public synchronized void start()
+	{
+		if (!this.running) {
+			this.running = true;
+			Thread thread = new Thread(this);
+			thread.start();
+		}
+	}
+
+	public synchronized void stop()
+	{
+		this.running = false;
+	}
+
+	@Override
+	public void run()
+	{
+		while (this.running) {
+			try {
+				this.step();
+			}
+			catch (java.lang.Exception e) {
+				this.failed = true;
+				break;
+			}
+		}
 	}
 
 }

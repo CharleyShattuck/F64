@@ -20,6 +20,7 @@ public class Machine {
 		assert(Ext1.values().length <= Processor.SLOT_SIZE);
 		assert(Ext2.values().length <= Processor.SLOT_SIZE);
 		assert(RegOp1.values().length <= Processor.SLOT_SIZE);
+		assert(SimdOp1.values().length <= Processor.SLOT_SIZE);
 		system = new System(dictionary_size, heap_size, stack_size, return_stack_size, no_of_threads);
 		processor_array = new ProcessorArray(columns, rows, system);
 		processor = processor_array.getProcessor(0, 0);
@@ -27,8 +28,8 @@ public class Machine {
 		dictionary.createStandardWords();
 		compiler = new Compiler(system, processor);
 		interpreter = new Interpreter(system, processor, compiler, dictionary);
-		processor.powerOn();
-		view = new ArrayView(processor_array, compiler, system, dictionary);
+//		processor.powerOn();
+		view = new ArrayView(processor_array, interpreter, compiler, system, dictionary);
 		View.systemLookAndFeel();
 		javax.swing.SwingUtilities.invokeLater(view);
 	}

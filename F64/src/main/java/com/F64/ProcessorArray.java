@@ -15,7 +15,7 @@ public class ProcessorArray {
 		this.array = new Processor[rows][columns];
 		for (int y=0; y<rows; ++y) {
 			for (int x=0; x<columns; ++x) {
-				this.array[y][x] = new Processor(system);
+				this.array[y][x] = new Processor(system, x, y, 0);
 			}
 		}
 	}
@@ -32,5 +32,22 @@ public class ProcessorArray {
 		return this.array[y][x];
 	}
 	
+	public synchronized void start()
+	{
+		for (int y=0; y<this.rows; ++y) {
+			for (int x=0; x<this.columns; ++x) {
+				this.array[y][x].start();
+			}
+		}
+	}
 	
+	public synchronized void stop()
+	{
+		for (int y=0; y<this.rows; ++y) {
+			for (int x=0; x<this.columns; ++x) {
+				this.array[y][x].stop();
+			}
+		}
+	}
+
 }

@@ -465,6 +465,20 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 	{
 		this.updating = true;
 		int i, limit;
+		if (processor.hasFailed()) {
+			this.main_panel.setBackground(Color.RED);
+			this.register_panel.setBackground(Color.RED);
+			this.flag_panel.setBackground(Color.RED);
+			this.port_panel.setBackground(Color.RED);
+			this.other_panel.setBackground(Color.RED);
+		}
+		else {
+			this.main_panel.setBackground(null);
+			this.register_panel.setBackground(null);
+			this.flag_panel.setBackground(null);
+			this.port_panel.setBackground(null);
+			this.other_panel.setBackground(null);
+		}
 		for (i=0; i<Processor.SLOT_SIZE; ++i) {
 			long value = processor.getRegister(i);
 			this.register_fields[i].setText(convertLongToString(value));
@@ -513,11 +527,6 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 			return true;
 		}
 		catch (java.lang.Exception ex) {
-			this.main_panel.setBackground(Color.RED);
-			this.register_panel.setBackground(Color.RED);
-			this.flag_panel.setBackground(Color.RED);
-			this.port_panel.setBackground(Color.RED);
-			this.other_panel.setBackground(Color.RED);
 //			this.setTitle(ex.getMessage());
 		}
 		return false;
@@ -526,6 +535,7 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 	@Override
 	public void actionPerformed(ActionEvent ev)
 	{
+		if (this.updating) {return;}
 		Object source = ev.getSource();
 		if (source == this.step) {
 			step();
@@ -608,13 +618,15 @@ public class View extends JFrame implements ActionListener, ItemListener, Runnab
 		int cnt = 0;
 		while (this.running) {
 			if (!this.step()) {
+				this.update();
 				this.stop();
 			}
 			if (this.tracing) {
 				this.update();
 				try {
 					Thread.sleep(100);
-				} catch (InterruptedException e) {
+				}
+				catch (InterruptedException e) {
 				}
 			}
 			else {

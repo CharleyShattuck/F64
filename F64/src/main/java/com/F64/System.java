@@ -19,7 +19,7 @@ public class System {
 		this.stack_size = stack_size;
 		this.return_stack_size = return_stack_size;
 		this.no_of_threads = no_of_threads;
-		this.code_position = Processor.BITS_PER_CELL;
+		this.code_position = Processor.BIT_PER_CELL;
 		this.data_position = dictionary_size;
 		memory = new long[dictionary_size+heap_size];
 		stack = new long[stack_size*no_of_threads];
