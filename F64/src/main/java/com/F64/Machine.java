@@ -36,20 +36,20 @@ public class Machine {
 	
 	public void interpret()
 	{
-//		java.util.Scanner scanner = new java.util.Scanner(java.lang.System.in);
-//		java.lang.System.out.println("F64 Forth (c) 2014 by S. Mauerhofer (Switzerland)");
-//		for (;;) {
-//			try {
-//				java.lang.System.out.print(">");
-//				String line = scanner.nextLine();
-//				interpreter.interpret(new java.io.ByteArrayInputStream(line.getBytes()));
-//				view.update();
-//				java.lang.System.out.println(" ok");
-//			}
-//			catch (IOException ex) {
-//				
-//			}
-//		}
+		java.util.Scanner scanner = new java.util.Scanner(java.lang.System.in);
+		java.lang.System.out.println("F64 Forth (c) 2014 by S. Mauerhofer (Switzerland)");
+		for (;;) {
+			try {
+				java.lang.System.out.print(">");
+				String line = scanner.nextLine();
+				interpreter.interpret(new java.io.ByteArrayInputStream(line.getBytes()));
+				view.update();
+				java.lang.System.out.println(" ok");
+			}
+			catch (IOException ex) {
+				
+			}
+		}
 	}
 	
 	public static void main(String[] args)

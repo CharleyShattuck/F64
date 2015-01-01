@@ -2,23 +2,23 @@ package com.F64.word;
 
 import com.F64.Compiler;
 import com.F64.ISA;
+import com.F64.Interpreter;
 import com.F64.Processor;
 
 public class Dup extends com.F64.Word {
 
 	@Override
-	public boolean isImmediate() {return false;}
-
-	@Override
-	public void execute(Processor p)
+	public void execute(Interpreter i)
 	{
+		Processor p = i.getProcessor();
 		p.doDup();
 	}
 
 	@Override
-	public void compile(Compiler c)
+	public void compile(Interpreter i)
 	{
-		c.compile(ISA.DUP.ordinal());
+		Compiler c = i.getCompiler();
+		c.compile(ISA.DUP);
 	}
 
 

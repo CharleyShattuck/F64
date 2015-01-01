@@ -282,7 +282,9 @@ public class ArrayView extends JFrame implements ActionListener, ItemListener, R
 						}
 						else {
 							this.toggle_array[this.selected_y][this.selected_x].setSelected(false);
-							this.view.setProcessor(this.processor_array.getProcessor(x, y));
+							Processor p = this.processor_array.getProcessor(x, y);
+							this.interpreter.setProcessor(p);
+							this.view.setProcessor(p);
 							this.selected_x = x;
 							this.selected_y = y;
 						}

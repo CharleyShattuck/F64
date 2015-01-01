@@ -20,6 +20,7 @@ public class Processor implements Runnable {
 	private volatile boolean	running;
 
 	public static final int		VERSION = 0x010000;
+	public static final long	IO_BASE = 0xFFFF_FFFF_FFFF_0000L;
 	public static final int		BIT_PER_CELL = 64;
 	public static final int		SLOT_BITS = 6;
 	public static final int		SLOT_SIZE = 1 << SLOT_BITS;
@@ -1239,6 +1240,12 @@ public class Processor implements Runnable {
 		}
 	}
 	
+	public void doJumpIo(int mask)
+	{
+		this.register[Register.P.ordinal()] = IO_BASE + mask;
+		this.slot = NO_OF_SLOTS; // leave slot
+	}
+	
 	public void doExt1()
 	{
 		switch (Ext1.values()[this.nextSlot()]) {
@@ -1277,6 +1284,7 @@ public class Processor implements Runnable {
 		case RRTBIT:	this.doToggleBit(this.nextSlot(), this.nextSlot(), true, false); break;
 		case RRRBIT:	this.doReadBit(this.nextSlot(), this.nextSlot(), true, false); break;
 		case RRWBIT:	this.doWriteBit(this.nextSlot(), this.nextSlot(), true, false); break;
+		case JMPIO:		this.doJumpIo(this.nextSlot()); break;
 		case CONFIGFETCH:	this.doConfigFetch(this.nextSlot()); break;
 		default: this.interrupt(Flag.ILLEGAL);
 		}
