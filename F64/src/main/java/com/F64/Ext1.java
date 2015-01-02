@@ -36,6 +36,10 @@ public enum Ext1 {
 	RRTBIT(4,"toggle bit in register and put old bit in carry (register in next slot, register with bit position in next slot+1). If the bit position register is S then a nip is appended"),
 	RRRBIT(4,"read bit from register into carry (register in next slot, register with bit position in next slot+1). If the bit position register is S then a nip is appended"),
 	RRWBIT(4,"write bit from carry into register (register in next slot, register with bit position in next slot+1). If the bit position register is S then a nip is appended"),
+	BITCNT(4,"count the number of bits in a register (source register in next slot, destination register in next slot+1)"),
+	BITFF1(4,"find first 1 bit in a register (source register in next slot, destination register in next slot+1)"),
+	BITFL1(4,"find last 1 bit in a register (source register in next slot, destination register in next slot+1)"),
+	NLIT(3,"inverted literal. Push next slot on the stack and invert all bits"),
 	JMPIO(3,"jump to I/O address (mask in next slot)"),
 	CONFIGFETCH(3,"return processor configuration (selector in next slot) ( - n)");
 

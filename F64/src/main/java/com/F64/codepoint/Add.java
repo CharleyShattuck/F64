@@ -3,7 +3,7 @@ package com.F64.codepoint;
 import com.F64.Compiler;
 import com.F64.Processor;
 
-public class Mul extends com.F64.Codepoint {
+public class Add extends com.F64.Codepoint {
 
 	@Override
 	public boolean optimize()
@@ -17,7 +17,7 @@ public class Mul extends com.F64.Codepoint {
 					// constant
 					Literal lit1 = (Literal) pp;
 					Literal lit2 = (Literal) p;
-					lit1.setValue(lit1.getValue() * lit2.getValue());
+					lit1.setValue(lit1.getValue() + lit2.getValue());
 					this.getScope().remove(lit2);
 					this.getScope().remove(this);
 					return true;
@@ -29,13 +29,7 @@ public class Mul extends com.F64.Codepoint {
 				Literal lit = (Literal) p;
 				long data = lit.getValue();
 				if (data == 0) {
-					// multiply with 0 give always 0
-					this.getScope().replace(lit, new Zero());
-					this.getScope().remove(this);
-					return true;
-				}
-				if (data == 1) {
-					// multiply with 1 does nothing
+					// add by 0 does nothing
 					this.getScope().remove(lit);
 					this.getScope().remove(this);
 					return true;
@@ -50,12 +44,8 @@ public class Mul extends com.F64.Codepoint {
 					// multiply with a power of 2 can be realized with a shift operation
 					int bit_pos = Processor.findFirstBit1(data);
 					if (bit_pos == 1) {
-						// multiply by 2
-						this.getScope().replace(lit, new Mul2());
-						this.getScope().remove(this);
-						return true;
+						// multiply by
 					}
-					// shift by bit_pos
 				}
 			}
 		}
@@ -67,4 +57,5 @@ public class Mul extends com.F64.Codepoint {
 	{
 		
 	}
+
 }

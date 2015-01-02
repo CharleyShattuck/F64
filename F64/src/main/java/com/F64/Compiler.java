@@ -22,6 +22,7 @@ public class Compiler {
 	public Processor getProcessor() {return processor;}
 	public boolean hasAdditionalCells() {return addtional_cnt > 0;}
 	public Scope getScope() {return scope;}
+	public void setScope(Scope s) {scope = s;}
 
 	public static boolean fit(int no_slots, int slot0)
 	{
@@ -224,7 +225,7 @@ public class Compiler {
 		return data | no_slots;
 	}
 
-	private void addAdditional(long value)
+	public void addAdditional(long value)
 	{
 		this.additional_cell[this.addtional_cnt++] = value;
 	}
@@ -299,44 +300,44 @@ public class Compiler {
 		return false;
 	}
 
-	private void compile(int slot1)
+	public void generate(ISA opcode)
 	{
-		if (!doesFit(slot1)) {flush();}
-		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot1);
+		if (!doesFit(opcode.ordinal())) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
 		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 	}
 
-	private void compile(int slot1, int slot2)
+	public void generate(ISA opcode, int slot2)
 	{
-		if (!doesFit(slot1, slot2)) {flush();}
-		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot1);
+		if (!doesFit(opcode.ordinal(), slot2)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot2);
 		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 	}
 
-	private void compile(int slot1, int slot2, int slot3)
+	public void generate(ISA opcode, int slot2, int slot3)
 	{
-		if (!doesFit(slot1, slot2, slot3)) {flush();}
-		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot1);
+		if (!doesFit(opcode.ordinal(), slot2, slot3)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot2);
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot3);
 		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 	}
 
-	private void compile(int slot1, int slot2, int slot3, int slot4)
+	public void generate(ISA opcode, int slot2, int slot3, int slot4)
 	{
-		if (!doesFit(slot1, slot2, slot3, slot4)) {flush();}
-		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot1);
+		if (!doesFit(opcode.ordinal(), slot2, slot3, slot4)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot2);
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot3);
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot4);
 		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 	}
 
-	private void compile(int slot1, int slot2, int slot3, int slot4, int slot5)
+	public void generate(ISA opcode, int slot2, int slot3, int slot4, int slot5)
 	{
-		if (!doesFit(slot1, slot2, slot3, slot4, slot5)) {flush();}
-		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot1);
+		if (!doesFit(opcode.ordinal(), slot2, slot3, slot4, slot5)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot2);
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot3);
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot4);
@@ -344,10 +345,10 @@ public class Compiler {
 		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 	}
 
-	private void compile(int slot1, int slot2, int slot3, int slot4, int slot5, int slot6)
+	public void generate(ISA opcode, int slot2, int slot3, int slot4, int slot5, int slot6)
 	{
-		if (!doesFit(slot1, slot2, slot3, slot4, slot5, slot6)) {flush();}
-		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot1);
+		if (!doesFit(opcode.ordinal(), slot2, slot3, slot4, slot5, slot6)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot2);
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot3);
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot4);
@@ -356,36 +357,36 @@ public class Compiler {
 		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 	}
 
-	public void compileLiteral(long value)
+	public void generate(Ext1 opcode)
 	{
-		if ((value >= 0) && (value < Processor.SLOT_SIZE)) {
-			// constant fits into a slot
-			this.compile(ISA.LIT.ordinal(), (int)value);
-		}
-		else if ((value & (value-1)) == 0) {
-			// 1 bit set constant
-			int bit = 0;
-			value = value >>> 1;
-			while (value != 0) {
-				++bit;
-				value = value >>> 1;
-			}
-			this.compile(ISA.BLIT.ordinal(), bit);
-		}
-		else if (value >= 0) {
-			// positive number
-			if (!doesFit(ISA.FETCHPINC.ordinal())) {flush();}
-			this.compile(ISA.FETCHPINC.ordinal());
-			this.addAdditional(value);
-		}
-		else {
-			// negative number
-			if (!doesFit(ISA.FETCHPINC.ordinal())) {flush();}
-			this.compile(ISA.FETCHPINC.ordinal());
-			this.addAdditional(value);
-		}
+		if (!doesFit(ISA.EXT1.ordinal(), opcode.ordinal())) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.EXT1.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 	}
 
+	public void generate(Ext1 opcode, int arg0)
+	{
+		if (!doesFit(ISA.EXT1.ordinal(), opcode.ordinal(), arg0)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.EXT1.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, arg0);
+		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
+	}
+
+	public void generate(RegOp1 opcode, int dest, int src1, int src2)
+	{
+		if (!doesFit(ISA.REGOP.ordinal(), opcode.ordinal(), src1, src2, dest)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.EXT1.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, src1);
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, src2);
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, dest);
+		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
+		
+	}
+
+	
 	public void compile(Codepoint cp)
 	{
 		scope.add(cp);		
@@ -406,41 +407,20 @@ public class Compiler {
 		scope.add(new Codepoint(opcode, arg0, arg1));
 	}
 
-//	public void compile(ISA opcode, int arg0, int arg1, int arg2)
-//	{
-//		if (head == null) {
-//			head = tail = new Codepoint(null, opcode, arg0, arg1, arg2);
-//		}
-//		else {
-//			Codepoint cp = new Codepoint(tail, opcode, arg0, arg1, arg2);
-//			tail.setNext(cp);
-//			tail = cp;
-//		}
-//	}
-//
-//	public void compile(ISA opcode, int arg0, int arg1, int arg2, int arg3)
-//	{
-//		if (head == null) {
-//			head = tail = new Codepoint(null, opcode, arg0, arg1, arg2, arg3);
-//		}
-//		else {
-//			Codepoint cp = new Codepoint(tail, opcode, arg0, arg1, arg2, arg3);
-//			tail.setNext(cp);
-//			tail = cp;
-//		}
-//	}
-//
-//	public void compile(ISA opcode, int arg0, int arg1, int arg2, int arg3, int arg4)
-//	{
-//		if (head == null) {
-//			head = tail = new Codepoint(null, opcode, arg0, arg1, arg2, arg3, arg4);
-//		}
-//		else {
-//			Codepoint cp = new Codepoint(tail, opcode, arg0, arg1, arg2, arg3, arg4);
-//			tail.setNext(cp);
-//			tail = cp;
-//		}
-//	}
+	public void compile(ISA opcode, int arg0, int arg1, int arg2)
+	{
+		scope.add(new Codepoint(opcode, arg0, arg1, arg2));
+	}
+
+	public void compile(ISA opcode, int arg0, int arg1, int arg2, int arg3)
+	{
+		scope.add(new Codepoint(opcode, arg0, arg1, arg2, arg3));
+	}
+
+	public void compile(ISA opcode, int arg0, int arg1, int arg2, int arg3, int arg4)
+	{
+		scope.add(new Codepoint(opcode, arg0, arg1, arg2, arg3, arg4));
+	}
 
 	
 	
