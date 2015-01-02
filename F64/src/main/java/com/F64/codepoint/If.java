@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Optimization;
 import com.F64.Scope;
 import com.F64.Compiler;
 
@@ -25,7 +26,7 @@ public class If extends com.F64.Codepoint {
 	}
 
 	@Override
-	public boolean optimize()
+	public boolean optimize(Optimization opt)
 	{
 		return false;
 	}

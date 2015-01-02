@@ -127,7 +127,7 @@ public class Codepoint {
 //	{
 //	}
 	
-	public boolean optimize()
+	public boolean optimize(Optimization opt)
 	{
 		return false;
 	}
