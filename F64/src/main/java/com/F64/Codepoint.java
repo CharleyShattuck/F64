@@ -1,20 +1,23 @@
 package com.F64;
 
 public class Codepoint {
+	private Scope			scope;			// scope of this code-point
 	private Codepoint		next;			// next instruction
 	private Codepoint		prev;			// previous instruction
 	private long			arg;			// arguments for this opcode
 	private int				no_args;		// # of arguments
 	private ISA				opcode;			// first opcode
 	private Ext1			extension1;		// opcode extension 1
-	private Codepoint[]		references;		// flag indication that this code-point is the target of a reference
-	private int				ref_cnt;
+//	private Codepoint[]		references;		// flag indication that this code-point is the target of a reference
+//	private int				ref_cnt;
 
+	public void setScope(Scope n) {scope = n;}
+	public Scope getScope() {return scope;}
 	public void setNext(Codepoint n) {next = n;}
 	public Codepoint getNext() {return next;}
 	public void setPrevious(Codepoint n) {prev = n;}
 	public Codepoint getPrevious() {return prev;}
-	public boolean isReferenced() {return references != null;}
+//	public boolean isReferenced() {return references != null;}
 
 	public Codepoint()
 	{
@@ -78,58 +81,58 @@ public class Codepoint {
 		this.no_args = 0;
 	}
 
-	public void addReference(Codepoint p)
-	{
-		if (references == null) {
-			references = new Codepoint[1];
-			ref_cnt = 1;
-		}
-		else {
-			int limit = references.length;
-			if (ref_cnt >= limit) {
-				Codepoint[] new_ref = new Codepoint[limit+limit];
-				java.lang.System.arraycopy(references, 0, new_ref, 0, ref_cnt);
-				references = new_ref;
-			}
-		}
-		references[ref_cnt++] = p;
-	}
+//	public void addReference(Codepoint p)
+//	{
+//		if (references == null) {
+//			references = new Codepoint[1];
+//			ref_cnt = 1;
+//		}
+//		else {
+//			int limit = references.length;
+//			if (ref_cnt >= limit) {
+//				Codepoint[] new_ref = new Codepoint[limit+limit];
+//				java.lang.System.arraycopy(references, 0, new_ref, 0, ref_cnt);
+//				references = new_ref;
+//			}
+//		}
+//		references[ref_cnt++] = p;
+//	}
+//
+//	public boolean removeReference(Codepoint p)
+//	{
+//		boolean found = false;
+//		int i = 0;
+//		int j = 0;
+//		while (i<ref_cnt) {
+//			if (references[i] == p) {
+//				found = true;
+//				++i;
+//				continue;
+//			}
+//			if (i != j) {
+//				references[j] = references[i];
+//			}
+//			++i;
+//			++j;
+//		}
+//		return found;
+//	}
 
-	public boolean removeReference(Codepoint p)
-	{
-		boolean found = false;
-		int i = 0;
-		int j = 0;
-		while (i<ref_cnt) {
-			if (references[i] == p) {
-				found = true;
-				++i;
-				continue;
-			}
-			if (i != j) {
-				references[j] = references[i];
-			}
-			++i;
-			++j;
-		}
-		return found;
-	}
-
-	/**
-	 * Informs a referencing code-point that a reference has changed
-	 * @param old_value
-	 * @param new_value
-	 */
-	public void changePointer(Codepoint old_value, Codepoint new_value)
-	{
-	}
+//	/**
+//	 * Informs a referencing code-point that a reference has changed
+//	 * @param old_value
+//	 * @param new_value
+//	 */
+//	public void changePointer(Codepoint old_cp, Codepoint new_cp)
+//	{
+//	}
 	
 	public boolean optimize()
 	{
 		return false;
 	}
 	
-	public void compile()
+	public void generate(Compiler c)
 	{
 		
 	}
@@ -140,7 +143,7 @@ public class Codepoint {
 	 */
 	public void replaceWith(Codepoint new_cp)
 	{
-		
+		scope.replace(this, new_cp);
 	}
 	
 	

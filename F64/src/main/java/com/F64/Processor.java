@@ -31,6 +31,38 @@ public class Processor implements Runnable {
 	public static final int		FINAL_SLOT = 10;
 	public static final int		NO_OF_SLOTS = FINAL_SLOT+1;
 
+	public static int countBits(long data)
+	{
+		int res = 0;
+		while (data != 0) {
+			++res;
+			data &= data-1;
+		}
+		return res;
+	}
+	
+	public static int findFirstBit1(long data)
+	{
+		if (data == 0) {return -1;}
+		int res = 0;
+		while ((data & 1) == 0) {
+			++res;
+			data >>= 1;
+		}
+		return res;
+	}
+
+	public static int findLastBit1(long data)
+	{
+		if (data == 0) {return -1;}
+		int res = 63;
+		while (data >= 0) {
+			--res;
+			data <<= 1;
+		}
+		return res;
+	}
+
 	public static long writeSlot(long data, int slot, int value)
 	{
 		assert(slot >= 0);
@@ -1194,8 +1226,13 @@ public class Processor implements Runnable {
 
 	public void doEnterInterrupt(int no)
 	{
+		// mark interrupt as in service
+		this.setInterruptFlag(Register.INTS, no, true);
+		// clear interrupt flag
+		this.setFlag(no, false);
+		//
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
-		// save flags (with current slot and interrupt)
+		// save flags (with current slot)
 		this.pushReturnStack(this.getRegister(Register.FLAG));
 		// save I
 		this.register[Register.R.ordinal()] = this.register[Register.I.ordinal()];
@@ -1203,10 +1240,6 @@ public class Processor implements Runnable {
 		this.register[Register.I.ordinal()] = system.getMemory(this.register[Register.INTV.ordinal()]+no);
 		// start with slot 0
 		this.slot = 0;
-		// mark interrupt as in service
-		this.setInterruptFlag(Register.INTS, no, true);
-		// clear interrupt flag register
-		this.setFlag(no, false);
 	}
 
 	public void doExitInterrupt(int no)
@@ -1245,7 +1278,29 @@ public class Processor implements Runnable {
 		this.register[Register.P.ordinal()] = IO_BASE + mask;
 		this.slot = NO_OF_SLOTS; // leave slot
 	}
-	
+
+	public void doBitCnt(int src, int dest)
+	{
+		this.setRegister(dest, countBits(this.getRegister(src)));
+	}
+
+
+	public void doBitFindFirst1(int src, int dest)
+	{
+		this.setRegister(dest, findFirstBit1(this.getRegister(src)));
+	}
+
+	public void doBitFindLast1(int src, int dest)
+	{
+		this.setRegister(dest, findLastBit1(this.getRegister(src)));
+	}
+
+	public void doLiteralNot(int value)
+	{
+		long data = value;
+		this.pushT(~data);
+	}
+
 	public void doExt1()
 	{
 		switch (Ext1.values()[this.nextSlot()]) {
@@ -1284,6 +1339,10 @@ public class Processor implements Runnable {
 		case RRTBIT:	this.doToggleBit(this.nextSlot(), this.nextSlot(), true, false); break;
 		case RRRBIT:	this.doReadBit(this.nextSlot(), this.nextSlot(), true, false); break;
 		case RRWBIT:	this.doWriteBit(this.nextSlot(), this.nextSlot(), true, false); break;
+		case BITCNT:	this.doBitCnt(this.nextSlot(), this.nextSlot()); break;
+		case BITFF1:	this.doBitFindFirst1(this.nextSlot(), this.nextSlot()); break;
+		case BITFL1:	this.doBitFindLast1(this.nextSlot(), this.nextSlot()); break;
+		case NLIT:		this.doLiteralNot(this.nextSlot()); break;
 		case JMPIO:		this.doJumpIo(this.nextSlot()); break;
 		case CONFIGFETCH:	this.doConfigFetch(this.nextSlot()); break;
 		default: this.interrupt(Flag.ILLEGAL);

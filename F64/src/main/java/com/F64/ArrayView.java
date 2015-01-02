@@ -83,6 +83,7 @@ public class ArrayView extends JFrame implements ActionListener, ItemListener, R
 				);
 				//
 				label = new JLabel(((x & 1) == 0) ? "R" : "L");
+				label.setHorizontalAlignment(JTextField.CENTER);
 				panel.add(
 					label,
 					new GridBagConstraints(
@@ -96,6 +97,7 @@ public class ArrayView extends JFrame implements ActionListener, ItemListener, R
 					)
 				);
 				label = new JLabel(((x & 1) == 0) ? "R" : "L");
+				label.setHorizontalAlignment(JTextField.CENTER);
 				panel.add(
 					label,
 					new GridBagConstraints(

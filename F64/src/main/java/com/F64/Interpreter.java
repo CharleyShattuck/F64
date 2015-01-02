@@ -2,6 +2,8 @@ package com.F64;
 
 import java.io.IOException;
 
+import com.F64.codepoint.Literal;
+
 public class Interpreter {
 	private java.io.InputStream		stream;
 	private	boolean					compiling;
@@ -57,7 +59,7 @@ public class Interpreter {
 	public void processNumber(long value)
 	{
 		if (this.compiling) {
-			this.compiler.compileLiteral(value);
+			this.compiler.compile(new Literal(value));
 		}
 		else {
 			this.processor.pushT(value);
