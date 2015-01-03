@@ -1,4 +1,4 @@
-package com.F64;
+package com.F64.view;
 
 import java.awt.Color;
 import java.awt.GridBagConstraints;
@@ -19,10 +19,15 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 
+import com.F64.Compiler;
+import com.F64.Dictionary;
+import com.F64.Interpreter;
+import com.F64.System;
+
 @SuppressWarnings("serial")
-public class ArrayView extends JFrame implements ActionListener, ItemListener, Runnable {
-	private View				view;
-	private ProcessorArray		processor_array;
+public class ProcessorArray extends JFrame implements ActionListener, ItemListener, Runnable {
+	private Processor			view;
+	private com.F64.ProcessorArray		processor_array;
 	private Interpreter			interpreter;
 	private JToggleButton[][]	toggle_array;
 	private JTextField[][]		connector_array1;
@@ -202,7 +207,7 @@ public class ArrayView extends JFrame implements ActionListener, ItemListener, R
 		this.toggle_array[0][0].setSelected(true);
 	}
 	
-	public ArrayView(ProcessorArray pa, Interpreter i, Compiler c, System s, Dictionary d)
+	public ProcessorArray(com.F64.ProcessorArray pa, Interpreter i, Compiler c, System s, Dictionary d)
 	{
 		processor_array = pa;
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -238,7 +243,7 @@ public class ArrayView extends JFrame implements ActionListener, ItemListener, R
 		this.add(this.main_split_pane);
 
 		this.interpreter = i;
-		this.view = new View(pa.getProcessor(0, 0), i, c, s, d);
+		this.view = new Processor(pa.getProcessor(0, 0), i, c, s, d);
 		
 		setVisible(true);
 	}
@@ -284,7 +289,7 @@ public class ArrayView extends JFrame implements ActionListener, ItemListener, R
 						}
 						else {
 							this.toggle_array[this.selected_y][this.selected_x].setSelected(false);
-							Processor p = this.processor_array.getProcessor(x, y);
+							com.F64.Processor p = this.processor_array.getProcessor(x, y);
 							this.interpreter.setProcessor(p);
 							this.view.setProcessor(p);
 							this.selected_x = x;
@@ -432,5 +437,5 @@ public class ArrayView extends JFrame implements ActionListener, ItemListener, R
 	}
 	
 
-	
+
 }

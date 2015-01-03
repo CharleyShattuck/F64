@@ -1,8 +1,11 @@
 package com.F64.codepoint;
 
 import com.F64.Compiler;
+import com.F64.ISA;
 import com.F64.Optimization;
 import com.F64.Processor;
+import com.F64.RegOp1;
+import com.F64.Register;
 
 public class Add extends com.F64.Codepoint {
 
@@ -21,8 +24,8 @@ public class Add extends com.F64.Codepoint {
 						Literal lit1 = (Literal) pp;
 						Literal lit2 = (Literal) p;
 						lit1.setValue(lit1.getValue() + lit2.getValue());
-						this.getScope().remove(lit2);
-						this.getScope().remove(this);
+						this.getOwner().remove(lit2);
+						this.getOwner().remove(this);
 						return true;
 					}
 				}
@@ -36,21 +39,34 @@ public class Add extends com.F64.Codepoint {
 					long data = lit.getValue();
 					if (data == 0) {
 						// add by 0 does nothing
-						this.getScope().remove(lit);
-						this.getScope().remove(this);
+						this.getOwner().remove(lit);
+						this.getOwner().remove(this);
 						return true;
 					}
-					if (data == -1) {
-						// multiply with 1 is negate
-						this.getScope().replace(lit, new Negate());
-						this.getScope().remove(this);
-						return true;
+					if (data > 0) {
+						if (data == 1) {
+							// increment
+							this.getOwner().replace(lit, new Inc());
+							this.getOwner().remove(this);
+							return true;
+						}
+						if (data < Processor.SLOT_SIZE) {
+							this.getOwner().replace(lit, new RegOpCode(RegOp1.ADDI, Register.T.ordinal(), Register.T.ordinal(), (int)data));
+							this.getOwner().remove(this);
+							return true;
+						}
 					}
-					if (Processor.countBits(data) == 1) {
-						// multiply with a power of 2 can be realized with a shift operation
-						int bit_pos = Processor.findFirstBit1(data);
-						if (bit_pos == 1) {
-							// multiply by
+					else {
+						if (data == -1) {
+							// decrement
+							this.getOwner().replace(lit, new Dec());
+							this.getOwner().remove(this);
+							return true;
+						}
+						if (data > -Processor.SLOT_SIZE) {
+							this.getOwner().replace(lit, new RegOpCode(RegOp1.SUBI, Register.T.ordinal(), Register.T.ordinal(), -(int)data));
+							this.getOwner().remove(this);
+							return true;
 						}
 					}
 				}
@@ -65,7 +81,7 @@ public class Add extends com.F64.Codepoint {
 	@Override
 	public void generate(Compiler c)
 	{
-		
+		c.generate(ISA.ADD);
 	}
 
 }

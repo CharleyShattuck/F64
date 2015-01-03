@@ -15,7 +15,7 @@ public enum Branch {
 	NEXT(0,"goto next cell"),
 	SHORT(1,"replace the lowest bits of P with next slot and beginn with slot 0"),
 	IO(1,"next slot holds I/O address"),
-	REM(-1,"remaining slots define the address + 4 lowest bits define the slot"),
+	REM(-1,"remaining slots define the address replacement + 4 lowest bits define the slot"),
 	LONG(-2,"fetch P from Memory[P] and beginn with slot 0");
 
 	private int size;

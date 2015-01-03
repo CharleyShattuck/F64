@@ -1,15 +1,19 @@
 package com.F64;
 
+import com.F64.codepoint.ISACode;
+import com.F64.scope.Main;
+
 //import java.io.IOException;
 
 public class Compiler {
-	private System		system;
-	private Processor	processor;
-	private	long		current_cell;
-	private	long[]		additional_cell;
-	private int			current_slot;
-	private int			addtional_cnt;
-	private Scope		scope;
+	private System				system;
+	private Processor			processor;
+	private	long				current_cell;
+	private	long[]				additional_cell;
+	private int					current_slot;
+	private int					addtional_cnt;
+	private Scope				main_scope;
+	private Scope				current_scope;
 	
 	public Compiler(System system, Processor processor)
 	{
@@ -21,9 +25,17 @@ public class Compiler {
 	public System getSystem() {return system;}
 	public Processor getProcessor() {return processor;}
 	public boolean hasAdditionalCells() {return addtional_cnt > 0;}
-	public Scope getScope() {return scope;}
-	public void setScope(Scope s) {scope = s;}
-
+	public Scope getScope() {return current_scope;}
+	public Scope getMainScope() {return main_scope;}
+	public void setScope(Scope s) {current_scope = s;}
+	public int getRemainingSlots() {return Processor.NO_OF_SLOTS - current_slot;}
+	
+	public void start()
+	{
+		this.main_scope = new Main();
+		this.current_scope = this.main_scope;
+	}
+	
 	public static boolean fit(int no_slots, int slot0)
 	{
 		if (no_slots < Processor.FINAL_SLOT) {return true;}
@@ -389,39 +401,51 @@ public class Compiler {
 	
 	public void compile(Codepoint cp)
 	{
-		scope.add(cp);		
+		getScope().add(cp);		
 	}
 
 	public void compile(ISA opcode)
 	{
-		scope.add(new Codepoint(opcode));
+		getScope().add(new ISACode(opcode));
 	}
 
 	public void compile(ISA opcode, int arg0)
 	{
-		scope.add(new Codepoint(opcode, arg0));
+		getScope().add(new ISACode(opcode, arg0));
 	}
 
 	public void compile(ISA opcode, int arg0, int arg1)
 	{
-		scope.add(new Codepoint(opcode, arg0, arg1));
+		getScope().add(new ISACode(opcode, arg0, arg1));
 	}
 
 	public void compile(ISA opcode, int arg0, int arg1, int arg2)
 	{
-		scope.add(new Codepoint(opcode, arg0, arg1, arg2));
+		getScope().add(new ISACode(opcode, arg0, arg1, arg2));
 	}
 
 	public void compile(ISA opcode, int arg0, int arg1, int arg2, int arg3)
 	{
-		scope.add(new Codepoint(opcode, arg0, arg1, arg2, arg3));
+		getScope().add(new ISACode(opcode, arg0, arg1, arg2, arg3));
 	}
 
 	public void compile(ISA opcode, int arg0, int arg1, int arg2, int arg3, int arg4)
 	{
-		scope.add(new Codepoint(opcode, arg0, arg1, arg2, arg3, arg4));
+		getScope().add(new ISACode(opcode, arg0, arg1, arg2, arg3, arg4));
 	}
 
+	public void optimize()
+	{
+		getMainScope().optimize(Optimization.CONSTANT_FOLDING);
+		getMainScope().optimize(Optimization.PEEPHOLE);
+		getMainScope().optimize(Optimization.DEAD_CODE_ELIMINATION);
+		getMainScope().optimize(Optimization.LOOP_UNROLLING);
+	}
 	
+	public void generate()
+	{
+		getMainScope().generate(this);		
+	}
+
 	
 }

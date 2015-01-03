@@ -13,8 +13,8 @@ public class Negate extends com.F64.Codepoint {
 		if (p != null) {
 			if (p instanceof Negate) {
 				// 2 negates do nothing
-				this.getScope().remove(p);
-				this.getScope().remove(this);
+				this.getOwner().remove(p);
+				this.getOwner().remove(this);
 				return true;
 			}
 		}

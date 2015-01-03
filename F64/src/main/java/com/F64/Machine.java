@@ -2,17 +2,29 @@ package com.F64;
 
 import java.io.IOException;
 
+import javax.swing.UIManager;
+
 //import java.nio.charset.StandardCharsets;
 
 
 public class Machine {
-	private ArrayView		view;
+	private com.F64.view.ProcessorArray		view;
 	private ProcessorArray	processor_array;
 	private Processor		processor;
 	private System			system;
 	private Compiler		compiler;
 	private Interpreter		interpreter;
 	private Dictionary		dictionary;
+
+	public static void systemLookAndFeel()
+	{
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		}
+		catch (java.lang.Exception ex) {
+			java.lang.System.err.println("Couldn't use system look and feel.");
+		}		
+	}
 
 	Machine(int columns, int rows, int dictionary_size, int heap_size, int stack_size, int return_stack_size, int no_of_threads)
 	{
@@ -29,8 +41,8 @@ public class Machine {
 		compiler = new Compiler(system, processor);
 		interpreter = new Interpreter(system, processor, compiler, dictionary);
 //		processor.powerOn();
-		view = new ArrayView(processor_array, interpreter, compiler, system, dictionary);
-		View.systemLookAndFeel();
+		view = new com.F64.view.ProcessorArray(processor_array, interpreter, compiler, system, dictionary);
+		systemLookAndFeel();
 		javax.swing.SwingUtilities.invokeLater(view);
 	}
 	
