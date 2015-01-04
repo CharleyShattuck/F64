@@ -23,6 +23,7 @@ public class Processor implements Runnable {
 	public static final int		VERSION = 0x010000;
 	public static final long	IO_BASE = 0xFFFF_FFFF_FFFF_FF00L;
 	public static final int		BIT_PER_CELL = 64;
+	public static final int		NO_OF_REG = 64;
 	public static final int		SLOT_BITS = 6;
 	public static final int		SLOT_SIZE = 1 << SLOT_BITS;
 	public static final int		SLOT_MASK = SLOT_SIZE - 1;
@@ -126,8 +127,8 @@ public class Processor implements Runnable {
 		this.x = x;
 		this.y = y;
 		this.z = z;
-		this.register = new long[SLOT_SIZE];
-		this.system_register = new long[SLOT_SIZE];
+		this.register = new long[NO_OF_REG];
+		this.system_register = new long[NO_OF_REG];
 		this.read_port = new long[Port.values().length];
 		this.write_port = new long[Port.values().length];
 		this.port_partner = new Processor[Port.values().length];
@@ -159,17 +160,20 @@ public class Processor implements Runnable {
 
 	public long getRegister(int reg)
 	{
-		long res = this.register[reg];
-		return res;
+		if (reg < NO_OF_REG) {return this.register[reg];}
+		return this.getSystemRegister(reg - NO_OF_REG);
 	}
 
 	
-	public boolean setRegister(int reg, long value)
+	public void setRegister(int reg, long value)
 	{
 		if (reg > 0) {
-			register[reg] = value;
+			if (reg < NO_OF_REG) {
+				register[reg] = value;
+				return;
+			}
+			this.setSystemRegister(reg - NO_OF_REG, value);
 		}
-		return true;
 	}
 
 	public long getSystemRegister(int reg)

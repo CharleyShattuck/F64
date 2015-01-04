@@ -32,6 +32,37 @@ public class ProcessorArray {
 		return this.array[y][x];
 	}
 	
+	public Processor getNeighbor(int x, int y, Port p)
+	{
+		switch (p) {
+		case DOWN:
+			if ((x & 1) != 0) {--y;}
+			else {++y;}
+			break;
+		case LEFT:
+			if ((x & 1) != 0) {--x;}
+			else {++x;}
+			break;
+		case RIGHT:
+			if ((x & 1) == 0) {--x;}
+			else {++x;}
+			break;
+		case UP:
+			if ((x & 1) == 0) {--y;}
+			else {++y;}
+			break;
+		case FRONT:
+		case BACK:
+		default:
+			return null;
+		}
+		if (x < 0) {x += this.columns;}
+		else if (x >= this.columns) {x -= this.columns;}
+		if (y < 0) {y += this.rows;}
+		else if (y >= this.rows) {y -= this.rows;}
+		return this.array[y][x];
+	}
+	
 	public synchronized void start()
 	{
 		for (int y=0; y<this.rows; ++y) {

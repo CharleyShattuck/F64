@@ -28,20 +28,20 @@ public class SystemRegister extends JPanel {
 		Insets label_insets = new Insets( 0, 2, 0, 4);
 		Insets field_insets = new Insets( 0,  0, 0, 4);
 		Dimension registerFieldMin = new Dimension(100, 10);
-		label = new JLabel("System Register");
-		this.add(
-			label,
-			new GridBagConstraints(
-				x+1, y,
-				1, 1,
-				0.0, 1.0,
-				GridBagConstraints.WEST,
-				GridBagConstraints.BOTH,
-				label_insets,
-				2, 0
-			)
-		);
-		y += 1;
+//		label = new JLabel("System Register");
+//		this.add(
+//			label,
+//			new GridBagConstraints(
+//				x+1, y,
+//				1, 1,
+//				0.0, 1.0,
+//				GridBagConstraints.WEST,
+//				GridBagConstraints.BOTH,
+//				label_insets,
+//				2, 0
+//			)
+//		);
+//		y += 1;
 		for (i=0; i<limit; ++i) {
 			label = new JLabel();
 			label.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -54,7 +54,7 @@ public class SystemRegister extends JPanel {
 			this.add(
 				label,
 				new GridBagConstraints(
-					i < (com.F64.Processor.SLOT_SIZE/2) ? x : x+2, i < (com.F64.Processor.SLOT_SIZE/2) ? y+i : y+i - (com.F64.Processor.SLOT_SIZE/2),
+					i < (com.F64.Processor.NO_OF_REG/2) ? x : x+2, i < (com.F64.Processor.NO_OF_REG/2) ? y+i : y+i - (com.F64.Processor.NO_OF_REG/2),
 					1, 1,
 					0.0, 1.0,
 					GridBagConstraints.WEST,
@@ -66,7 +66,7 @@ public class SystemRegister extends JPanel {
 			this.add(
 				field,
 				new GridBagConstraints(
-					i < (com.F64.Processor.SLOT_SIZE/2) ? x+1 : x+3, i < (com.F64.Processor.SLOT_SIZE/2) ? y+i : y+i - (com.F64.Processor.SLOT_SIZE/2),
+					i < (com.F64.Processor.NO_OF_REG/2) ? x+1 : x+3, i < (com.F64.Processor.NO_OF_REG/2) ? y+i : y+i - (com.F64.Processor.NO_OF_REG/2),
 					1, 1,
 					0.0, 1.0,
 					GridBagConstraints.EAST,

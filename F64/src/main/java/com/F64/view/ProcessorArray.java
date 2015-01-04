@@ -52,7 +52,8 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 
 	private void connect(int columns, int rows, int x, int y)
 	{
-		
+		com.F64.Processor from = processor_array.getProcessor(x, y);
+		com.F64.Processor to = processor_array.getNeighbor(x, y, com.F64.Port.UP);
 	}
 	
 	private void addArray(JPanel panel, int x0, int y0)
@@ -74,11 +75,13 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 				this.processor_array.getProcessor(x, y).powerOn();
 				this.toggle_array[y][x] = new JToggleButton(x+"."+y);
 				this.toggle_array[y][x].addActionListener(this);
+				int xpos = x0+factor*x;
+				int ypos = y0+factor*y;
 				panel.add(
 					this.toggle_array[y][x],
 					new GridBagConstraints(
-						x0+factor*x, y0+factor*y,
-						factor-1, factor-1,
+						xpos+1, ypos+1,
+						factor-2, factor-2,
 						0.0, 1.0,
 						GridBagConstraints.WEST,
 						GridBagConstraints.BOTH,
@@ -86,118 +89,367 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 						0, 0
 					)
 				);
-				//
-				label = new JLabel(((x & 1) == 0) ? "R" : "L");
-				label.setHorizontalAlignment(JTextField.CENTER);
-				panel.add(
-					label,
-					new GridBagConstraints(
-						x0+factor*x+factor-1, y0+factor*y,
-						1, 1,
-						0.0, 0.0,
-						GridBagConstraints.WEST,
-						GridBagConstraints.BOTH,
-						insets,
-						0, 0
-					)
-				);
-				label = new JLabel(((x & 1) == 0) ? "R" : "L");
-				label.setHorizontalAlignment(JTextField.CENTER);
-				panel.add(
-					label,
-					new GridBagConstraints(
-						x0+factor*x+factor-1, y0+factor*y+3,
-						1, 1,
-						0.0, 0.0,
-						GridBagConstraints.WEST,
-						GridBagConstraints.BOTH,
-						insets,
-						0, 0
-					)
-				);
-				//
+				// left port
 				this.connector_array1[y][x] = new JTextField(" ");
 				this.connector_array1[y][x].setHorizontalAlignment(JTextField.CENTER);
 				panel.add(
 					this.connector_array1[y][x],
 					new GridBagConstraints(
-						x0+factor*x+1, y0+factor*y+factor-1,
+						xpos, ypos+2,
 						1, 1,
-						0.5, 0.0,
+						0.5, 1.0,
 						GridBagConstraints.WEST,
 						GridBagConstraints.BOTH,
 						insets,
 						0, 0
 					)
 				);
+				// right port
 				this.connector_array2[y][x] = new JTextField(" ");
 				this.connector_array2[y][x].setHorizontalAlignment(JTextField.CENTER);
 				panel.add(
 					this.connector_array2[y][x],
 					new GridBagConstraints(
-						x0+factor*x+2, y0+factor*y+factor-1,
+						xpos+factor-1, ypos+2,
 						1, 1,
-						0.5, 0.0,
+						0.5, 1.0,
 						GridBagConstraints.WEST,
 						GridBagConstraints.BOTH,
 						insets,
 						0, 0
 					)
 				);
-				//
-				label = new JLabel(((y & 1) == 0) ? "U" : "D");
-				panel.add(
-					label,
-					new GridBagConstraints(
-						x0+factor*x, y0+factor*y+factor-1,
-						1, 1,
-						0.0, 0.0,
-						GridBagConstraints.WEST,
-						GridBagConstraints.BOTH,
-						insets,
-						0, 0
-					)
-				);
-				label = new JLabel(((y & 1) == 0) ? "U" : "D");
-				panel.add(
-					label,
-					new GridBagConstraints(
-						x0+factor*x+3, y0+factor*y+factor-1,
-						1, 1,
-						0.0, 0.0,
-						GridBagConstraints.WEST,
-						GridBagConstraints.BOTH,
-						insets,
-						0, 0
-					)
-				);
-				//
+				// up port
 				this.connector_array3[y][x] = new JTextField(" ");
+				this.connector_array3[y][x].setHorizontalAlignment(JTextField.CENTER);
 				panel.add(
 					this.connector_array3[y][x],
 					new GridBagConstraints(
-						x0+factor*x+factor-1, y0+factor*y+1,
+						xpos+2, ypos,
 						1, 1,
-						0.0, 0.5,
+						1.0, 0.5,
 						GridBagConstraints.WEST,
 						GridBagConstraints.BOTH,
 						insets,
-						10, 0
+						0, 0
 					)
 				);
+				// down port
 				this.connector_array4[y][x] = new JTextField(" ");
+				this.connector_array4[y][x].setHorizontalAlignment(JTextField.CENTER);
 				panel.add(
 					this.connector_array4[y][x],
 					new GridBagConstraints(
-						x0+factor*x+factor-1, y0+factor*y+2,
+						xpos+2, ypos+factor-1,
 						1, 1,
-						0.0, 0.5,
+						1.0, 0.5,
 						GridBagConstraints.WEST,
 						GridBagConstraints.BOTH,
 						insets,
-						10, 0
+						0, 0
 					)
 				);
+				// horizontal label
+				if (x == 0) {
+					label = new JLabel(((x & 1) == 0) ? "R" : "L");
+					label.setHorizontalAlignment(JTextField.CENTER);
+					panel.add(
+						label,
+						new GridBagConstraints(
+							xpos, ypos+1,
+							1, 1,
+							0.0, 0.0,
+							GridBagConstraints.WEST,
+							GridBagConstraints.BOTH,
+							insets,
+							0, 0
+						)
+					);
+					//
+					label = new JLabel(((x & 1) == 0) ? "R" : "L");
+					label.setHorizontalAlignment(JTextField.CENTER);
+					panel.add(
+						label,
+						new GridBagConstraints(
+							xpos, ypos+3,
+							1, 1,
+							0.0, 0.0,
+							GridBagConstraints.WEST,
+							GridBagConstraints.BOTH,
+							insets,
+							0, 0
+						)
+					);
+				}
+				else {
+					label = new JLabel(((x & 1) == 0) ? "R" : "L");
+					label.setHorizontalAlignment(JTextField.CENTER);
+					panel.add(
+						label,
+						new GridBagConstraints(
+							xpos-1, ypos+1,
+							2, 1,
+							0.0, 0.0,
+							GridBagConstraints.WEST,
+							GridBagConstraints.BOTH,
+							insets,
+							0, 0
+						)
+					);
+					//
+					label = new JLabel(((x & 1) == 0) ? "R" : "L");
+					label.setHorizontalAlignment(JTextField.CENTER);
+					panel.add(
+						label,
+						new GridBagConstraints(
+							xpos-1, ypos+3,
+							2, 1,
+							0.0, 0.0,
+							GridBagConstraints.WEST,
+							GridBagConstraints.BOTH,
+							insets,
+							0, 0
+						)
+					);
+				}
+				if (x == (columns-1)) {
+					label = new JLabel(((x & 1) != 0) ? "R" : "L");
+					label.setHorizontalAlignment(JTextField.CENTER);
+					panel.add(
+						label,
+						new GridBagConstraints(
+							xpos+factor-1, ypos+1,
+							1, 1,
+							0.0, 0.0,
+							GridBagConstraints.WEST,
+							GridBagConstraints.BOTH,
+							insets,
+							0, 0
+						)
+					);
+					//
+					label = new JLabel(((x & 1) != 0) ? "R" : "L");
+					label.setHorizontalAlignment(JTextField.CENTER);
+					panel.add(
+						label,
+						new GridBagConstraints(
+							xpos+factor-1, ypos+3,
+							1, 1,
+							0.0, 0.0,
+							GridBagConstraints.WEST,
+							GridBagConstraints.BOTH,
+							insets,
+							0, 0
+						)
+					);
+				}
+				// vertical label
+				if (y == 0) {
+					label = new JLabel(((y & 1) == 0) ? "U" : "D");
+					label.setHorizontalAlignment(JTextField.CENTER);
+					panel.add(
+						label,
+						new GridBagConstraints(
+							xpos+1, ypos,
+							1, 1,
+							0.0, 0.0,
+							GridBagConstraints.WEST,
+							GridBagConstraints.BOTH,
+							insets,
+							0, 0
+						)
+					);
+					//
+					label = new JLabel(((y & 1) == 0) ? "U" : "D");
+					label.setHorizontalAlignment(JTextField.CENTER);
+					panel.add(
+						label,
+						new GridBagConstraints(
+							xpos+3, ypos,
+							1, 1,
+							0.0, 0.0,
+							GridBagConstraints.WEST,
+							GridBagConstraints.BOTH,
+							insets,
+							0, 0
+						)
+					);
+				}
+				else {
+					label = new JLabel(((y & 1) == 0) ? "U" : "D");
+					label.setHorizontalAlignment(JTextField.CENTER);
+					panel.add(
+						label,
+						new GridBagConstraints(
+							xpos+1, ypos-1,
+							1, 2,
+							0.0, 0.0,
+							GridBagConstraints.WEST,
+							GridBagConstraints.BOTH,
+							insets,
+							0, 0
+						)
+					);
+					//
+					label = new JLabel(((y & 1) == 0) ? "U" : "D");
+					label.setHorizontalAlignment(JTextField.CENTER);
+					panel.add(
+						label,
+						new GridBagConstraints(
+							xpos+3, ypos-1,
+							1, 2,
+							0.0, 0.0,
+							GridBagConstraints.WEST,
+							GridBagConstraints.BOTH,
+							insets,
+							0, 0
+						)
+					);
+				}
+				if (y == (rows-1)) {
+					label = new JLabel(((y & 1) != 0) ? "U" : "D");
+					label.setHorizontalAlignment(JTextField.CENTER);
+					panel.add(
+						label,
+						new GridBagConstraints(
+							xpos+1, ypos+factor-1,
+							1, 1,
+							0.0, 0.0,
+							GridBagConstraints.WEST,
+							GridBagConstraints.BOTH,
+							insets,
+							0, 0
+						)
+					);
+					//
+					label = new JLabel(((y & 1) != 0) ? "U" : "D");
+					label.setHorizontalAlignment(JTextField.CENTER);
+					panel.add(
+						label,
+						new GridBagConstraints(
+							xpos+3, ypos+factor-1,
+							1, 1,
+							0.0, 0.0,
+							GridBagConstraints.WEST,
+							GridBagConstraints.BOTH,
+							insets,
+							0, 0
+						)
+					);
+				}
+
+				//
+//				label = new JLabel(((x & 1) == 0) ? "R" : "L");
+//				label.setHorizontalAlignment(JTextField.CENTER);
+//				panel.add(
+//					label,
+//					new GridBagConstraints(
+//						x0+factor*x+factor-2, y0+factor*y,
+//						2, 1,
+//						0.0, 0.0,
+//						GridBagConstraints.WEST,
+//						GridBagConstraints.BOTH,
+//						insets,
+//						0, 0
+//					)
+//				);
+//				label = new JLabel(((x & 1) == 0) ? "R" : "L");
+//				label.setHorizontalAlignment(JTextField.CENTER);
+//				panel.add(
+//					label,
+//					new GridBagConstraints(
+//						x0+factor*x+factor-2, y0+factor*y+2,
+//						2, 1,
+//						0.0, 0.0,
+//						GridBagConstraints.WEST,
+//						GridBagConstraints.BOTH,
+//						insets,
+//						0, 0
+//					)
+//				);
+//				//
+//				this.connector_array1[y][x] = new JTextField(" ");
+//				this.connector_array1[y][x].setHorizontalAlignment(JTextField.CENTER);
+//				panel.add(
+//					this.connector_array1[y][x],
+//					new GridBagConstraints(
+//						x0+factor*x+1, y0+factor*y+factor-2,
+//						1, 1,
+//						0.5, 0.0,
+//						GridBagConstraints.WEST,
+//						GridBagConstraints.BOTH,
+//						insets,
+//						0, 0
+//					)
+//				);
+//				this.connector_array2[y][x] = new JTextField(" ");
+//				this.connector_array2[y][x].setHorizontalAlignment(JTextField.CENTER);
+//				panel.add(
+//					this.connector_array2[y][x],
+//					new GridBagConstraints(
+//						x0+factor*x+1, y0+factor*y+factor-1,
+//						1, 1,
+//						0.5, 0.0,
+//						GridBagConstraints.WEST,
+//						GridBagConstraints.BOTH,
+//						insets,
+//						0, 0
+//					)
+//				);
+//				//
+//				label = new JLabel(((y & 1) == 0) ? "U" : "D");
+//				panel.add(
+//					label,
+//					new GridBagConstraints(
+//						x0+factor*x, y0+factor*y+factor-2,
+//						1, 2,
+//						0.0, 0.0,
+//						GridBagConstraints.WEST,
+//						GridBagConstraints.BOTH,
+//						insets,
+//						0, 0
+//					)
+//				);
+//				label = new JLabel(((y & 1) == 0) ? "U" : "D");
+//				panel.add(
+//					label,
+//					new GridBagConstraints(
+//						x0+factor*x+2, y0+factor*y+factor-2,
+//						1, 2,
+//						0.0, 0.0,
+//						GridBagConstraints.WEST,
+//						GridBagConstraints.BOTH,
+//						insets,
+//						0, 0
+//					)
+//				);
+//				//
+//				this.connector_array3[y][x] = new JTextField(" ");
+//				panel.add(
+//					this.connector_array3[y][x],
+//					new GridBagConstraints(
+//						x0+factor*x+factor-2, y0+factor*y+1,
+//						1, 1,
+//						0.0, 0.5,
+//						GridBagConstraints.WEST,
+//						GridBagConstraints.BOTH,
+//						insets,
+//						10, 0
+//					)
+//				);
+//				this.connector_array4[y][x] = new JTextField(" ");
+//				panel.add(
+//					this.connector_array4[y][x],
+//					new GridBagConstraints(
+//						x0+factor*x+factor-1, y0+factor*y+1,
+//						1, 1,
+//						0.0, 0.5,
+//						GridBagConstraints.WEST,
+//						GridBagConstraints.BOTH,
+//						insets,
+//						10, 0
+//					)
+//				);
 				connect(columns, rows, x, y);
 //				if ((x > 0) && (y > 0)) {
 //					
@@ -211,7 +463,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 	{
 		processor_array = pa;
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		this.setSize(640,480);
+		this.setSize(720,480);
 		
 		this.run = new JButton("Run");
 		this.go = new JButton("Go");
