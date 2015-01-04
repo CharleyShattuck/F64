@@ -24,8 +24,8 @@ public enum Ext1 {
 	ENTERM(2,"push the MT to the return stack and load the MT with the method table from SELF"),
 	LCALLM(2,"long method call. Call a method on SELF (T contains the method #)"),
 	LJMPM(2,"long method jump. Jump to a method on SELF (T contains the method #)"),
-	FETCHAINC(2,"fetch via register A post-increment"),
-	STOREBINC(2,"store via register B post-increment"),
+	FETCHINC(3,"fetch via register post-increment (register in next slot)"),
+	STOREINC(3,"store via register post-increment (register in next slot)"),
 	RSBIT(4,"set bit in register and put old bit in carry (register in next slot, bit position in next slot+1)"),
 	RCBIT(4,"clear bit in register and put old bit in carry (register in next slot, bit position in next slot+1)"),
 	RTBIT(4,"toggle bit in register and put old bit in carry (register in next slot, bit position in next slot+1)"),
@@ -41,7 +41,7 @@ public enum Ext1 {
 	BITFL1(4,"find last 1 bit in a register (source register in next slot, destination register in next slot+1)"),
 	NLIT(3,"inverted literal. Push next slot on the stack and invert all bits"),
 	JMPIO(3,"jump to I/O address (mask in next slot)"),
-	CONFIGFETCH(3,"return processor configuration (selector in next slot) ( - n)");
+	CONFIGFETCH(3,"fetch processor configuration (selector in next slot) ( - n)");
 
 	private int size;
 	private String tooltip;

@@ -13,20 +13,22 @@ import java.awt.event.ItemListener;
 import javax.swing.JButton;
 //import javax.swing.JCheckBox;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
+//import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTextField;
+import javax.swing.JTabbedPane;
+//import javax.swing.JTextField;
 import javax.swing.JToolBar;
 //import javax.swing.SwingConstants;
+
 
 import com.F64.Compiler;
 import com.F64.Dictionary;
 import com.F64.Flag;
-import com.F64.ISA;
+//import com.F64.ISA;
 import com.F64.Interpreter;
-import com.F64.Port;
+//import com.F64.Port;
 import com.F64.System;
 
 @SuppressWarnings("serial")
@@ -40,7 +42,9 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 	private JButton				stop;
 	private JScrollPane 		scroll;
 	private JPanel				main_panel;
+	private JTabbedPane			register_pane;
 	private Register			register_panel;
+	private SystemRegister		system_register_panel;
 	private Flags				flag_panel;
 	private Ports				port_panel;
 	private Slots				slot_panel;
@@ -88,12 +92,15 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		this.toolbar.add(this.trace);
 		this.toolbar.add(this.step);
 		this.toolbar.add(this.stop);
+
+		this.register_pane = new JTabbedPane();
 		this.main_panel = new JPanel( new GridBagLayout() );
 		this.main_split_pane.setTopComponent(this.toolbar);
 		this.scroll = new JScrollPane(this.main_panel);
 		this.main_split_pane.setBottomComponent(this.scroll);
 //		this.register_panel = new JPanel( new GridBagLayout() );
 		this.register_panel = new Register();
+		this.system_register_panel = new SystemRegister();
 		this.flag_panel = new Flags(this);
 		this.port_panel = new Ports();
 		this.slot_panel = new Slots();
@@ -101,10 +108,18 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 //		this.other_panel = new JPanel( new GridBagLayout() );
 		// register
 //		this.addRegister(this.register_panel, 0, 0);
+
+		this.register_pane.addTab("Register", null, this.register_panel, "General purpose register");
+		this.register_pane.addTab("System", null, this.system_register_panel, "System register");
+		this.register_pane.addTab("Flags", null, this.flag_panel, "Flags");
+		
+		int x = 0;
+		int y = 0;
+		// register
 		this.main_panel.add(
-				this.register_panel,
+				this.register_pane,
 				new GridBagConstraints(
-					0, 0,
+					x, y,
 					1, 2,
 					0.0, 1.0,
 					GridBagConstraints.WEST,
@@ -113,26 +128,42 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 					0, 0
 				)
 			);
+		x += 1;
+//		// system register
+//		this.main_panel.add(
+//				this.system_register_panel,
+//				new GridBagConstraints(
+//					x, y,
+//					1, 2,
+//					0.0, 1.0,
+//					GridBagConstraints.WEST,
+//					GridBagConstraints.BOTH,
+//					panel_insets,
+//					0, 0
+//				)
+//			);
+//		x += 1;
 		// flags
 //		this.addFlags(this.flag_panel, 0, 0);
-		this.main_panel.add(
-				this.flag_panel,
-				new GridBagConstraints(
-					1, 0,
-					1, 2,
-					0.0, 1.0,
-					GridBagConstraints.WEST,
-					GridBagConstraints.BOTH,
-					panel_insets,
-					0, 0
-				)
-			);
+//		this.main_panel.add(
+//				this.flag_panel,
+//				new GridBagConstraints(
+//					x, y,
+//					1, 2,
+//					0.0, 1.0,
+//					GridBagConstraints.WEST,
+//					GridBagConstraints.BOTH,
+//					panel_insets,
+//					0, 0
+//				)
+//			);
+//		x += 1;
 		// slots
 //		this.addSlots(this.other_panel, 0, 0);
 		this.main_panel.add(
 				this.slot_panel,
 				new GridBagConstraints(
-					2, 0,
+					x, y,
 					1, 1,
 					0.0, 0.0,
 					GridBagConstraints.WEST,
@@ -141,12 +172,13 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 					0, 0
 				)
 			);
+		y += 1;
 		// ports
 //		this.addPorts(this.port_panel, 0, 0);
 		this.main_panel.add(
 				this.port_panel,
 				new GridBagConstraints(
-					2, 1,
+					x, y,
 					1, 1,
 					0.0, 0.0,
 					GridBagConstraints.WEST,
@@ -157,7 +189,6 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 			);
 		//
 //		split_pane.setResizeWeight(0.0);
-		this.stop.setEnabled(false);
 //		step.setEnabled(false);
 //		run.setBackground(getBackground());
 //		step.setBackground(getBackground());
@@ -165,6 +196,8 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		this.trace.addActionListener(this);
 		this.step.addActionListener(this);
 		this.stop.addActionListener(this);
+
+		this.stop.setEnabled(false);
 
 		this.update();
 		
@@ -181,6 +214,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		if (processor.hasFailed()) {
 			this.main_panel.setBackground(Color.RED);
 			this.register_panel.setBackground(Color.RED);
+			this.system_register_panel.setBackground(Color.RED);
 			this.flag_panel.setBackground(Color.RED);
 			this.port_panel.setBackground(Color.RED);
 			this.slot_panel.setBackground(Color.RED);
@@ -188,11 +222,13 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		else {
 			this.main_panel.setBackground(null);
 			this.register_panel.setBackground(null);
+			this.system_register_panel.setBackground(null);
 			this.flag_panel.setBackground(null);
 			this.port_panel.setBackground(null);
 			this.slot_panel.setBackground(null);
 		}
 		this.register_panel.update(processor);
+		this.system_register_panel.update(processor);
 //		for (i=0; i<com.F64.Processor.SLOT_SIZE; ++i) {
 //			long value = processor.getRegister(i);
 //			this.register_fields[i].setText(convertLongToString(value));
@@ -297,11 +333,13 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 
 	public void stop()
 	{
-		this.running = false;
-		this.step.setEnabled(true);
-		this.run.setEnabled(true);
-		this.trace.setEnabled(true);
-		this.stop.setEnabled(false);
+		if (this.running) {
+			this.running = false;
+			this.step.setEnabled(true);
+			this.run.setEnabled(true);
+			this.trace.setEnabled(true);
+			this.stop.setEnabled(false);
+		}
 	}
 
 	@Override
@@ -324,6 +362,11 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 			else {
 				if ((++cnt & 0xff) == 0) {
 					this.update();
+					try {
+						Thread.sleep(1);
+					}
+					catch (InterruptedException e) {
+					}
 				}
 			}
 		}

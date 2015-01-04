@@ -6,9 +6,11 @@ import com.F64.codepoint.Literal;
 
 public class Interpreter {
 	private java.io.InputStream		stream;
+	private	boolean					ignore;
 	private	boolean					compiling;
 	private byte[]					buffer;
 	private int						buffer_pos;
+	private int						ignore_level;
 	private long					number;
 	private	System					system;
 	private	Processor				processor;
@@ -48,8 +50,10 @@ public class Interpreter {
 	{
 		String[] name_list = Dictionary.splitName(name);
 		Dictionary current = this.context;
+		Word w = current.lookup(name_list, this.compiling, true);
+		if (w != null) {return w;}
 		while (current != null) {
-			Word w = current.lookup(name_list, this.compiling);
+			w = current.lookup(name_list, this.compiling, false);
 			if (w != null) {return w;}
 			current = current.getParent();
 		}

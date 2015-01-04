@@ -5,6 +5,7 @@ import com.F64.word.*;
 public class Dictionary {
 	private Dictionary							parent;
 	private System								system;
+	private java.util.Map<String, Word>			macro_map;
 	private java.util.Map<String, Word>			compile_map;
 	private java.util.Map<String, Word>			normal_map;
 	private java.util.Map<String, Dictionary>	package_map;
@@ -61,7 +62,7 @@ public class Dictionary {
 	}
 
 	
-	public Word lookup(String[] name_list, boolean compiling)
+	public Word lookup(String[] name_list, boolean compiling, boolean macro)
 	{
 		Word res = null;
 		Dictionary current = this;
@@ -73,14 +74,19 @@ public class Dictionary {
 			if (current == null) {return null;}
 			++i;
 		}
-		if (compiling && (current.compile_map != null)) {res = current.compile_map.get(name_list[last]);}
-		if ((res == null) && (current.normal_map != null)) {res = current.normal_map.get(name_list[last]);}
+		if (macro) {
+			if (current.macro_map != null) {res = current.macro_map.get(name_list[last]);}
+		}
+		else {
+			if (compiling && (current.compile_map != null)) {res = current.compile_map.get(name_list[last]);}
+			if ((res == null) && (current.normal_map != null)) {res = current.normal_map.get(name_list[last]);}
+		}
 		return res;
 	}
 
-	public Word lookup(String name, boolean compiling)
+	public Word lookup(String name, boolean compiling, boolean macro)
 	{
-		return this.lookup(Dictionary.splitName(name), compiling);
+		return this.lookup(Dictionary.splitName(name), compiling, macro);
 	}
 
 	public void createStandardWords()

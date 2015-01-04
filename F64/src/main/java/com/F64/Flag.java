@@ -13,7 +13,7 @@ public enum Flag {
 	ALIGNED("a value is not aligned properly"),
 	BOUND("a value is out of bound"),
 	PRIVILEDGE("priviledge violation"),
-	CODE("cannot execute code out of code area"),
+	CODE("code was executed out of code area"),
 	TOUCHED("a reserved memory location has been touched"),
 	SOVER("parameter stack overflow"),
 	ROVER("return stack overflow"),
