@@ -40,19 +40,17 @@ public class ProcessorArray {
 			else {++y;}
 			break;
 		case LEFT:
-			if ((x & 1) != 0) {--x;}
+			if ((x & 1) == 0) {--x;}
 			else {++x;}
 			break;
 		case RIGHT:
-			if ((x & 1) == 0) {--x;}
+			if ((x & 1) != 0) {--x;}
 			else {++x;}
 			break;
 		case UP:
 			if ((x & 1) == 0) {--y;}
 			else {++y;}
 			break;
-		case FRONT:
-		case BACK:
 		default:
 			return null;
 		}

@@ -1,5 +1,6 @@
 package com.F64.view;
 
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -13,12 +14,14 @@ import com.F64.Port;
 @SuppressWarnings("serial")
 public class Ports extends JPanel {
 	private JTextField[]		ports;
+	private JLabel[]			states;
 
 	public Ports()
 	{
 		super( new GridBagLayout() );
+		JTextField field;
 		int limit = Port.values().length;
-
+		Font font = new Font(Font.MONOSPACED, Font.BOLD , 12);
 		JLabel label;
 		int i;
 		int x = 0;
@@ -40,6 +43,7 @@ public class Ports extends JPanel {
 		);
 		y += 1;
 		this.ports = new JTextField[limit+limit];
+		this.states = new JLabel[limit+limit];
 		for (i=0; i<limit; ++i) {
 			label = new JLabel(Port.values()[i].name());
 			this.add(
@@ -54,12 +58,28 @@ public class Ports extends JPanel {
 					2, 0
 				)
 			);
-			this.ports[i] = new JTextField(Port.values()[i].name());
-			this.ports[i].setToolTipText(Port.values()[i].getTooltip());
+			//
+			this.ports[i] = field = new JTextField("", 20);
+			field.setFont(font);
+			field.setToolTipText(Port.values()[i].getTooltip());
 			this.add(
-					this.ports[i],
+				field,
 				new GridBagConstraints(
 					x+1, y+i,
+					1, 1,
+					0.0, 0.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.BOTH,
+					field_insets,
+					2, 0
+				)
+			);
+			//
+			this.states[i] = label = new JLabel();
+			this.add(
+				label,
+				new GridBagConstraints(
+					x+2, y+i,
 					1, 1,
 					0.0, 0.0,
 					GridBagConstraints.WEST,
@@ -98,12 +118,27 @@ public class Ports extends JPanel {
 					2, 0
 				)
 			);
-			this.ports[i+limit] = new JTextField(Port.values()[i].name());
-			this.ports[i+limit].setToolTipText(Port.values()[i].getTooltip());
+			this.ports[i+limit] = field = new JTextField("", 20);
+			field.setFont(font);
+			field.setToolTipText(Port.values()[i].getTooltip());
 			this.add(
-				this.ports[i+limit],
+				field,
 				new GridBagConstraints(
 					x+1, y+i,
+					1, 1,
+					0.0, 0.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.BOTH,
+					field_insets,
+					2, 0
+				)
+			);
+			//
+			this.states[i+limit] = label = new JLabel();
+			this.add(
+				label,
+				new GridBagConstraints(
+					x+2, y+i,
 					1, 1,
 					0.0, 0.0,
 					GridBagConstraints.WEST,
@@ -118,9 +153,23 @@ public class Ports extends JPanel {
 	public void update(com.F64.Processor processor)
 	{
 		int limit = Port.values().length;
+		int read_mask = processor.getPortReadMask();
+		int write_mask = processor.getPortWriteMask();
 		for (int i=0; i<limit; ++i) {
 			this.ports[i].setText(Processor.convertLongToString(processor.getPort(i, false)));
 			this.ports[i+limit].setText(Processor.convertLongToString(processor.getPort(i, true)));
+			if (((1 << i) & read_mask) == 0) {
+				this.states[i].setText("");
+			}
+			else {
+				this.states[i].setText("@");
+			}
+			if (((1 << i) & write_mask) == 0) {
+				this.states[i+limit].setText("");
+			}
+			else {
+				this.states[i+limit].setText("!");
+			}
 		}
 
 	}

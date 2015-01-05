@@ -1,6 +1,7 @@
 package com.F64.view;
 
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -42,10 +43,12 @@ public class SystemRegister extends JPanel {
 //			)
 //		);
 //		y += 1;
+		Font font = new Font(Font.MONOSPACED, Font.BOLD , 12);
 		for (i=0; i<limit; ++i) {
 			label = new JLabel();
 			label.setHorizontalAlignment(SwingConstants.RIGHT);
-			JTextField field = new JTextField();
+			JTextField field = new JTextField("", 20);
+			field.setFont(font);
 			field.setMinimumSize(registerFieldMin);
 			label.setText(" "+com.F64.SystemRegister.values()[i].name());
 			label.setToolTipText(com.F64.SystemRegister.values()[i].getTooltip());

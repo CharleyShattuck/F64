@@ -1,5 +1,6 @@
 package com.F64.view;
 
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -8,6 +9,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import com.F64.Ext1;
+import com.F64.Ext2;
 import com.F64.ISA;
 
 @SuppressWarnings("serial")
@@ -19,6 +22,7 @@ public class Slots extends JPanel {
 	{
 		super( new GridBagLayout() );
 		int limit = com.F64.Processor.getMaxSlot();
+		Font font = new Font(Font.MONOSPACED, Font.BOLD , 12);
 		JLabel label;
 		int i;
 		int x = 0;
@@ -38,12 +42,13 @@ public class Slots extends JPanel {
 				2, 0
 			)
 		);
-		this.slot_no = new JTextField();
-		this.slot_no.setHorizontalAlignment(JTextField.RIGHT);
+		this.slot_no = new JTextField("", 20);
+		this.slot_no.setFont(font);
+//		this.slot_no.setHorizontalAlignment(JTextField.RIGHT);
 		this.add(
 			this.slot_no,
 			new GridBagConstraints(
-				x, y+1,
+				x+1, y,
 				1, 1,
 				0.0, 0.0,
 				GridBagConstraints.WEST,
@@ -52,14 +57,14 @@ public class Slots extends JPanel {
 				2, 0
 			)
 		);
-		x += 1;
+		y += 1;
 		this.slots = new JTextField[limit];
 		for (i=0; i<limit; ++i) {
 			label = new JLabel("slot "+i);
 			this.add(
 				label,
 				new GridBagConstraints(
-					x+i, y,
+					x, y+i,
 					1, 1,
 					0.0, 0.0,
 					GridBagConstraints.WEST,
@@ -69,13 +74,14 @@ public class Slots extends JPanel {
 				)
 			);
 			this.slots[i] = new JTextField();
-			this.slots[i].setHorizontalAlignment(JTextField.RIGHT);
+			this.slots[i].setFont(font);
+//			this.slots[i].setHorizontalAlignment(JTextField.RIGHT);
 			this.add(
 				this.slots[i],
 				new GridBagConstraints(
-					x+i, y+1,
+					x+1, y+i,
 					1, 1,
-					0.0, 0.0,
+					1.0, 0.0,
 					GridBagConstraints.WEST,
 					GridBagConstraints.BOTH,
 					field_insets,
@@ -97,11 +103,29 @@ public class Slots extends JPanel {
 		int no_of_slots = instr.size();
 		if (no_of_slots == 0) {
 			// extension instruction
+			switch (instr) {
+			case EXT1:
+				Ext1 ext1 = Ext1.values()[processor.getSlot(slot+i)];
+				this.slots[i].setToolTipText(ext1.getTooltip());
+				this.slots[i++].setText(ext1.name());
+				no_of_slots = ext1.size();
+				break;
+			case EXT2:
+				Ext2 ext2 = Ext2.values()[processor.getSlot(slot+i)];
+				this.slots[i].setToolTipText(ext2.getTooltip());
+				this.slots[i++].setText(ext2.name());
+				no_of_slots = ext2.size();
+				break;
+			default:
+			}
 		}
 		while (i<no_of_slots) {
-			this.slots[i++].setText(Integer.toString(processor.getSlot(slot+i)));
+			int value = processor.getSlot(slot+i);
+			this.slots[i].setToolTipText("");
+			this.slots[i++].setText(Integer.toString(value));
 		}
 		while (i<this.slots.length) {
+			this.slots[i].setToolTipText("");
 			this.slots[i++].setText("");
 		}
 

@@ -1,6 +1,7 @@
 package com.F64.view;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -53,12 +54,41 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 	private void connect(int columns, int rows, int x, int y)
 	{
 		com.F64.Processor from = processor_array.getProcessor(x, y);
-		com.F64.Processor to = processor_array.getNeighbor(x, y, com.F64.Port.UP);
+		for (com.F64.Port p : com.F64.Port.values()) {
+			com.F64.Processor to = processor_array.getNeighbor(x, y, p);
+			if (to != null) {
+				from.setPortPartner(p, to);
+				to.setPortPartner(p, from);
+			}
+		}
+	}
+	
+	private JTextField getPort(int x, int y, com.F64.Port p)
+	{
+		switch (p) {
+		case DOWN:
+			if ((y & 1) == 0) {return connector_array4[y][x];}
+			return connector_array3[y][x];
+		case LEFT:
+			if ((x & 1) == 0) {return connector_array1[y][x];}
+			return connector_array2[y][x];
+		case RIGHT:
+			if ((x & 1) == 0) {return connector_array2[y][x];}
+			return connector_array1[y][x];
+		case UP:
+			if ((y & 1) == 0) {return connector_array3[y][x];}
+			return connector_array4[y][x];
+		default:
+			break;
+		
+		}
+		return null;
 	}
 	
 	private void addArray(JPanel panel, int x0, int y0)
 	{
 		JLabel label;
+		Font font = new Font(Font.MONOSPACED, Font.BOLD , 12);
 		int rows = this.processor_array.getRows();
 		int columns = this.processor_array.getColumns();
 		Insets insets = new Insets( 0, 0, 0, 0);
@@ -90,7 +120,8 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 					)
 				);
 				// left port
-				this.connector_array1[y][x] = new JTextField(" ");
+				this.connector_array1[y][x] = new JTextField("", 1);
+				this.connector_array1[y][x].setFont(font);
 				this.connector_array1[y][x].setHorizontalAlignment(JTextField.CENTER);
 				panel.add(
 					this.connector_array1[y][x],
@@ -105,7 +136,8 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 					)
 				);
 				// right port
-				this.connector_array2[y][x] = new JTextField(" ");
+				this.connector_array2[y][x] = new JTextField("", 1);
+				this.connector_array2[y][x].setFont(font);
 				this.connector_array2[y][x].setHorizontalAlignment(JTextField.CENTER);
 				panel.add(
 					this.connector_array2[y][x],
@@ -120,7 +152,8 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 					)
 				);
 				// up port
-				this.connector_array3[y][x] = new JTextField(" ");
+				this.connector_array3[y][x] = new JTextField("", 1);
+				this.connector_array3[y][x].setFont(font);
 				this.connector_array3[y][x].setHorizontalAlignment(JTextField.CENTER);
 				panel.add(
 					this.connector_array3[y][x],
@@ -135,7 +168,8 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 					)
 				);
 				// down port
-				this.connector_array4[y][x] = new JTextField(" ");
+				this.connector_array4[y][x] = new JTextField("", 1);
+				this.connector_array4[y][x].setFont(font);
 				this.connector_array4[y][x].setHorizontalAlignment(JTextField.CENTER);
 				panel.add(
 					this.connector_array4[y][x],
@@ -151,7 +185,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 				);
 				// horizontal label
 				if (x == 0) {
-					label = new JLabel(((x & 1) == 0) ? "R" : "L");
+					label = new JLabel(((x & 1) != 0) ? "R" : "L");
 					label.setHorizontalAlignment(JTextField.CENTER);
 					panel.add(
 						label,
@@ -166,7 +200,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 						)
 					);
 					//
-					label = new JLabel(((x & 1) == 0) ? "R" : "L");
+					label = new JLabel(((x & 1) != 0) ? "R" : "L");
 					label.setHorizontalAlignment(JTextField.CENTER);
 					panel.add(
 						label,
@@ -182,7 +216,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 					);
 				}
 				else {
-					label = new JLabel(((x & 1) == 0) ? "R" : "L");
+					label = new JLabel(((x & 1) != 0) ? "R" : "L");
 					label.setHorizontalAlignment(JTextField.CENTER);
 					panel.add(
 						label,
@@ -197,7 +231,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 						)
 					);
 					//
-					label = new JLabel(((x & 1) == 0) ? "R" : "L");
+					label = new JLabel(((x & 1) != 0) ? "R" : "L");
 					label.setHorizontalAlignment(JTextField.CENTER);
 					panel.add(
 						label,
@@ -213,7 +247,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 					);
 				}
 				if (x == (columns-1)) {
-					label = new JLabel(((x & 1) != 0) ? "R" : "L");
+					label = new JLabel(((x & 1) == 0) ? "R" : "L");
 					label.setHorizontalAlignment(JTextField.CENTER);
 					panel.add(
 						label,
@@ -228,7 +262,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 						)
 					);
 					//
-					label = new JLabel(((x & 1) != 0) ? "R" : "L");
+					label = new JLabel(((x & 1) == 0) ? "R" : "L");
 					label.setHorizontalAlignment(JTextField.CENTER);
 					panel.add(
 						label,
@@ -641,9 +675,37 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 		int x = 0, y = 0;
 		int rows = this.processor_array.getRows();
 		int columns = this.processor_array.getColumns();
+		JTextField field;
 		for (y=0; y<rows; ++y) {
 			for (x=0; x<columns; ++x) {
-				if (processor_array.getProcessor(x, y).hasFailed()) {
+				com.F64.Processor proc = processor_array.getProcessor(x, y);
+				if (proc.isWaiting()) {
+					int mask = proc.getPortReadMask();
+					if (mask != 0) {
+						for (com.F64.Port p : com.F64.Port.values()) {
+							if ((mask & (1 << p.ordinal())) != 0) {
+								field = this.getPort(x, y, p);
+								if (field != null) {field.setText("@");}
+							}
+						}
+					}
+					mask = proc.getPortWriteMask();
+					if (mask != 0) {
+						for (com.F64.Port p : com.F64.Port.values()) {
+							if ((mask & (1 << p.ordinal())) != 0) {
+								field = this.getPort(x, y, p);
+								if (field != null) {field.setText("!");}
+							}
+						}
+					}
+				}
+				else {
+					this.getPort(x, y, com.F64.Port.RIGHT).setText("");
+					this.getPort(x, y, com.F64.Port.LEFT).setText("");
+					this.getPort(x, y, com.F64.Port.UP).setText("");
+					this.getPort(x, y, com.F64.Port.DOWN).setText("");
+				}
+				if (proc.hasFailed()) {
 					this.toggle_array[y][x].setBackground(Color.RED);
 				}
 				else {

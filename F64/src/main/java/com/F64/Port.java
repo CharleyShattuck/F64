@@ -3,10 +3,12 @@ package com.F64;
 public enum Port {
 	UP("up port"),
 	DOWN("down port"),
-	LEFT("left port"),
 	RIGHT("right port"),
+	LEFT("left port"),
 	FRONT("front port"),
-	BACK("back port");
+	BACK("back port"),
+	FUTURE("future port"),
+	PAST("past port");
 
 	private String tooltip;
 
