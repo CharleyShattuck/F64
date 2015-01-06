@@ -8,7 +8,7 @@ public class Processor implements Runnable {
 	private long[]				write_port;
 	private Processor[]			port_partner;
 	private long				communication;
-	private Processor			communication_source;
+	private int					communication_register;
 	private int					x;
 	private int					y;
 	private int					z;
@@ -19,6 +19,7 @@ public class Processor implements Runnable {
 //	private int					max_slot;	// max # of slots
 	private boolean				failed;
 	private boolean				waiting;
+	private boolean				reading;
 	private volatile boolean	running;
 
 	public static final int		VERSION = 0x010000;
@@ -166,6 +167,16 @@ public class Processor implements Runnable {
 	public int getPortReadMask() {return this.port_read_mask;}
 	public int getPortWriteMask() {return this.port_write_mask;}
 
+	public boolean isReadingOn(Port p)
+	{
+		return this.waiting && ((this.port_read_mask & (1 << p.ordinal())) != 0);
+	}
+
+	public boolean isWritingOn(Port p)
+	{
+		return this.waiting && ((this.port_write_mask & (1 << p.ordinal())) != 0);
+	}
+	
 	public long getRegister(int reg)
 	{
 		if (reg < NO_OF_REG) {return this.register[reg];}
@@ -239,11 +250,15 @@ public class Processor implements Runnable {
 	
 	public boolean setSystemRegister(int reg, long value)
 	{
+		if (reg == SystemRegister.I.ordinal()) {
+			// we must set reset the slot # if we write the I register
+			this.slot = 0;
+		}
 //		if (reg == SystemRegister.FLAG.ordinal()) {
 //			// upper 4 bits contain slot #
 //			this.slot = (int)(value >>> (BIT_PER_CELL - 4));
 //		}				
-		if (reg == SystemRegister.INTE.ordinal()) {
+		else if (reg == SystemRegister.INTE.ordinal()) {
 			value |= Flag.RESET.getMask() | Flag.NMI.getMask();
 		}
 		else if (reg == SystemRegister.P.ordinal()) {
@@ -257,83 +272,172 @@ public class Processor implements Runnable {
 		return true;
 	}
 
-	public boolean handshake(Processor target, long value)
+//	public boolean handshake(Processor target, long value)
+//	{
+//		synchronized (target) {
+//			if (target.communication_source == null) {
+//				for (int i=0; i<Port.values().length; ++i) {
+//					if ((target.port_read_mask & (1 << i)) != 0) {
+//						// target wait for input on this port
+//						if (target.port_partner[i] == this) {
+//							// target expects input through this port from this
+//							target.communication = value;
+//							target.communication_source = this;
+//							target.notify();
+//							return true;
+//						}
+//					}
+//				}
+//			}
+//		}
+//		return false;
+//	}
+
+	public boolean canReadFromPort(int p)
 	{
-		synchronized (target) {
-			if (target.communication_source == null) {
-				for (int i=0; i<Port.values().length; ++i) {
-					if ((target.port_read_mask & (1 << i)) != 0) {
-						// target wait for input on this port
-						if (target.port_partner[i] == this) {
-							// target expects input through this port from this
-							target.communication = value;
-							target.communication_source = this;
-							target.notify();
-							return true;
-						}
+		return ((this.port_read_mask & (1 << p)) != 0);
+	}
+
+	public boolean canWriteToPort(int p)
+	{
+		return ((this.port_write_mask & (1 << p)) != 0);
+	}
+
+	public void readFromPort(int p)
+	{
+		int reg = this.communication_register;
+		if (reg < BIT_PER_CELL) {
+			this.setRegister(reg, this.communication);
+		}
+		else {
+			reg -=  BIT_PER_CELL;
+			this.setSystemRegister(reg, this.communication);
+		}
+		this.setFlag(Flag.UPREAD.ordinal()+p, true);
+		this.setPort(p, false, this.communication);
+		this.port_read_mask = 0;
+		this.waiting = false;
+	}
+
+	public void writeToPort(int p)
+	{
+		this.setFlag(Flag.UPWRITE.ordinal()+p, true);
+		this.setPort(p, true, this.communication);
+		this.port_write_mask = 0;
+		this.waiting = false;
+	}
+
+	public boolean readPort()
+	{
+		Processor partner;
+		if (this.port_read_mask != 0) {
+			int limit = Port.values().length;
+			for (int i=0; i<limit; ++i) {
+				if (canReadFromPort(i)) {
+					partner = this.port_partner[i];
+					if ((partner != null) && partner.canWriteToPort(i)) {
+						// communication settled
+						this.communication = partner.communication;
+						this.readFromPort(i);
+						partner.writeToPort(i);
+						return true;
 					}
 				}
 			}
 		}
 		return false;
 	}
-	
-	public void writePort(int mask, boolean wait, long value)
+
+	public boolean writePort()
 	{
 		Processor partner;
-		int i,limit = Port.values().length;
-		this.port_write_mask = mask;
-		for (i=0; i<limit; ++i) {
-			if ((mask & (1 << i)) != 0) {
-				if (this.port_partner[i] != null) {
-					if (this.handshake(this.port_partner[i], value)) {
-						this.setFlag(Flag.UPWRITE.ordinal()+i, true);
-						this.setPort(i, true, value);
-						this.port_write_mask = 0;
-						this.waiting = false;
-						return;
+		if (this.port_write_mask != 0) {
+			int limit = Port.values().length;
+			for (int i=0; i<limit; ++i) {
+				if (canWriteToPort(i)) {
+					partner = this.port_partner[i];
+					if ((partner != null) && partner.canReadFromPort(i)) {
+						// communication settled
+						partner.communication = this.communication;
+						partner.readFromPort(i);
+						this.writeToPort(i);
+						return true;
 					}
 				}
 			}
 		}
-		if (wait) {
-			this.waiting = true;
-		}
-		else {
-			this.waiting = false;
-			this.port_write_mask = 0;
-		}
+		return false;
 	}
 
-	public long readPort(int mask, boolean wait)
+	public boolean externalWriteToPort(int p, long value)
 	{
-		int i,limit = Port.values().length;
-		this.port_read_mask = mask;
-		if (this.communication_source != null) {
-			// someone has communicated with us
-			this.port_read_mask = 0;
-			for (i=0; i<limit; ++i) {
-				if ((mask & (1 << i)) != 0) {
-					if (this.port_partner[i] == this.communication_source) {
-						this.waiting = false;
-						long value = this.communication;
-						this.communication = 0;
-						this.setFlag(Flag.UPREAD.ordinal()+i, true);
-						this.setPort(i, false, value);
-						return value;
-					}
-				}
+		if (this.port_read_mask != 0) {
+			if (canReadFromPort(p)) {
+				this.communication = value;
+				this.readFromPort(p);
 			}
 		}
-		if (wait) {
-			this.waiting = true;
-		}
-		else {
-			this.waiting = false;
-			this.port_read_mask = 0;
-		}
-		return 0;
+		return false;
 	}
+
+	
+//	public void writePort(int mask, boolean wait, long value)
+//	{
+//		Processor partner;
+//		int i,limit = Port.values().length;
+//		this.port_write_mask = mask;
+//		for (i=0; i<limit; ++i) {
+//			if ((mask & (1 << i)) != 0) {
+//				partner = this.port_partner[i];
+//				if (partner != null) {
+//					if (partner.writeToPort(i, value)) {
+//						this.setFlag(Flag.UPWRITE.ordinal()+i, true);
+//						this.setPort(i, true, value);
+//						this.port_write_mask = 0;
+//						this.waiting = false;
+//						return;
+//					}
+//				}
+//			}
+//		}
+//		if (wait) {
+//			this.waiting = true;
+//		}
+//		else {
+//			this.waiting = false;
+//			this.port_write_mask = 0;
+//		}
+//	}
+//
+//	public long readPort(int mask, boolean wait)
+//	{
+//		int i,limit = Port.values().length;
+//		this.port_read_mask = mask;
+//		if (this.communication_source != null) {
+//			// someone has communicated with us
+//			this.port_read_mask = 0;
+//			for (i=0; i<limit; ++i) {
+//				if ((mask & (1 << i)) != 0) {
+//					if (this.port_partner[i] == this.communication_source) {
+//						this.waiting = false;
+//						long value = this.communication;
+//						this.communication = 0;
+//						this.setFlag(Flag.UPREAD.ordinal()+i, true);
+//						this.setPort(i, false, value);
+//						return value;
+//					}
+//				}
+//			}
+//		}
+//		if (wait) {
+//			this.waiting = true;
+//		}
+//		else {
+//			this.waiting = false;
+//			this.port_read_mask = 0;
+//		}
+//		return 0;
+//	}
 
 	public long getPort(int p, boolean writing)
 	{
@@ -1224,6 +1328,15 @@ public class Processor implements Runnable {
 	public void step()
 	{
 		try {
+			if (this.waiting) {
+				// try to finish communication
+				if (reading) {
+					this.readPort();
+				}
+				else {
+					this.writePort();
+				}
+			}
 			if (!this.waiting) {
 				this.saved_slot = this.slot; // save slot # in case of an interrupt before the operation
 				switch (ISA.values()[this.nextSlot()]) {
@@ -1300,34 +1413,28 @@ public class Processor implements Runnable {
 				triggerInterrupts();
 			}
 			//
-			if (this.slot > FINAL_SLOT) {
+			if ((!this.waiting) && (this.slot > FINAL_SLOT)) {
 				// load new instruction cell
 				long adr = this.system_register[SystemRegister.P.ordinal()];
 				if (adr >= 0) {
 					// normal memory
-					this.system_register[SystemRegister.I.ordinal()] = system.getMemory(adr);
+					this.setSystemRegister(SystemRegister.I.ordinal(), system.getMemory(adr));
 					// increment P
-					incPointer(SystemRegister.P);
-					// begin with first slot
-					this.slot = 0;
+					inc(SystemRegister.P);
 				}
 				else {
 					// I/O memory
-					int mask = (int)adr & 0xff;
-					long data = this.readPort(mask, true);
-					if (this.waiting) {
-						// restore slot so the instruction gets repeated next time
-						this.slot = FINAL_SLOT+1;
-					}
-					else {
-						this.system_register[SystemRegister.I.ordinal()] = data;
-						// begin with first slot
-						this.slot = 0;				
+					this.communication_register = SystemRegister.I.ordinal() + BIT_PER_CELL;
+					this.port_read_mask = (int)adr & 0xff;
+					if (!this.readPort()) {
+						this.waiting = true;
+						this.reading = true;
 					}
 				}
 			}
 		}
 		catch (java.lang.Exception ex) {
+			ex.printStackTrace();
 			this.failed = true;
 			throw ex;
 		}
@@ -1634,13 +1741,23 @@ public class Processor implements Runnable {
 	public void doFetchPort(int mask, boolean wait)
 	{
 		this.doDup();
-		this.setRegister(Register.T, this.readPort(mask, wait));
+		this.communication_register = Register.T.ordinal();
+		this.port_read_mask = mask;
+		if (!readPort() && wait) {
+			this.waiting = true;
+			this.reading = true;
+		}
 	}
 
 	public void doStorePort(int mask, boolean wait)
 	{
-		this.writePort(mask, wait, this.getRegister(Register.T));
+		this.communication = this.getRegister(Register.T);
 		this.doDrop();
+		this.port_write_mask = mask;
+		if (!this.writePort() && wait) {
+			this.waiting = true;
+			this.reading = false;
+		}
 	}
 
 
@@ -1722,11 +1839,6 @@ public class Processor implements Runnable {
 		
 	}
 	
-	public void reset()
-	{
-		this.interrupt(Flag.RESET);
-	}
-
 	public void nmi()
 	{
 		this.interrupt(Flag.NMI);
@@ -1740,9 +1852,14 @@ public class Processor implements Runnable {
 		}
 	}
 
-	public void powerOn()
+	public void reset()
 	{
+		this.interrupt(Flag.RESET);
+		//
 		this.waiting = false;
+		this.failed = false;
+		this.port_read_mask = 0;
+		this.port_write_mask = 0;
 		// initial setup
 		long bootcode = writeSlot(0, 0, ISA.LIT.ordinal());
 		bootcode = writeSlot(bootcode, 1, 0);
@@ -1763,13 +1880,19 @@ public class Processor implements Runnable {
 		this.setRegister(SystemRegister.RP, system.getStackTop(0, true));
 		this.setRegister(SystemRegister.R0, system.getStackBottom(0, true));
 		this.setRegister(SystemRegister.RL, system.getStackTop(0, true));
-		// memory
+		// system register
 		this.setRegister(SystemRegister.INTV, 0);
 		this.setRegister(SystemRegister.INTE, 0);
+	}
+	
+	public void powerOn()
+	{
+		this.reset();
 		// power-on reset clears the reset interrupt flags
 		this.setFlag(Flag.RESET, false);
 		this.setFlag(SystemRegister.INTS, Flag.RESET, false);
 	}
+
 	
 	public void doRegisterOperation(int op, int s1, int s2, int d)
 	{

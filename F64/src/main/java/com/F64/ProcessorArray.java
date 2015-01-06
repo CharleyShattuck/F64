@@ -2,14 +2,16 @@ package com.F64;
 
 public class ProcessorArray {
 	private System			system;
+	private BootROM			rom;
 	private int				rows;
 	private int				columns;
 	private Processor[][]	array;
 
 	
-	public ProcessorArray(int columns, int rows, System system)
+	public ProcessorArray(int columns, int rows, System system, BootROM rom)
 	{
 		this.system = system;
+		this.rom = rom;
 		this.columns = columns;
 		this.rows = rows;
 		this.array = new Processor[rows][columns];
@@ -79,4 +81,41 @@ public class ProcessorArray {
 		}
 	}
 
+	public synchronized void reset()
+	{
+		rom.reset();
+		for (int y=0; y<this.rows; ++y) {
+			for (int x=0; x<this.columns; ++x) {
+				this.array[y][x].reset();
+			}
+		}
+	}
+
+	public synchronized void powerOn()
+	{
+		rom.reset();
+		for (int y=0; y<this.rows; ++y) {
+			for (int x=0; x<this.columns; ++x) {
+				this.array[y][x].powerOn();
+			}
+		}
+	}
+
+	public synchronized void step()
+	{
+		for (int y=0; y<this.rows; ++y) {
+			for (int x=0; x<this.columns; ++x) {
+				this.array[y][x].powerOn();
+			}
+		}
+	}
+
+	public synchronized void boot()
+	{
+		Processor p = this.array[0][0];
+		if (p.canReadFromPort(Port.LEFT.ordinal())) {
+			p.externalWriteToPort(Port.LEFT.ordinal(), rom.nextValue());
+		}
+	}
+	
 }

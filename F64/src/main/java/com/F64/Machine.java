@@ -11,6 +11,7 @@ public class Machine {
 	private com.F64.view.ProcessorArray		view;
 	private ProcessorArray	processor_array;
 	private Processor		processor;
+	private BootROM			rom;
 	private System			system;
 	private Compiler		compiler;
 	private Interpreter		interpreter;
@@ -33,8 +34,18 @@ public class Machine {
 		assert(Ext2.values().length <= Processor.SLOT_SIZE);
 		assert(RegOp1.values().length <= Processor.SLOT_SIZE);
 		assert(SimdOp1.values().length <= Processor.SLOT_SIZE);
+		assert(Flag.values().length <= (Processor.BIT_PER_CELL - 3*Processor.SLOT_BITS));
+		rom = new BootROM();
 		system = new System(dictionary_size, heap_size, stack_size, return_stack_size, no_of_threads);
-		processor_array = new ProcessorArray(columns, rows, system);
+		//
+		long interrupt_code = Processor.writeSlot(0, 0, ISA.EXT1.ordinal());
+		interrupt_code = Processor.writeSlot(interrupt_code, 1, Ext1.EXITI.ordinal());
+		for (int i=0; i<Processor.BIT_PER_CELL; ++i) {
+			interrupt_code = Processor.writeSlot(interrupt_code, 2, i);
+			system.setMemory(i, interrupt_code);
+		}
+		//
+		processor_array = new ProcessorArray(columns, rows, system, rom);
 		processor = processor_array.getProcessor(0, 0);
 		dictionary = new Dictionary(system);
 		dictionary.createStandardWords();

@@ -42,6 +42,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 	private JButton				trace;
 	private JButton				step;
 	private JButton				stop;
+	private JButton				reset;
 	private JScrollPane 		scroll;
 	private JPanel				main_panel;
 	private int					selected_x;
@@ -504,6 +505,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 		this.trace = new JButton("Trace");
 		this.step = new JButton("Step");
 		this.stop = new JButton("Stop");
+		this.reset = new JButton("Reset");
 
 		this.toolbar = new JToolBar();
 		this.toolbar.setFloatable(false);
@@ -512,6 +514,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 		this.toolbar.add(this.step);
 		this.toolbar.add(this.stop);
 		this.toolbar.add(this.go);
+		this.toolbar.add(this.reset);
 		this.main_panel = new JPanel( new GridBagLayout() );
 		this.main_split_pane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		this.scroll = new JScrollPane(this.main_panel);
@@ -526,6 +529,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 		this.trace.addActionListener(this);
 		this.step.addActionListener(this);
 		this.stop.addActionListener(this);
+		this.reset.addActionListener(this);
 		this.add(this.main_split_pane);
 
 		this.interpreter = i;
@@ -556,10 +560,13 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 		else if (source == this.trace) {
 			this.trace();
 		}
-		if (source == this.stop) {
+		else if (source == this.stop) {
 			this.stop();
 		}
-		if (source == this.go) {
+		else if (source == this.reset) {
+			this.reset();
+		}
+		else if (source == this.go) {
 			this.go();
 		}
 		else {
@@ -570,7 +577,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 					if (this.toggle_array[y][x] == source) {
 						this.updating = true;
 						if ((this.selected_x == x) && (this.selected_y == y)) {
-							// current deselected
+							// deselect current
 							this.toggle_array[y][x].setSelected(true);
 						}
 						else {
@@ -590,6 +597,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 
 	public boolean step()
 	{
+		this.processor_array.boot();
 		boolean res = true;
 		int x = 0, y = 0;
 		int rows = this.processor_array.getRows();
@@ -617,6 +625,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 			this.run.setEnabled(false);
 			this.go.setEnabled(false);
 			this.trace.setEnabled(false);
+			this.reset.setEnabled(false);
 			this.stop.setEnabled(true);
 			Thread thread = new Thread(this);
 			thread.start();
@@ -634,6 +643,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 			this.run.setEnabled(false);
 			this.go.setEnabled(false);
 			this.trace.setEnabled(false);
+			this.reset.setEnabled(false);
 			this.stop.setEnabled(true);
 			Thread thread = new Thread(this);
 			thread.start();
@@ -649,6 +659,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 			this.run.setEnabled(false);
 			this.go.setEnabled(false);
 			this.trace.setEnabled(false);
+			this.reset.setEnabled(false);
 			this.stop.setEnabled(true);
 			Thread thread = new Thread(this);
 			thread.start();
@@ -667,6 +678,15 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 		this.go.setEnabled(true);
 		this.trace.setEnabled(true);
 		this.stop.setEnabled(false);
+		this.reset.setEnabled(true);
+	}
+
+
+	public void reset()
+	{
+		this.stop();
+		this.processor_array.reset();
+		this.update();
 	}
 
 	public void update()
