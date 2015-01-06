@@ -1,6 +1,7 @@
 package com.F64.codepoint;
 
 import com.F64.Compiler;
+<<<<<<< HEAD
 import com.F64.Optimization;
 import com.F64.RegOp1;
 import com.F64.Register;
@@ -33,6 +34,23 @@ public class Asl extends com.F64.Codepoint {
 		else {
 			c.generate(RegOp1.ASLI, Register.T.ordinal(), Register.T.ordinal(), cnt);
 		}
+=======
+import com.F64.RegOp1;
+import com.F64.Register;
+
+public class Asl extends com.F64.Codepoint {
+
+	@Override
+	public boolean optimize()
+	{
+		return false;
+	}
+	
+	@Override
+	public void generate(Compiler c)
+	{
+		c.generate(RegOp1.ASL, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
+>>>>>>> refs/remotes/origin/master
 	}
 
 

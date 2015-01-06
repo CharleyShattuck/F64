@@ -35,6 +35,7 @@ public class Processor implements Runnable {
 	public static final int		FINAL_SLOT = 10;
 	public static final int		NO_OF_SLOTS = FINAL_SLOT+1;
 
+<<<<<<< HEAD
 	private static int max_slot = 0;
 
 	public static int getMaxSlot()
@@ -62,6 +63,8 @@ public class Processor implements Runnable {
 		return IO_BASE + slot_bits;
 	}
 	
+=======
+>>>>>>> refs/remotes/origin/master
 	public static int countBits(long data)
 	{
 		int res = 0;
@@ -1566,16 +1569,24 @@ public class Processor implements Runnable {
 	public void doEnterInterrupt(int no)
 	{
 		// mark interrupt as in service
+<<<<<<< HEAD
 		this.setInterruptFlag(SystemRegister.INTS, no, true);
+=======
+		this.setInterruptFlag(Register.INTS, no, true);
+>>>>>>> refs/remotes/origin/master
 		// clear interrupt flag
 		this.setFlag(no, false);
 		//
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
 		// save flags (with current slot)
+<<<<<<< HEAD
 		this.pushReturnStack(this.getFlagForInterrupt());
 		this.port_read_mask = 0;
 		this.port_write_mask = 0;
 		this.waiting = false;
+=======
+		this.pushReturnStack(this.getRegister(Register.FLAG));
+>>>>>>> refs/remotes/origin/master
 		// save I
 		this.register[Register.R.ordinal()] = this.system_register[SystemRegister.I.ordinal()];
 		// load instruction from interrupt vector table
@@ -1686,7 +1697,11 @@ public class Processor implements Runnable {
 		case BITFF1:	this.doBitFindFirst1(this.nextSlot(), this.nextSlot()); break;
 		case BITFL1:	this.doBitFindLast1(this.nextSlot(), this.nextSlot()); break;
 		case NLIT:		this.doLiteralNot(this.nextSlot()); break;
+<<<<<<< HEAD
 		case JMPIO:		this.doJumpIO(this.nextSlot()); break;
+=======
+		case JMPIO:		this.doJumpIo(this.nextSlot()); break;
+>>>>>>> refs/remotes/origin/master
 		case CONFIGFETCH:	this.doConfigFetch(this.nextSlot()); break;
 		default: this.interrupt(Flag.ILLEGAL);
 		}

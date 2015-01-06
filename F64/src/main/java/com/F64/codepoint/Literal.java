@@ -3,7 +3,10 @@ package com.F64.codepoint;
 import com.F64.Compiler;
 import com.F64.Ext1;
 import com.F64.ISA;
+<<<<<<< HEAD
 import com.F64.Optimization;
+=======
+>>>>>>> refs/remotes/origin/master
 import com.F64.Processor;
 
 
@@ -19,7 +22,11 @@ public class Literal extends com.F64.Codepoint {
 	public void setValue(long value) {this.value = value;}
 
 	@Override
+<<<<<<< HEAD
 	public boolean optimize(Optimization opt)
+=======
+	public boolean optimize()
+>>>>>>> refs/remotes/origin/master
 	{
 		return false;
 	}
