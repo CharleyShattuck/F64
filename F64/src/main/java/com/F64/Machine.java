@@ -53,6 +53,7 @@ public class Machine {
 		interpreter = new Interpreter(system, processor, compiler, dictionary);
 //		processor.powerOn();
 		view = new com.F64.view.ProcessorArray(processor_array, interpreter, compiler, system, dictionary);
+		view.update();
 		systemLookAndFeel();
 		javax.swing.SwingUtilities.invokeLater(view);
 	}

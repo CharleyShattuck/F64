@@ -8,9 +8,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.ScrollPaneConstants;
 
@@ -18,16 +20,21 @@ import javax.swing.ScrollPaneConstants;
 public class System extends JFrame implements ActionListener {
 	private com.F64.System				system;
 	private JToggleButton[]				toggle_list;
+	private JTextField[]				bytes;
 	private JSplitPane 					split;
 	private JPanel						area;
 	private JPanel						memory;
 	private JScrollPane 				scroll;
 	private int							selected_area;
 	private volatile boolean			updating;
-	private final int COLUMNS = 4;
+	private final int BUTTON_COLUMNS = 4;
+	private final int MEMORY_COLUMNS = 16;
+	private final int MEMORY_SIZE = 256;
+	private final int MEMORY_DIGITS = MEMORY_SIZE / 16;
 
 	public System(com.F64.System s)
 	{
+		JLabel label;
 		system = s;
 		this.setSize(700,600);
 		this.setTitle("System View");
@@ -44,9 +51,9 @@ public class System extends JFrame implements ActionListener {
 
 		split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scroll, memory);
 	
-		int no_of_areas = (int)(system.getMemorySize() / 256);
+		int no_of_areas = (int)(system.getMemorySize() / MEMORY_SIZE);
 		toggle_list = new JToggleButton[no_of_areas];
-		int no_of_area_lines = no_of_areas / COLUMNS;
+		int no_of_area_lines = no_of_areas / BUTTON_COLUMNS;
 		int x0 = 0;
 		int y0 = 0;
 		int y = 0;
@@ -69,14 +76,81 @@ public class System extends JFrame implements ActionListener {
 				)
 			);
 
-			
-			if (++x >= COLUMNS) {
-				x -= COLUMNS;
+			if (++x >= BUTTON_COLUMNS) {
+				x -= BUTTON_COLUMNS;
 				++y;
 			}
 		}
 		this.toggle_list[0].setSelected(true);
 
+		this.bytes = new JTextField[MEMORY_SIZE];
+
+		y = y0;
+		x = x0;
+
+		for (int i=1; i<=MEMORY_COLUMNS; ++i) {
+			label = new JLabel(String.format("%01x", MEMORY_COLUMNS-i));
+			label.setFont(font);
+			label.setHorizontalAlignment(JTextField.CENTER);
+			this.memory.add(
+				label,
+				new GridBagConstraints(
+					x+i, y,
+					1, 1,
+					0.0, 0.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.BOTH,
+					field_insets,
+					0, 0
+				)
+			);
+
+		}
+
+		
+		y = 0;
+		x = 0;
+		for (int i=0; i<MEMORY_SIZE; ++i) {
+			if (x == 0) {
+				label = new JLabel(String.format("%01xx", y));
+				label.setFont(font);
+				label.setHorizontalAlignment(JTextField.RIGHT);
+				this.memory.add(
+					label,
+					new GridBagConstraints(
+						x0+x, y0+y+1,
+						1, 1,
+						0.0, 0.0,
+						GridBagConstraints.WEST,
+						GridBagConstraints.BOTH,
+						field_insets,
+						0, 0
+					)
+				);
+			}
+			bytes[i] = new JTextField(String.format("%02x", 0));
+			bytes[i].setFont(font);
+			this.memory.add(
+				bytes[i],
+				new GridBagConstraints(
+					x0+(MEMORY_COLUMNS-x), y0+y+1,
+					1, 1,
+					0.0, 0.0,
+					GridBagConstraints.WEST,
+					GridBagConstraints.BOTH,
+					field_insets,
+					0, 0
+				)
+			);
+			if (++x >= MEMORY_COLUMNS) {
+				x -= MEMORY_COLUMNS;
+				++y;
+			}
+
+		}
+
+		
+		
 		this.add(this.split);
 
 		setVisible(true);
@@ -106,7 +180,16 @@ public class System extends JFrame implements ActionListener {
 
 	public void update()
 	{
-		
+		long data = 0;
+		long adr = selected_area;
+		adr *= MEMORY_SIZE / 8;
+		for (int i=0; i<MEMORY_SIZE; ++i) {
+			if ((i & 7) == 0) {
+				data = this.system.getMemory(adr++);
+			}
+			this.bytes[i].setText(String.format("%02x", (int)(data & 0xff)));
+			data = data >>> 8;
+		}
 	}
 
 }
