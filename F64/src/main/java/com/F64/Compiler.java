@@ -25,7 +25,6 @@ public class Compiler {
 	public System getSystem() {return system;}
 	public Processor getProcessor() {return processor;}
 	public boolean hasAdditionalCells() {return addtional_cnt > 0;}
-<<<<<<< HEAD
 	public Scope getScope() {return current_scope;}
 	public Scope getMainScope() {return main_scope;}
 	public void setScope(Scope s) {current_scope = s;}
@@ -37,11 +36,6 @@ public class Compiler {
 		this.current_scope = this.main_scope;
 	}
 	
-=======
-	public Scope getScope() {return scope;}
-	public void setScope(Scope s) {scope = s;}
-
->>>>>>> refs/remotes/origin/master
 	public static boolean fit(int no_slots, int slot0)
 	{
 		if (no_slots < Processor.FINAL_SLOT) {return true;}
@@ -427,21 +421,7 @@ public class Compiler {
 
 	public void compile(ISA opcode, int arg0, int arg1, int arg2)
 	{
-<<<<<<< HEAD
 		getScope().add(new ISACode(opcode, arg0, arg1, arg2));
-=======
-		scope.add(new Codepoint(opcode, arg0, arg1, arg2));
-	}
-
-	public void compile(ISA opcode, int arg0, int arg1, int arg2, int arg3)
-	{
-		scope.add(new Codepoint(opcode, arg0, arg1, arg2, arg3));
-	}
-
-	public void compile(ISA opcode, int arg0, int arg1, int arg2, int arg3, int arg4)
-	{
-		scope.add(new Codepoint(opcode, arg0, arg1, arg2, arg3, arg4));
->>>>>>> refs/remotes/origin/master
 	}
 
 	public void compile(ISA opcode, int arg0, int arg1, int arg2, int arg3)

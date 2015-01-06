@@ -1,7 +1,6 @@
 package com.F64.codepoint;
 
 import com.F64.Compiler;
-<<<<<<< HEAD
 import com.F64.Ext1;
 import com.F64.ISA;
 import com.F64.Optimization;
@@ -73,13 +72,6 @@ public class ISACode extends com.F64.Codepoint {
 
 	@Override
 	public boolean optimize(Optimization opt)
-=======
-
-public class ISACode extends com.F64.Codepoint {
-
-	@Override
-	public boolean optimize()
->>>>>>> refs/remotes/origin/master
 	{
 		if (this.getPrevious() == null) {return false;}
 		return false;
