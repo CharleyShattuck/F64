@@ -23,11 +23,11 @@ import javax.swing.JToolBar;
 import com.F64.Compiler;
 import com.F64.Dictionary;
 import com.F64.Interpreter;
-import com.F64.System;
 
 @SuppressWarnings("serial")
 public class ProcessorArray extends JFrame implements ActionListener, ItemListener, Runnable {
 	private Processor			view;
+	private System				system_view;
 	private com.F64.ProcessorArray		processor_array;
 	private Interpreter			interpreter;
 	private JToggleButton[][]	toggle_array;
@@ -494,11 +494,12 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 		this.toggle_array[0][0].setSelected(true);
 	}
 	
-	public ProcessorArray(com.F64.ProcessorArray pa, Interpreter i, Compiler c, System s, Dictionary d)
+	public ProcessorArray(com.F64.ProcessorArray pa, Interpreter i, Compiler c, com.F64.System s, Dictionary d)
 	{
 		processor_array = pa;
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setSize(720,480);
+		this.setTitle("Processor Array View");
 		
 		this.run = new JButton("Run");
 		this.go = new JButton("Go");
@@ -534,6 +535,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 
 		this.interpreter = i;
 		this.view = new Processor(pa.getProcessor(0, 0), i, c, s, d);
+		this.system_view = new System(s);
 		
 		setVisible(true);
 	}
@@ -589,6 +591,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 							this.selected_y = y;
 						}
 						this.updating = false;
+						return;
 					}
 				}
 			}
@@ -692,6 +695,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 	public void update()
 	{
 		view.update();
+		system_view.update();
 		int x = 0, y = 0;
 		int rows = this.processor_array.getRows();
 		int columns = this.processor_array.getColumns();

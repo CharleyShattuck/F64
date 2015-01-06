@@ -77,6 +77,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 	{
 		this.processor = p;
 		this.setSize(1000,800);
+		this.setTitle("Single Processor View");
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		Insets panel_insets = new Insets( 0, 0, 0, 0);
 

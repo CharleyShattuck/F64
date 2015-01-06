@@ -25,29 +25,29 @@ public class Flags extends JPanel {
 		int y = 0;
 		Insets label_insets = new Insets( 0, 10, 0, 4);
 		Insets field_insets = new Insets( -4, 10, 0, 4);
-		label = new JLabel("Flags");
-		this.add(
-			label,
-			new GridBagConstraints(
-				x, y,
-				1, 1,
-				0.0, 1.0,
-				GridBagConstraints.WEST,
-				GridBagConstraints.BOTH,
-				label_insets,
-				2, 0
-			)
-		);
-		y += 1;
+//		label = new JLabel("Flags");
+//		this.add(
+//			label,
+//			new GridBagConstraints(
+//				x, y,
+//				1, 1,
+//				0.0, 1.0,
+//				GridBagConstraints.WEST,
+//				GridBagConstraints.BOTH,
+//				label_insets,
+//				2, 0
+//			)
+//		);
+//		y += 1;
 		this.flags = new JCheckBox[limit];
 		for (i=0; i<limit; ++i) {
 			this.flags[i] = new JCheckBox(Flag.values()[i].name());
 			this.flags[i].setToolTipText(Flag.values()[i].getTooltip());
 			this.flags[i].addItemListener(p);
 			this.add(
-					this.flags[i],
+				this.flags[i],
 				new GridBagConstraints(
-					x, y+i,
+					i < (com.F64.Processor.NO_OF_REG/2) ? x : x+2, i < (com.F64.Processor.NO_OF_REG/2) ? y+i : y+i - (com.F64.Processor.NO_OF_REG/2),
 					1, 1,
 					0.0, 1.0,
 					GridBagConstraints.WEST,
