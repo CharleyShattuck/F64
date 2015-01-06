@@ -184,28 +184,66 @@ public class Processor implements Runnable {
 		}
 	}
 
+	public long getFlagForInterrupt()
+	{
+		long res = this.system_register[SystemRegister.FLAG.ordinal()];
+		int aux_data = this.slot;
+		aux_data <<= 9;
+		if (this.port_read_mask != 0) {
+			aux_data |= this.port_read_mask;
+		}
+		else if (this.port_write_mask != 0) {
+			aux_data |= this.port_write_mask;
+			aux_data |= 0x100;
+		}
+		res = writeSlot(res, 0, (aux_data >> (2*SLOT_BITS)) & SLOT_MASK);
+		res = writeSlot(res, 1, (aux_data >> (1*SLOT_BITS)) & SLOT_MASK);
+		res = writeSlot(res, 2, (aux_data >> (0*SLOT_BITS)) & SLOT_MASK);
+		return res;
+	}
+	
+	public void setFlagForInterrupt(long data)
+	{
+		int aux_data = readSlot(data, 0);
+		aux_data <<= SLOT_BITS;
+		aux_data |= readSlot(data, 1);
+		aux_data <<= SLOT_BITS;
+		aux_data |= readSlot(data, 2);
+		int port = aux_data & 0xff;
+		if ((slot & 0x100) != 0) {
+			this.port_write_mask = port;
+		}
+		else {
+			this.port_read_mask = port;
+		}
+		aux_data >>= 9;
+		this.slot = aux_data;
+		long mask = -1;
+		this.system_register[SystemRegister.FLAG.ordinal()] = data & (mask >>> (3*SLOT_BITS));
+	}
+
 	public long getSystemRegister(int reg)
 	{
 		long res = this.system_register[reg];
-		if (reg == SystemRegister.FLAG.ordinal()) {
-			// fill in the slot bits into the upper 4 bits
-			long mask = -1;
-			res &= mask >>> 4;
-			mask = this.slot;
-			mask <<= (BIT_PER_CELL - 4);
-			res |= mask;
-		}
+//		if (reg == SystemRegister.FLAG.ordinal()) {
+//			// fill in the slot bits into the upper 4 bits
+//			long mask = -1;
+//			res &= mask >>> 4;
+//			mask = this.slot;
+//			mask <<= (BIT_PER_CELL - 4);
+//			res |= mask;
+//		}
 		return res;
 	}
-
+	
 	
 	public boolean setSystemRegister(int reg, long value)
 	{
-		if (reg == SystemRegister.FLAG.ordinal()) {
-			// upper 4 bits contain slot #
-			this.slot = (int)(value >>> (BIT_PER_CELL - 4));
-		}				
-		else if (reg == SystemRegister.INTE.ordinal()) {
+//		if (reg == SystemRegister.FLAG.ordinal()) {
+//			// upper 4 bits contain slot #
+//			this.slot = (int)(value >>> (BIT_PER_CELL - 4));
+//		}				
+		if (reg == SystemRegister.INTE.ordinal()) {
 			value |= Flag.RESET.getMask() | Flag.NMI.getMask();
 		}
 		else if (reg == SystemRegister.P.ordinal()) {
@@ -1240,7 +1278,7 @@ public class Processor implements Runnable {
 				case ADD:		this.doAdd(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
 				case SUB:		this.doSub(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
 				case OR:		this.doOr(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
-				case NOT:		this.doXNor(Register.T.ordinal(), Register.S.ordinal(), Register.Z.ordinal()); break;
+				case NOT:		this.doXNor(Register.T.ordinal(), Register.T.ordinal(), Register.Z.ordinal()); break;
 				case MUL2:		this.doMul2Add(Register.T.ordinal(), Register.T.ordinal(), Register.Z.ordinal()); break;
 				case DIV2:		this.doDiv2Sub(Register.T.ordinal(), Register.T.ordinal(), Register.Z.ordinal()); break;
 				case PUSH:		this.doPush(this.nextSlot()); break;
@@ -1427,7 +1465,10 @@ public class Processor implements Runnable {
 		//
 		this.pushReturnStack(this.register[Register.R.ordinal()]);
 		// save flags (with current slot)
-		this.pushReturnStack(this.getRegister(SystemRegister.FLAG));
+		this.pushReturnStack(this.getFlagForInterrupt());
+		this.port_read_mask = 0;
+		this.port_write_mask = 0;
+		this.waiting = false;
 		// save I
 		this.register[Register.R.ordinal()] = this.system_register[SystemRegister.I.ordinal()];
 		// load instruction from interrupt vector table
@@ -1441,7 +1482,8 @@ public class Processor implements Runnable {
 		// restore I
 		this.system_register[SystemRegister.I.ordinal()] = this.register[Register.R.ordinal()];
 		// restore flags with slot
-		this.setRegister(SystemRegister.FLAG, this.popReturnStack());
+		this.setFlagForInterrupt(this.popReturnStack());
+		this.waiting = (this.port_read_mask != 0) || (this.port_write_mask != 0);
 		// restore R
 		this.register[Register.R.ordinal()] = this.popReturnStack();
 		// clear interrupt service register
