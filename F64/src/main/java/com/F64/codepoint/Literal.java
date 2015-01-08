@@ -5,6 +5,8 @@ import com.F64.Ext1;
 import com.F64.ISA;
 import com.F64.Optimization;
 import com.F64.Processor;
+import com.F64.RegOp1;
+import com.F64.Register;
 
 
 public class Literal extends com.F64.Codepoint {
@@ -21,6 +23,25 @@ public class Literal extends com.F64.Codepoint {
 	@Override
 	public boolean optimize(Optimization opt)
 	{
+		if (this.getPrevious() == null) {return false;}
+		com.F64.Codepoint p = this.getPrevious();
+		if (p != null) {
+			switch (opt) {
+			case CONSTANT_FOLDING:
+				if (p instanceof Literal) {
+					// constant
+					Literal lit = (Literal) p;
+					if (lit.getValue() == this.value) {
+						this.replaceWith(new Dup());
+						return true;
+					}
+				}
+				break;
+
+			default:
+				break;
+			}
+		}
 		return false;
 	}
 	

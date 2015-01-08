@@ -82,6 +82,11 @@ public class Codepoint {
 	{
 		getOwner().replace(this, new_cp);
 	}
-	
+
+	public void remove()
+	{
+		getOwner().remove(this);
+	}
+
 	
 }

@@ -386,6 +386,14 @@ public class Compiler {
 		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 	}
 
+	public void generate(Ext2 opcode)
+	{
+		if (!doesFit(ISA.EXT2.ordinal(), opcode.ordinal())) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.EXT2.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
+	}
+
 	public void generate(RegOp1 opcode, int dest, int src1, int src2)
 	{
 		if (!doesFit(ISA.REGOP.ordinal(), opcode.ordinal(), src1, src2, dest)) {flush();}
@@ -404,42 +412,50 @@ public class Compiler {
 		getScope().add(cp);		
 	}
 
-	public void compile(ISA opcode)
-	{
-		getScope().add(new ISACode(opcode));
-	}
-
-	public void compile(ISA opcode, int arg0)
-	{
-		getScope().add(new ISACode(opcode, arg0));
-	}
-
-	public void compile(ISA opcode, int arg0, int arg1)
-	{
-		getScope().add(new ISACode(opcode, arg0, arg1));
-	}
-
-	public void compile(ISA opcode, int arg0, int arg1, int arg2)
-	{
-		getScope().add(new ISACode(opcode, arg0, arg1, arg2));
-	}
-
-	public void compile(ISA opcode, int arg0, int arg1, int arg2, int arg3)
-	{
-		getScope().add(new ISACode(opcode, arg0, arg1, arg2, arg3));
-	}
-
-	public void compile(ISA opcode, int arg0, int arg1, int arg2, int arg3, int arg4)
-	{
-		getScope().add(new ISACode(opcode, arg0, arg1, arg2, arg3, arg4));
-	}
+//	public void compile(ISA opcode)
+//	{
+//		getScope().add(new ISACode(opcode));
+//	}
+//
+//	public void compile(ISA opcode, int arg0)
+//	{
+//		getScope().add(new ISACode(opcode, arg0));
+//	}
+//
+//	public void compile(ISA opcode, int arg0, int arg1)
+//	{
+//		getScope().add(new ISACode(opcode, arg0, arg1));
+//	}
+//
+//	public void compile(ISA opcode, int arg0, int arg1, int arg2)
+//	{
+//		getScope().add(new ISACode(opcode, arg0, arg1, arg2));
+//	}
+//
+//	public void compile(ISA opcode, int arg0, int arg1, int arg2, int arg3)
+//	{
+//		getScope().add(new ISACode(opcode, arg0, arg1, arg2, arg3));
+//	}
+//
+//	public void compile(ISA opcode, int arg0, int arg1, int arg2, int arg3, int arg4)
+//	{
+//		getScope().add(new ISACode(opcode, arg0, arg1, arg2, arg3, arg4));
+//	}
 
 	public void optimize()
 	{
-		getMainScope().optimize(Optimization.CONSTANT_FOLDING);
-		getMainScope().optimize(Optimization.PEEPHOLE);
-		getMainScope().optimize(Optimization.DEAD_CODE_ELIMINATION);
-		getMainScope().optimize(Optimization.LOOP_UNROLLING);
+		boolean allowConstantFolding = true;
+		boolean allowPeepholeOptimization = true;
+		boolean allowDeadCodeElimkination = true;
+		boolean allowLoopUnrolling = true;
+		boolean cont = true;
+		while (cont) {
+			cont = false;
+			cont |= allowConstantFolding		&& getMainScope().optimize(Optimization.CONSTANT_FOLDING);
+			cont |= allowPeepholeOptimization	&& getMainScope().optimize(Optimization.PEEPHOLE);
+			cont |= allowDeadCodeElimkination	&& getMainScope().optimize(Optimization.DEAD_CODE_ELIMINATION);
+			cont |= allowLoopUnrolling			&& getMainScope().optimize(Optimization.LOOP_UNROLLING);
+		};
 	}
 	
 	public void generate()

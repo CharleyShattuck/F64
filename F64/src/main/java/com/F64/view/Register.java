@@ -5,6 +5,8 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -12,14 +14,17 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 @SuppressWarnings("serial")
-public class Register extends JPanel {
+public class Register extends JPanel implements ActionListener {
 	private JLabel[]			labels;
 	private JTextField[]		fields;
+	private boolean				updating;
+	private com.F64.Processor	processor;
 
 	
-	public Register()
+	public Register(com.F64.Processor processor)
 	{
 		super( new GridBagLayout() );
+		this.processor = processor;
 		int limit = com.F64.Processor.NO_OF_REG;
 		JLabel label;
 		int i;
@@ -65,6 +70,7 @@ public class Register extends JPanel {
 			JTextField field = new JTextField("", 20);
 			field.setFont(font);
 			field.setMinimumSize(registerFieldMin);
+			field.addActionListener(this);
 			if (i < com.F64.Register.values().length) {
 				label.setText(" "+com.F64.Register.values()[i].name());
 				label.setToolTipText(com.F64.Register.values()[i].getTooltip());
@@ -101,14 +107,40 @@ public class Register extends JPanel {
 		}	
 	}
 
-	
-	public void update(com.F64.Processor processor)
+	public void setProcessor(com.F64.Processor value) {processor = value;}
+
+	public void update()
 	{
 		for (int i=0; i<com.F64.Processor.NO_OF_REG; ++i) {
 			long value = processor.getRegister(i);
 			this.fields[i].setText(Processor.convertLongToString(value));
 		}
 
+	}
+
+
+	@Override
+	public void actionPerformed(ActionEvent ev)
+	{
+		if (this.updating) {return;}
+		Object source = ev.getSource();
+		for (int i=0; i<fields.length; ++i) {
+			if (fields[i] == source) {
+				if (i > 0) {// do not overwrite the Z register
+					try {
+						String txt = ev.getActionCommand();
+						long value = Long.parseLong(txt.replaceAll(" ", ""), 16);
+						this.processor.setRegister(i, value);
+					}
+					catch (Exception ex) {}
+				}
+				this.updating = true;
+				this.fields[i].setText(Processor.convertLongToString(this.processor.getRegister(i)));
+				this.updating = false;
+				return;
+			}
+		}
+		
 	}
 
 	

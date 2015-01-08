@@ -94,18 +94,27 @@ public class Dictionary {
 		this.register(".",			false,	new Dot());
 		this.register("+",			false,	new Add());
 		this.register("-",			false,	new Sub());
+		this.register("*",			false,	new Mul());
+		this.register("<<",			false,	new Asl());
+		this.register("<0?",		false,	new NegQ());
+		this.register(">>",			false,	new Asr());
+		this.register(">=0?",		false,	new PosQ());
 		this.register("2*",			false,	new Mul2());
 		this.register("2/",			false,	new Div2());
+		this.register("abs",		false,	new Abs());
 		this.register("and",		false,	new And());
 		this.register("drop",		false,	new Drop());
 		this.register("dup",		false,	new Dup());
 		this.register("exit",		true,	new Exit());
+		this.register("if",			false,	new If());
+		this.register("negate",		false,	new Negate());
 		this.register("nip",		false,	new Nip());
 		this.register("not",		false,	new Not());
 		this.register("or",			false,	new Or());
 		this.register("over",		false,	new Over());
 		this.register("swap",		false,	new Swap());
 		this.register("xor",		false,	new Xor());
+		this.register("zero",		false,	new Zero());
 	}
 
 }

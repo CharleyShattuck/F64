@@ -5,6 +5,8 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -12,13 +14,16 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 @SuppressWarnings("serial")
-public class SystemRegister extends JPanel {
+public class SystemRegister extends JPanel implements ActionListener {
 	private JLabel[]			labels;
 	private JTextField[]		fields;
+	private boolean				updating;
+	private com.F64.Processor	processor;
 
-	public SystemRegister()
+	public SystemRegister(com.F64.Processor processor)
 	{
 		super(new GridBagLayout());
+		this.processor = processor;
 		int limit = com.F64.SystemRegister.values().length;
 		JLabel label;
 		int i;
@@ -80,15 +85,39 @@ public class SystemRegister extends JPanel {
 			);
 		}
 	}
+
+	public void setProcessor(com.F64.Processor value) {processor = value;}
 	
-	
-	public void update(com.F64.Processor processor)
+	public void update()
 	{
 		for (int i=0; i<com.F64.SystemRegister.values().length; ++i) {
-			long value = processor.getRegister(com.F64.SystemRegister.values()[i]);
+			long value = processor.getSystemRegister(i);
 			this.fields[i].setText(Processor.convertLongToString(value));
 		}
 
+	}
+
+
+	@Override
+	public void actionPerformed(ActionEvent ev)
+	{
+		if (this.updating) {return;}
+		Object source = ev.getSource();
+		for (int i=0; i<fields.length; ++i) {
+			if (fields[i] == source) {
+				try {
+					String txt = ev.getActionCommand();
+					long value = Long.parseLong(txt.replaceAll(" ", ""), 16);
+					this.processor.setSystemRegister(i, value);
+				}
+				catch (Exception ex) {}
+				this.updating = true;
+				this.fields[i].setText(Processor.convertLongToString(this.processor.getSystemRegister(i)));
+				this.updating = false;
+				return;
+			}
+		}
+		
 	}
 
 }

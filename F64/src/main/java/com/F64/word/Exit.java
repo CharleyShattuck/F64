@@ -19,7 +19,7 @@ public class Exit extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(ISA.EXIT);
+		c.compile(new com.F64.codepoint.Exit());
 	}
 
 }

@@ -48,6 +48,8 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 	private Flags				flag_panel;
 	private Ports				port_panel;
 	private Slots				slot_panel;
+	private ParameterStack		parameter_stack;
+	private ReturnStack			return_stack;
 //	private JPanel				other_panel;
 	private volatile boolean	running;
 	private volatile boolean	tracing;
@@ -100,8 +102,10 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		this.scroll = new JScrollPane(this.main_panel);
 		this.main_split_pane.setBottomComponent(this.scroll);
 //		this.register_panel = new JPanel( new GridBagLayout() );
-		this.register_panel = new Register();
-		this.system_register_panel = new SystemRegister();
+		this.register_panel = new Register(p);
+		this.system_register_panel = new SystemRegister(p);
+		this.parameter_stack = new ParameterStack(p);
+		this.return_stack = new ReturnStack(p);
 		this.flag_panel = new Flags(this);
 		this.port_panel = new Ports();
 		this.slot_panel = new Slots();
@@ -113,6 +117,8 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		this.register_pane.addTab("Register", null, this.register_panel, "General purpose register");
 		this.register_pane.addTab("System", null, this.system_register_panel, "System register");
 		this.register_pane.addTab("Flags", null, this.flag_panel, "Flags");
+		this.register_pane.addTab("Stack", null, this.parameter_stack, "Parameter stack");
+		this.register_pane.addTab("Return", null, this.return_stack, "Return stack");
 		
 		int x = 0;
 		int y = 0;
@@ -228,8 +234,10 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 			this.port_panel.setBackground(null);
 			this.slot_panel.setBackground(null);
 		}
-		this.register_panel.update(processor);
-		this.system_register_panel.update(processor);
+		this.register_panel.update();
+		this.system_register_panel.update();
+		this.parameter_stack.update();
+		this.return_stack.update();
 //		for (i=0; i<com.F64.Processor.SLOT_SIZE; ++i) {
 //			long value = processor.getRegister(i);
 //			this.register_fields[i].setText(convertLongToString(value));
@@ -246,6 +254,10 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 	public void setProcessor(com.F64.Processor p)
 	{
 		this.processor = p;
+		this.register_panel.setProcessor(p);
+		this.system_register_panel.setProcessor(p);
+		this.parameter_stack.setProcessor(p);
+		this.return_stack.setProcessor(p);
 		this.update();
 	}
 

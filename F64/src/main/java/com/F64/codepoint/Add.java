@@ -17,15 +17,15 @@ public class Add extends com.F64.Codepoint {
 		if (p != null) {
 			switch (opt) {
 			case CONSTANT_FOLDING:
-				com.F64.Codepoint pp = this.getPrevious();
+				com.F64.Codepoint pp = p.getPrevious();
 				if (pp != null) {
 					if ((p instanceof Literal) && (pp instanceof Literal)) {
 						// constant
 						Literal lit1 = (Literal) pp;
 						Literal lit2 = (Literal) p;
 						lit1.setValue(lit1.getValue() + lit2.getValue());
-						this.getOwner().remove(lit2);
-						this.getOwner().remove(this);
+						lit2.remove();
+						this.remove();
 						return true;
 					}
 				}
@@ -39,33 +39,33 @@ public class Add extends com.F64.Codepoint {
 					long data = lit.getValue();
 					if (data == 0) {
 						// add by 0 does nothing
-						this.getOwner().remove(lit);
-						this.getOwner().remove(this);
+						lit.remove();
+						this.remove();
 						return true;
 					}
 					if (data > 0) {
 						if (data == 1) {
 							// increment
-							this.getOwner().replace(lit, new Inc());
-							this.getOwner().remove(this);
+							lit.replaceWith(new Inc());
+							this.remove();
 							return true;
 						}
 						if (data < Processor.SLOT_SIZE) {
-							this.getOwner().replace(lit, new RegOpCode(RegOp1.ADDI, Register.T.ordinal(), Register.T.ordinal(), (int)data));
-							this.getOwner().remove(this);
+							lit.replaceWith(new RegOpCode(RegOp1.ADDI, Register.T.ordinal(), Register.T.ordinal(), (int)data));
+							this.remove();
 							return true;
 						}
 					}
 					else {
 						if (data == -1) {
 							// decrement
-							this.getOwner().replace(lit, new Dec());
-							this.getOwner().remove(this);
+							lit.replaceWith(new Dec());
+							this.remove();
 							return true;
 						}
 						if (data > -Processor.SLOT_SIZE) {
-							this.getOwner().replace(lit, new RegOpCode(RegOp1.SUBI, Register.T.ordinal(), Register.T.ordinal(), -(int)data));
-							this.getOwner().remove(this);
+							lit.replaceWith(new RegOpCode(RegOp1.SUBI, Register.T.ordinal(), Register.T.ordinal(), -(int)data));
+							this.remove();
 							return true;
 						}
 					}

@@ -19,7 +19,7 @@ public class Mul2 extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(ISA.MUL2);
+		c.compile(new com.F64.codepoint.Mul2());
 	}
 
 }

@@ -1,7 +1,7 @@
 package com.F64;
 
 public enum Ext1 {
-	NOP(2,"no operation"),
+	RDROP(2,"drop R"),
 	EXITI(3,"return from interrupt (interrupt # in next slot)"),
 	ADDC(2,"add with carry"),
 	SUBC(2,"subtract with carry"),
@@ -11,6 +11,8 @@ public enum Ext1 {
 	ROR(2,"rotate right and copy least significant bit into carry"),
 	ROLC(2,"rotate left with carry"),
 	RORC(2,"rotate right with carry"),
+	SFLAG(3,"set flag (flag # in next slot)"),
+	CFLAG(3,"clear flag (flag # in next slot)"),
 	SBIT(3,"set bit in T and put old bit in carry (bit position in next slot)"),
 	CBIT(3,"clear bit in T and put old bit in carry (bit position in next slot)"),
 	TBIT(3,"toggle bit in T and put old bit in carry (bit position in next slot)"),

@@ -8,7 +8,7 @@ public class ProcessorArray {
 	private Processor[][]	array;
 
 	
-	public ProcessorArray(int columns, int rows, System system, BootROM rom)
+	public ProcessorArray(int columns, int rows, System system, BootROM rom, int stack_size, int return_stack_size)
 	{
 		this.system = system;
 		this.rom = rom;
@@ -17,7 +17,7 @@ public class ProcessorArray {
 		this.array = new Processor[rows][columns];
 		for (int y=0; y<rows; ++y) {
 			for (int x=0; x<columns; ++x) {
-				this.array[y][x] = new Processor(system, x, y, 0);
+				this.array[y][x] = new Processor(system, x, y, 0, stack_size, return_stack_size);
 			}
 		}
 	}

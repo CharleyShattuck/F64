@@ -1,6 +1,12 @@
 package com.F64;
 
 public enum Ext2 {
+	TUCK(2,"tuck ( n1 n2 - n2 n1 n2)"),
+	UNDER(2,"under ( n1 n2 - n1 n1 n2)"),
+	POSQ(2,"return true on non-negaive numbers ( n - flag)"),
+	NEGQ(2,"return true on negaive numbers ( n - flag)"),
+	ABS(2,"absolute ( n1 - n2)"),
+	NEGATE(2,"negate ( n1 - n2)"),
 	FETCHSYSTEM(3,"fetch system register (selector in next slot) ( - n)"),
 	STORESYSTEM(3,"store system register (selector in next slot) ( n -)"),
 	FETCHRES(2,"fetch and reserve memory location"),

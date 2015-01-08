@@ -20,7 +20,7 @@ public class Or extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(ISA.OR);
+		c.compile(new com.F64.codepoint.Or());
 	}
 
 }

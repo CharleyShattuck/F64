@@ -10,6 +10,23 @@ public class Inc extends com.F64.Codepoint {
 	@Override
 	public boolean optimize(Optimization opt)
 	{
+		if (this.getPrevious() == null) {return false;}
+		com.F64.Codepoint p = this.getPrevious();
+		if (p != null) {
+			switch (opt) {
+			case CONSTANT_FOLDING:
+				if (p instanceof Literal) {
+					Literal lit = (Literal) p;
+					lit.setValue(lit.getValue() + 1);
+					this.remove();
+					return true;
+				}
+				break;
+
+			default:
+				break;
+			}
+		}
 		return false;
 	}
 	

@@ -19,7 +19,7 @@ public class Zero extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(ISA.AND);
+		c.compile(new com.F64.codepoint.Zero());
 	}
 
 }

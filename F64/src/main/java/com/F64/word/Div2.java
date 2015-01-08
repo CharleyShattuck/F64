@@ -19,7 +19,7 @@ public class Div2 extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(ISA.DIV2);
+		c.compile(new com.F64.codepoint.Div2());
 	}
 
 }

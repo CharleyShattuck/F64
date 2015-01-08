@@ -21,8 +21,8 @@ public class Mul extends com.F64.Codepoint {
 						Literal lit1 = (Literal) pp;
 						Literal lit2 = (Literal) p;
 						lit1.setValue(lit1.getValue() * lit2.getValue());
-						this.getOwner().remove(lit2);
-						this.getOwner().remove(this);
+						lit2.remove();
+						this.remove();
 						return true;
 					}
 				}
@@ -36,20 +36,20 @@ public class Mul extends com.F64.Codepoint {
 					long data = lit.getValue();
 					if (data == 0) {
 						// multiply with 0 give always 0
-						this.getOwner().replace(lit, new Zero());
-						this.getOwner().remove(this);
+						lit.replaceWith(new Zero());
+						this.remove();
 						return true;
 					}
 					if (data == 1) {
 						// multiply with 1 does nothing
-						this.getOwner().remove(lit);
-						this.getOwner().remove(this);
+						lit.remove();
+						this.remove();
 						return true;
 					}
 					if (data == -1) {
 						// multiply with 1 is negate
-						this.getOwner().replace(lit, new Negate());
-						this.getOwner().remove(this);
+						lit.replaceWith(new Negate());
+						this.remove();
 						return true;
 					}
 					if (Processor.countBits(data) == 1) {
@@ -57,13 +57,13 @@ public class Mul extends com.F64.Codepoint {
 						int bit_pos = Processor.findFirstBit1(data);
 						if (bit_pos == 1) {
 							// multiply by 2
-							this.getOwner().replace(lit, new Mul2());
-							this.getOwner().remove(this);
+							lit.replaceWith(new Mul2());
+							this.remove();
 							return true;
 						}
 						// shift by bit_pos
-						this.getOwner().replace(lit, new Asl(bit_pos));
-						this.getOwner().remove(this);
+						lit.replaceWith(new Asl(bit_pos));
+						this.remove();
 						return true;
 					}
 				}

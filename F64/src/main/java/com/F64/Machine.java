@@ -45,7 +45,7 @@ public class Machine {
 			system.setMemory(i, interrupt_code);
 		}
 		//
-		processor_array = new ProcessorArray(columns, rows, system, rom);
+		processor_array = new ProcessorArray(columns, rows, system, rom, 0x40, 0x80);
 		processor = processor_array.getProcessor(0, 0);
 		dictionary = new Dictionary(system);
 		dictionary.createStandardWords();
@@ -78,7 +78,7 @@ public class Machine {
 	
 	public static void main(String[] args)
 	{
-		Machine main = new Machine(8, 4, 10000, 100000, 1024, 1024, 10);
+		Machine main = new Machine(8, 4, 10000, 100000, 32, 16, 10);
 		main.interpret();
 	}
 

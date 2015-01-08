@@ -78,7 +78,7 @@ public class If extends com.F64.Scope {
 								cond = Condition.NEVER;
 							}
 						}
-						this.getOwner().remove(lit);
+						lit.remove();
 						res = true;
 					}
 				}
