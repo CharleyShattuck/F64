@@ -270,7 +270,7 @@ public class Processor implements Runnable {
 		return data;
 	}
 
-	public long rolc(long data, int shift, boolean carry)
+	public long rcl(long data, int shift, boolean carry)
 	{
 		boolean c;
 		shift &= BIT_PER_CELL-1;
@@ -289,7 +289,7 @@ public class Processor implements Runnable {
 		return data;
 	}
 
-	public long rorc(long data, int shift, boolean carry)
+	public long rcr(long data, int shift, boolean carry)
 	{
 		boolean c;
 		shift &= BIT_PER_CELL-1;
@@ -1379,6 +1379,44 @@ public class Processor implements Runnable {
 		this.setRegister(d, dest);
 	}
 
+
+	public void doRol(int d, int s1, int s2)
+	{
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest = this.rol(src1, (int)src2);
+		this.setFlag(Flag.CARRY, this.carry);
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
+	}
+
+	public void doRor(int d, int s1, int s2)
+	{
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest = this.ror(src1, (int)src2);
+		this.setFlag(Flag.CARRY, this.carry);
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
+	}
+
+	public void doRoli(int d, int s1, int src2)
+	{
+		long src1 = this.getRegister(s1);
+		long dest = this.rol(src1, src2);
+		this.setFlag(Flag.CARRY, this.carry);
+		this.setRegister(d, dest);
+	}
+
+	public void doRori(int d, int s1, int src2)
+	{
+		long src1 = this.getRegister(s1);
+		long dest = this.ror(src1, src2);
+		this.setFlag(Flag.CARRY, this.carry);
+		this.setRegister(d, dest);
+	}
+
+	
 	public void doMul2Add(int d, int s1, int s2)
 	{
 		long src1 = this.getRegister(s1);
@@ -1631,15 +1669,15 @@ public class Processor implements Runnable {
 		setFlag(Flag.CARRY, this.carry);
 	}
 
-	public void doRolc(int reg, int shift)
+	public void doRcl(int reg, int shift)
 	{
-		this.register[reg] = this.rolc(this.register[reg], shift, getFlag(Flag.CARRY));
+		this.register[reg] = this.rcl(this.register[reg], shift, getFlag(Flag.CARRY));
 		setFlag(Flag.CARRY, this.carry);
 	}
 
-	public void doRorc(int reg, int shift)
+	public void doRcr(int reg, int shift)
 	{
-		this.register[reg] = this.rorc(this.register[reg], shift, getFlag(Flag.CARRY));
+		this.register[reg] = this.rcr(this.register[reg], shift, getFlag(Flag.CARRY));
 		setFlag(Flag.CARRY, this.carry);
 	}
 
@@ -1925,8 +1963,8 @@ public class Processor implements Runnable {
 		case DIVS:		this.doDivideStep(); break;
 		case ROL:		this.doRol(Register.T.ordinal(), 1); break;
 		case ROR:		this.doRor(Register.T.ordinal(), 1); break;
-		case ROLC:		this.doRolc(Register.T.ordinal(), 1); break;
-		case RORC:		this.doRorc(Register.T.ordinal(), 1); break;
+		case RCL:		this.doRcl(Register.T.ordinal(), 1); break;
+		case RCR:		this.doRcr(Register.T.ordinal(), 1); break;
 		case SFLAG:		this.doSetFlags(this.nextSlot()); break;
 		case CFLAG:		this.doClearFlags(this.nextSlot()); break;
 		case SBIT:		this.doSetBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
@@ -1975,8 +2013,8 @@ public class Processor implements Runnable {
 		case NEGATE:		this.doNegate(Register.T.ordinal()); break;
 		case ROL:			this.doRol(Register.T.ordinal(), this.nextSlot()); break;
 		case ROR:			this.doRor(Register.T.ordinal(), this.nextSlot()); break;
-		case ROLC:			this.doRolc(Register.T.ordinal(), this.nextSlot()); break;
-		case RORC:			this.doRorc(Register.T.ordinal(), this.nextSlot()); break;
+		case RCL:			this.doRcl(Register.T.ordinal(), this.nextSlot()); break;
+		case RCR:			this.doRcr(Register.T.ordinal(), this.nextSlot()); break;
 		case FETCHSYSTEM:	this.doFetchSystem(this.nextSlot()); break;
 		case STORESYSTEM:	this.doStoreSystem(this.nextSlot()); break;
 		case FETCHRES:	this.doFetchReserved(); break;
@@ -1996,8 +2034,8 @@ public class Processor implements Runnable {
 		case NEGATE:		this.doNegate(this.nextSlot()); break;
 		case ROL:			this.doRol(this.nextSlot(), 1); break;
 		case ROR:			this.doRor(this.nextSlot(), 1); break;
-		case ROLC:			this.doRolc(this.nextSlot(), 1); break;
-		case RORC:			this.doRorc(this.nextSlot(), 1); break;
+		case RCL:			this.doRcl(this.nextSlot(), 1); break;
+		case RCR:			this.doRcr(this.nextSlot(), 1); break;
 		default: this.interrupt(Flag.ILLEGAL);
 		}
 	}
@@ -2007,8 +2045,8 @@ public class Processor implements Runnable {
 		switch (Ext4.values()[this.nextSlot()]) {
 		case ROL:			this.doRol(this.nextSlot(), this.nextSlot()); break;
 		case ROR:			this.doRor(this.nextSlot(), this.nextSlot()); break;
-		case ROLC:			this.doRolc(this.nextSlot(), this.nextSlot()); break;
-		case RORC:			this.doRorc(this.nextSlot(), this.nextSlot()); break;
+		case RCL:			this.doRcl(this.nextSlot(), this.nextSlot()); break;
+		case RCR:			this.doRcr(this.nextSlot(), this.nextSlot()); break;
 		default: this.interrupt(Flag.ILLEGAL);
 		}
 	}
@@ -2153,10 +2191,14 @@ public class Processor implements Runnable {
 		case ASR: this.doAsr(d, s1, s2); break;
 		case LSL: this.doLsl(d, s1, s2); break;
 		case LSR: this.doLsr(d, s1, s2); break;
+		case ROL: this.doRol(d, s1, s2); break;
+		case ROR: this.doRor(d, s1, s2); break;
 		case ASLI: this.doAsli(d, s1, s2); break;
 		case ASRI: this.doAsri(d, s1, s2); break;
 		case LSLI: this.doLsli(d, s1, s2); break;
 		case LSRI: this.doLsri(d, s1, s2); break;
+		case ROLI: this.doRoli(d, s1, s2); break;
+		case RORI: this.doRori(d, s1, s2); break;
 		case MUL2ADD: this.doMul2Add(d, s1, s2); break;
 		case DIV2SUB: this.doDiv2Sub(d, s1, s2); break;
 		default: this.interrupt(Flag.ILLEGAL);

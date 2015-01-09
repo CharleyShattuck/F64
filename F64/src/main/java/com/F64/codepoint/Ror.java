@@ -7,15 +7,15 @@ import com.F64.Processor;
 import com.F64.RegOp1;
 import com.F64.Register;
 
-public class Rol extends com.F64.Codepoint {
+public class Ror extends com.F64.Codepoint {
 	private	int			cnt;
 
-	public Rol()
+	public Ror()
 	{
 		cnt = -1;
 	}
 
-	public Rol(int value)
+	public Ror(int value)
 	{
 		cnt = value;
 	}
@@ -37,7 +37,7 @@ public class Rol extends com.F64.Codepoint {
 						Literal lit2 = (Literal) p;
 						long data = lit1.getValue();
 						int shift = (int)(lit2.getValue() & (Processor.BIT_PER_CELL-1));
-						lit1.setValue(processor.rol(data, shift));
+						lit1.setValue(processor.ror(data, shift));
 						lit2.replaceWith(new Carry(processor.getInternalCarry()));
 						this.remove();
 						return true;
@@ -56,12 +56,12 @@ public class Rol extends com.F64.Codepoint {
 						this.remove();
 						return true;
 					}
-					lit.replaceWith(new Rol(shift));
+					lit.replaceWith(new Ror(shift));
 					this.remove();
 					return true;
 				}
-				if (p instanceof Rol) {
-					Rol prev = (Rol)p;
+				if (p instanceof Ror) {
+					Ror prev = (Ror)p;
 					if ((this.cnt >= 0) && (prev.cnt >= 0)) {
 						prev.cnt = (prev.cnt+this.cnt) & (Processor.BIT_PER_CELL-1);
 						this.remove();
@@ -80,10 +80,10 @@ public class Rol extends com.F64.Codepoint {
 	public void generate(Compiler c)
 	{
 		if (cnt == -1) {
-			c.generate(Ext1.ROL);
+			c.generate(Ext1.ROR);
 		}
 		else {
-			c.generate(RegOp1.ROLI, Register.T.ordinal(), Register.T.ordinal(), cnt);
+			c.generate(RegOp1.RORI, Register.T.ordinal(), Register.T.ordinal(), cnt);
 		}
 	}
 

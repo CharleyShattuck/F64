@@ -17,8 +17,27 @@ public class Nip extends com.F64.Codepoint {
 
 			case PEEPHOLE:
 				if (p instanceof Under) {
+					// under nip ->
 					p.remove();
 					this.remove();
+					return true;
+				}
+				if (p instanceof Swap) {
+					// swap nip -> drop
+					p.replaceWith(new Drop());
+					this.remove();
+					return true;
+				}
+				if (p instanceof Over) {
+					// over nip -> drop dup
+					p.replaceWith(new Drop());
+					this.replaceWith(new Dup());
+					return true;
+				}
+				if (p instanceof Tuck) {
+					// tuck nip -> nip dup
+					p.replaceWith(new Nip());
+					this.replaceWith(new Dup());
 					return true;
 				}
 				break;

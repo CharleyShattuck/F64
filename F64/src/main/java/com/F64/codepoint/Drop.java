@@ -24,16 +24,34 @@ public class Drop extends com.F64.Codepoint {
 
 
 			case PEEPHOLE:
-				if (p instanceof Dup) {
-					// the sequence dup drop does nothing and can be deleted
+				if ((p instanceof Dup) || (p instanceof Over)) {
+					// dup drop ->
+					// over drop ->
 					p.remove();
 					this.remove();
 					return true;
 				}
+				if (p instanceof Swap) {
+					// swap drop -> nip
+					p.replaceWith(new Nip());
+					this.remove();
+					return true;
+				}
 				if (p instanceof Under) {
-					// the sequence dup drop does nothing and can be deleted
+					// under drop -> drop dup
 					p.replaceWith(new Drop());
 					this.replaceWith(new Dup());
+					return true;
+				}
+				if (p instanceof Nip) {
+					// nip drop -> drop drop
+					p.replaceWith(new Drop());
+					return true;
+				}
+				if (p instanceof Tuck) {
+					// tuck drop -> swap
+					p.replaceWith(new Swap());
+					this.remove();
 					return true;
 				}
 				break;

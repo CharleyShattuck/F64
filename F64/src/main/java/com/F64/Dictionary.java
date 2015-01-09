@@ -96,9 +96,13 @@ public class Dictionary {
 		this.register("-",			false,	new Sub());
 		this.register("*",			false,	new Mul());
 		this.register("<<",			false,	new Asl());
+		this.register("<<<",		false,	new Lsl());
 		this.register("<0?",		false,	new NegQ());
 		this.register(">>",			false,	new Asr());
+		this.register(">>>",		false,	new Lsr());
 		this.register(">=0?",		false,	new PosQ());
+		this.register(">>^",		false,	new Ror());
+		this.register("^<<",		false,	new Rol());
 		this.register("1+",			false,	new Inc());
 		this.register("1-",			false,	new Dec());
 		this.register("2*",			false,	new Mul2());
@@ -116,6 +120,8 @@ public class Dictionary {
 		this.register("or",			false,	new Or());
 		this.register("over",		false,	new Over());
 		this.register("swap",		false,	new Swap());
+		this.register("tuck",		false,	new Tuck());
+		this.register("under",		false,	new Under());
 		this.register("xor",		false,	new Xor());
 		this.register("zero",		false,	new Zero());
 	}

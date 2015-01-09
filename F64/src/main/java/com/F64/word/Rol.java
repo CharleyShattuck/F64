@@ -5,13 +5,13 @@ import com.F64.Interpreter;
 import com.F64.Processor;
 import com.F64.Register;
 
-public class Asl extends com.F64.Word {
+public class Rol extends com.F64.Word {
 
 	@Override
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.setRegister(Register.T, p.asl(p.getRegister(Register.S), (int)p.getRegister(Register.T)));
+		p.setRegister(Register.T, p.rol(p.getRegister(Register.S), (int)p.getRegister(Register.T)));
 		p.doNip();
 	}
 
@@ -19,7 +19,8 @@ public class Asl extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(new com.F64.codepoint.Asl());
+		c.compile(new com.F64.codepoint.Rol());
 	}
+
 
 }

@@ -5,8 +5,8 @@ public enum Ext3 {
 	NEGATE(2,"negate (register in next slot)"),
 	ROL(3,"rotate left and copy most significant bit into carry (register in next slot)"),
 	ROR(3,"rotate right and copy least significant bit into carry (register in next slot)"),
-	ROLC(3,"rotate left with carry (register in next slot)"),
-	RORC(3,"rotate right with carry (register in next slot)");
+	RCL(3,"rotate left with carry (register in next slot)"),
+	RCR(3,"rotate right with carry (register in next slot)");
 
 	private int size;
 	private String tooltip;
