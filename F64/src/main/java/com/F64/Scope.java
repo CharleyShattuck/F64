@@ -1,15 +1,37 @@
 package com.F64;
 
 public class Scope extends Codepoint {
-	private Codepoint	head;
-	private Codepoint	tail;
-
+	private Codepoint							head;
+	private Codepoint							tail;
+	private java.util.ArrayList<Precondition>	preconditions;
+	
 	public Codepoint getHead() {return head;}
 	public Codepoint getTail() {return tail;}
 
 	public Scope(Scope parent)
 	{
 		this.setOwner(parent);
+	}
+
+	public void addPrecondition(Precondition pc)
+	{
+		if (preconditions == null) {
+			preconditions = new java.util.ArrayList<Precondition>();
+		}
+		preconditions.add(pc);
+	}
+	
+	public boolean hasPrecondition(Codepoint cp, Precondition pc)
+	{
+		if ((preconditions != null) && (head == cp)) {
+			int limit = preconditions.size();
+			for (int i=0; i<limit; ++i) {
+				if (preconditions.get(i) == pc) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public void add(Codepoint cp)

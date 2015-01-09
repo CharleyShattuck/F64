@@ -5,7 +5,7 @@ import com.F64.ISA;
 import com.F64.Optimization;
 import com.F64.Register;
 
-public class Zero extends com.F64.Codepoint {
+public class Ones extends com.F64.Codepoint {
 
 	@Override
 	public boolean optimize(Optimization opt)
@@ -17,17 +17,17 @@ public class Zero extends com.F64.Codepoint {
 			case CONSTANT_FOLDING:
 				if (p instanceof Literal) {
 					Literal lit = (Literal) p;
-					lit.setValue(0);
+					lit.setValue(-1L);
 					this.remove();
 					return true;
 				}
 				if (p instanceof Dup) {
-					p.replaceWith(new Literal(0));
+					p.replaceWith(new Literal(-1L));
 					this.remove();
 					return true;					
 				}
 				if (p instanceof Over) {
-					p.replaceWith(new Literal(0));
+					p.replaceWith(new Literal(-1L));
 					this.remove();
 					return true;					
 				}
@@ -44,6 +44,8 @@ public class Zero extends com.F64.Codepoint {
 	public void generate(Compiler c)
 	{
 		c.generate(ISA.MOV, Register.T.ordinal(), Register.Z.ordinal());
+		c.generate(ISA.NOT);
 	}
+
 
 }

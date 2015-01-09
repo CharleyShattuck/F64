@@ -6,15 +6,15 @@ import com.F64.Processor;
 import com.F64.RegOp1;
 import com.F64.Register;
 
-public class Asl extends com.F64.Codepoint {
+public class Lsr extends com.F64.Codepoint {
 	private	int			cnt;
 
-	public Asl()
+	public Lsr()
 	{
 		cnt = -1;
 	}
 
-	public Asl(int value)
+	public Lsr(int value)
 	{
 		cnt = value;
 	}
@@ -34,7 +34,7 @@ public class Asl extends com.F64.Codepoint {
 						// constant
 						Literal lit1 = (Literal) pp;
 						Literal lit2 = (Literal) p;
-						lit1.setValue(lit1.getValue() << lit2.getValue());
+						lit1.setValue(lit1.getValue() >>> lit2.getValue());
 						lit2.remove();
 						this.remove();
 						return true;
@@ -56,13 +56,13 @@ public class Asl extends com.F64.Codepoint {
 					}
 					if (data > 0) {
 						if (data < Processor.SLOT_SIZE) {
-							lit.replaceWith(new Asl((int)data));
+							lit.replaceWith(new Lsr((int)data));
 							this.remove();
 							return true;
 						}
 						else {
-							this.getOwner().replace(lit, new Zero());
-							this.getOwner().remove(this);
+							lit.replaceWith(new Zero());
+							this.remove();
 							return true;
 						}
 					}
@@ -74,7 +74,7 @@ public class Asl extends com.F64.Codepoint {
 							return true;
 						}
 						lit.setValue(-data);
-						this.replaceWith(new Asr());
+						this.replaceWith(new Lsl());
 						return true;
 					}
 				}
@@ -90,10 +90,10 @@ public class Asl extends com.F64.Codepoint {
 	public void generate(Compiler c)
 	{
 		if (cnt == -1) {
-			c.generate(RegOp1.ASL, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
+			c.generate(RegOp1.LSR, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
 		}
 		else {
-			c.generate(RegOp1.ASLI, Register.T.ordinal(), Register.T.ordinal(), cnt);
+			c.generate(RegOp1.LSRI, Register.T.ordinal(), Register.T.ordinal(), cnt);
 		}
 	}
 

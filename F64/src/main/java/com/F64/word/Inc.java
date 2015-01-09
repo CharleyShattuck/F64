@@ -18,7 +18,8 @@ public class Inc extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(new com.F64.codepoint.Inc());
+		c.compile(new com.F64.codepoint.Literal(1));
+		c.compile(new com.F64.codepoint.Add());
 	}
 
 

@@ -11,7 +11,7 @@ public class NegQ extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doNegQ();
+		p.doNegQ(Register.T.ordinal());
 	}
 
 	@Override

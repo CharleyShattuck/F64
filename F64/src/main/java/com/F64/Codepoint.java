@@ -17,6 +17,13 @@ public class Codepoint {
 	{
 	}
 
+	public boolean hasPrecondition(Precondition pc)
+	{
+		if (owner != null) {
+			return owner.hasPrecondition(this, pc);
+		}
+		return false;
+	}
 
 //	public void addReference(Codepoint p)
 //	{

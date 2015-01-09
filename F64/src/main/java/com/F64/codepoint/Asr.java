@@ -34,7 +34,7 @@ public class Asr extends com.F64.Codepoint {
 						// constant
 						Literal lit1 = (Literal) pp;
 						Literal lit2 = (Literal) p;
-						lit1.setValue(lit1.getValue() << lit2.getValue());
+						lit1.setValue(lit1.getValue() >> lit2.getValue());
 						lit2.remove();
 						this.remove();
 						return true;
@@ -56,7 +56,7 @@ public class Asr extends com.F64.Codepoint {
 					}
 					if (data > 0) {
 						if (data < Processor.SLOT_SIZE) {
-							lit.replaceWith(new Asl((int)data));
+							lit.replaceWith(new Asr((int)data));
 							this.remove();
 							return true;
 						}
@@ -68,7 +68,7 @@ public class Asr extends com.F64.Codepoint {
 					}
 					else {
 						if (data == -0x8000_0000_0000_0000L) {
-							// decrement
+							assert(false);
 							lit.remove();
 							this.remove();
 							return true;
@@ -90,10 +90,10 @@ public class Asr extends com.F64.Codepoint {
 	public void generate(Compiler c)
 	{
 		if (cnt == -1) {
-			c.generate(RegOp1.ASL, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
+			c.generate(RegOp1.ASR, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
 		}
 		else {
-			c.generate(RegOp1.ASLI, Register.T.ordinal(), Register.T.ordinal(), cnt);
+			c.generate(RegOp1.ASRI, Register.T.ordinal(), Register.T.ordinal(), cnt);
 		}
 	}
 

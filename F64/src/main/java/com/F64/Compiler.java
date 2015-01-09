@@ -394,6 +394,23 @@ public class Compiler {
 		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 	}
 
+	public void generate(Ext3 opcode)
+	{
+		if (!doesFit(ISA.EXT3.ordinal(), opcode.ordinal())) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.EXT3.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
+	}
+
+	public void generate(Ext3 opcode, int reg)
+	{
+		if (!doesFit(ISA.EXT3.ordinal(), opcode.ordinal(), reg)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.EXT3.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, reg);
+		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
+	}
+
 	public void generate(RegOp1 opcode, int dest, int src1, int src2)
 	{
 		if (!doesFit(ISA.REGOP.ordinal(), opcode.ordinal(), src1, src2, dest)) {flush();}
@@ -444,17 +461,17 @@ public class Compiler {
 
 	public void optimize()
 	{
-		boolean allowConstantFolding = true;
-		boolean allowPeepholeOptimization = true;
 		boolean allowDeadCodeElimkination = true;
 		boolean allowLoopUnrolling = true;
+		boolean allowConstantFolding = true;
+		boolean allowPeepholeOptimization = true;
 		boolean cont = true;
 		while (cont) {
 			cont = false;
 			cont |= allowConstantFolding		&& getMainScope().optimize(Optimization.CONSTANT_FOLDING);
-			cont |= allowPeepholeOptimization	&& getMainScope().optimize(Optimization.PEEPHOLE);
 			cont |= allowDeadCodeElimkination	&& getMainScope().optimize(Optimization.DEAD_CODE_ELIMINATION);
 			cont |= allowLoopUnrolling			&& getMainScope().optimize(Optimization.LOOP_UNROLLING);
+			cont |= allowPeepholeOptimization	&& getMainScope().optimize(Optimization.PEEPHOLE);
 		};
 	}
 	

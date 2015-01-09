@@ -3,6 +3,7 @@ package com.F64.word;
 import com.F64.Compiler;
 import com.F64.Interpreter;
 import com.F64.Processor;
+import com.F64.Register;
 
 public class Negate extends com.F64.Word {
 
@@ -10,7 +11,7 @@ public class Negate extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doNegate();
+		p.doNegate(Register.T.ordinal());
 	}
 
 	@Override

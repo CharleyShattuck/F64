@@ -99,6 +99,8 @@ public class Dictionary {
 		this.register("<0?",		false,	new NegQ());
 		this.register(">>",			false,	new Asr());
 		this.register(">=0?",		false,	new PosQ());
+		this.register("1+",			false,	new Inc());
+		this.register("1-",			false,	new Dec());
 		this.register("2*",			false,	new Mul2());
 		this.register("2/",			false,	new Div2());
 		this.register("abs",		false,	new Abs());
@@ -110,6 +112,7 @@ public class Dictionary {
 		this.register("negate",		false,	new Negate());
 		this.register("nip",		false,	new Nip());
 		this.register("not",		false,	new Not());
+		this.register("ones",		false,	new Ones());
 		this.register("or",			false,	new Or());
 		this.register("over",		false,	new Over());
 		this.register("swap",		false,	new Swap());

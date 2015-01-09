@@ -3,27 +3,13 @@ package com.F64.codepoint;
 import com.F64.Compiler;
 import com.F64.Optimization;
 import com.F64.Processor;
-import com.F64.RegOp1;
-import com.F64.Register;
 
-public class Asl extends com.F64.Codepoint {
-	private	int			cnt;
-
-	public Asl()
-	{
-		cnt = -1;
-	}
-
-	public Asl(int value)
-	{
-		cnt = value;
-	}
+public class Div extends com.F64.Codepoint {
 
 	@Override
 	public boolean optimize(Optimization opt)
 	{
 		if (this.getPrevious() == null) {return false;}
-		if (this.cnt >= 0) {return false;}
 		com.F64.Codepoint p = this.getPrevious();
 		if (p != null) {
 			switch (opt) {
@@ -34,7 +20,7 @@ public class Asl extends com.F64.Codepoint {
 						// constant
 						Literal lit1 = (Literal) pp;
 						Literal lit2 = (Literal) p;
-						lit1.setValue(lit1.getValue() << lit2.getValue());
+						lit1.setValue(lit1.getValue() / lit2.getValue());
 						lit2.remove();
 						this.remove();
 						return true;
@@ -49,32 +35,35 @@ public class Asl extends com.F64.Codepoint {
 					Literal lit = (Literal) p;
 					long data = lit.getValue();
 					if (data == 0) {
-						// add by 0 does nothing
+						// division by 0 is illegal
+						assert(false);
+						this.remove();
+						return true;
+					}
+					if (data == 1) {
+						// division by 1 does nothing
 						lit.remove();
 						this.remove();
 						return true;
 					}
-					if (data > 0) {
-						if (data < Processor.SLOT_SIZE) {
-							lit.replaceWith(new Asl((int)data));
-							this.remove();
-							return true;
-						}
-						else {
-							this.getOwner().replace(lit, new Zero());
-							this.getOwner().remove(this);
-							return true;
-						}
+					if (data == -1) {
+						// division by -1 is negate
+						lit.replaceWith(new Negate());
+						this.remove();
+						return true;
 					}
-					else {
-						if (data == -0x8000_0000_0000_0000L) {
-							assert(false);
-							lit.remove();
+					if (Processor.countBits(data) == 1) {
+						// division by a power of 2 can be realized with a shift operation
+						int bit_pos = Processor.findFirstBit1(data);
+						if (bit_pos == 1) {
+							// divide by 2
+							lit.replaceWith(new Div2());
 							this.remove();
 							return true;
 						}
-						lit.setValue(-data);
-						this.replaceWith(new Asr());
+						// shift by bit_pos
+						lit.replaceWith(new Asr(bit_pos));
+						this.remove();
 						return true;
 					}
 				}
@@ -89,13 +78,7 @@ public class Asl extends com.F64.Codepoint {
 	@Override
 	public void generate(Compiler c)
 	{
-		if (cnt == -1) {
-			c.generate(RegOp1.ASL, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
-		}
-		else {
-			c.generate(RegOp1.ASLI, Register.T.ordinal(), Register.T.ordinal(), cnt);
-		}
+		
 	}
-
 
 }

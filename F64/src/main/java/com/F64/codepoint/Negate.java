@@ -2,9 +2,22 @@ package com.F64.codepoint;
 
 import com.F64.Compiler;
 import com.F64.Ext2;
+import com.F64.Ext3;
 import com.F64.Optimization;
+import com.F64.Register;
 
 public class Negate extends com.F64.Codepoint {
+	private int reg;
+
+	public Negate()
+	{
+		reg = -1;
+	}
+
+	public Negate(int reg)
+	{
+		this.reg = reg;
+	}
 
 	@Override
 	public boolean optimize(Optimization opt)
@@ -43,7 +56,12 @@ public class Negate extends com.F64.Codepoint {
 	@Override
 	public void generate(Compiler c)
 	{
-		c.generate(Ext2.NEGATE);
+		if ((reg < 0) || (reg == Register.T.ordinal())) {
+			c.generate(Ext2.NEGATE);
+		}
+		else {
+			c.generate(Ext3.NEGATE, reg);			
+		}
 	}
 
 }

@@ -47,7 +47,7 @@ public class Mul extends com.F64.Codepoint {
 						return true;
 					}
 					if (data == -1) {
-						// multiply with 1 is negate
+						// multiply with -1 is negate
 						lit.replaceWith(new Negate());
 						this.remove();
 						return true;
@@ -56,7 +56,7 @@ public class Mul extends com.F64.Codepoint {
 						// multiply with a power of 2 can be realized with a shift operation
 						int bit_pos = Processor.findFirstBit1(data);
 						if (bit_pos == 1) {
-							// multiply by 2
+							// multiply with 2
 							lit.replaceWith(new Mul2());
 							this.remove();
 							return true;

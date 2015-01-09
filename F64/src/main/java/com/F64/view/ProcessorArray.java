@@ -43,6 +43,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 	private JButton				step;
 	private JButton				stop;
 	private JButton				reset;
+	private JButton				power_on;
 	private JScrollPane 		scroll;
 	private JPanel				main_panel;
 	private int					selected_x;
@@ -507,6 +508,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 		this.step = new JButton("Step");
 		this.stop = new JButton("Stop");
 		this.reset = new JButton("Reset");
+		this.power_on = new JButton("Power on");
 
 		this.toolbar = new JToolBar();
 		this.toolbar.setFloatable(false);
@@ -516,6 +518,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 		this.toolbar.add(this.stop);
 		this.toolbar.add(this.go);
 		this.toolbar.add(this.reset);
+		this.toolbar.add(this.power_on);
 		this.main_panel = new JPanel( new GridBagLayout() );
 		this.main_split_pane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		this.scroll = new JScrollPane(this.main_panel);
@@ -531,6 +534,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 		this.step.addActionListener(this);
 		this.stop.addActionListener(this);
 		this.reset.addActionListener(this);
+		this.power_on.addActionListener(this);
 		this.add(this.main_split_pane);
 
 		this.interpreter = i;
@@ -570,6 +574,9 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 		}
 		else if (source == this.go) {
 			this.go();
+		}
+		else if (source == this.power_on) {
+			this.powerOn();
 		}
 		else {
 			int rows = this.processor_array.getRows();
@@ -689,6 +696,13 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 	{
 		this.stop();
 		this.processor_array.reset();
+		this.update();
+	}
+
+	public void powerOn()
+	{
+		this.stop();
+		this.processor_array.powerOn();
 		this.update();
 	}
 

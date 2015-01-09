@@ -149,7 +149,7 @@ public class Processor implements Runnable {
 		long mask = 1L << bitpos;
 		return data ^ mask;
 	}
-
+	
 	public Processor(System system, int x, int y, int z, int stack_size, int return_stack_size)
 	{
 		this.system = system;
@@ -1547,56 +1547,56 @@ public class Processor implements Runnable {
 		//TODO
 	}
 
-	public void doRotateLeft()
+	public void doRol(int reg)
 	{
-		long value = this.register[Register.T.ordinal()];
+		long value = this.register[reg];
 		if (value < 0) {
-			this.register[Register.T.ordinal()] = (value << 1) | 1;
+			this.register[reg] = (value << 1) | 1;
 			setFlag(Flag.CARRY, true);
 		}
 		else {
-			this.register[Register.T.ordinal()] = (value << 1);
+			this.register[reg] = (value << 1);
 			setFlag(Flag.CARRY, false);
 		}
 	}
 
-	public void doRotateRight()
+	public void doRor(int reg)
 	{
-		long value = this.register[Register.T.ordinal()];
+		long value = this.register[reg];
 		if ((value & 1) != 0) {
 			long mask = 1;
 			mask <<= 63;
-			this.register[Register.T.ordinal()] = (value >> 1) | mask;
+			this.register[reg] = (value >> 1) | mask;
 			setFlag(Flag.CARRY, true);
 		}
 		else {
-			this.register[Register.T.ordinal()] = (value >>> 1);
+			this.register[reg] = (value >>> 1);
 			setFlag(Flag.CARRY, false);
 		}
 	}
 
-	public void doRotateLeftWithCarry()
+	public void doRolc(int reg)
 	{
-		long value = this.register[Register.T.ordinal()];
+		long value = this.register[reg];
 		if (getFlag(Flag.CARRY)) {
-			this.register[Register.T.ordinal()] = (value << 1) | 1;
+			this.register[reg] = (value << 1) | 1;
 		}
 		else {
-			this.register[Register.T.ordinal()] = (value << 1);
+			this.register[reg] = (value << 1);
 		}
 		setFlag(Flag.CARRY, (value < 0));
 	}
 
-	public void doRotateRightWithCarry()
+	public void doRorc(int reg)
 	{
-		long value = this.register[Register.T.ordinal()];
+		long value = this.register[reg];
 		long mask = 1;
 		mask <<= 63;
 		if (getFlag(Flag.CARRY)) {
-			this.register[Register.T.ordinal()] = (value >> 1) | mask;
+			this.register[reg] = (value >> 1) | mask;
 		}
 		else {
-			this.register[Register.T.ordinal()] = (value >>> 1);
+			this.register[reg] = (value >>> 1);
 		}
 		setFlag(Flag.CARRY, (value & mask) != 0);
 	}
@@ -1766,10 +1766,10 @@ public class Processor implements Runnable {
 		case SUBC:		this.doSubtractWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
 		case MULS:		this.doMultiplyStep(); break;
 		case DIVS:		this.doDivideStep(); break;
-		case ROL:		this.doRotateLeft(); break;
-		case ROR:		this.doRotateRight(); break;
-		case ROLC:		this.doRotateLeftWithCarry(); break;
-		case RORC:		this.doRotateRightWithCarry(); break;
+		case ROL:		this.doRol(Register.T.ordinal()); break;
+		case ROR:		this.doRor(Register.T.ordinal()); break;
+		case ROLC:		this.doRolc(Register.T.ordinal()); break;
+		case RORC:		this.doRorc(Register.T.ordinal()); break;
 		case SFLAG:		this.doSetFlags(this.nextSlot()); break;
 		case CFLAG:		this.doClearFlags(this.nextSlot()); break;
 		case SBIT:		this.doSetBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
@@ -1888,38 +1888,38 @@ public class Processor implements Runnable {
 		this.doDrop();
 	}
 
-	public void doPosQ()
+	public void doPosQ(int reg)
 	{
-		if (this.register[Register.T.ordinal()] >= 0) {
-			this.register[Register.T.ordinal()] = TRUE;
+		if (this.register[reg] >= 0) {
+			this.register[reg] = TRUE;
 		}
 		else {
-			this.register[Register.T.ordinal()] = FALSE;
+			this.register[reg] = FALSE;
 		}
 	}
 
-	public void doNegQ()
+	public void doNegQ(int reg)
 	{
-		if (this.register[Register.T.ordinal()] < 0) {
-			this.register[Register.T.ordinal()] = TRUE;
+		if (this.register[reg] < 0) {
+			this.register[reg] = TRUE;
 		}
 		else {
-			this.register[Register.T.ordinal()] = FALSE;
+			this.register[reg] = FALSE;
 		}
 	}
 
-	public void doAbs()
+	public void doAbs(int reg)
 	{
-		long data = this.register[Register.T.ordinal()];
+		long data = this.register[reg];
 		if (data < 0) {
-			this.register[Register.T.ordinal()] = -data;
+			this.register[reg] = -data;
 		}
 		
 	}
 
-	public void doNegate()
+	public void doNegate(int reg)
 	{
-		this.register[Register.T.ordinal()] = -this.register[Register.T.ordinal()];
+		this.register[reg] = -this.register[reg];
 	}
 
 	public void doExt2()
@@ -1927,10 +1927,10 @@ public class Processor implements Runnable {
 		switch (Ext2.values()[this.nextSlot()]) {
 		case TUCK:			this.doTuck(); break;
 		case UNDER:			this.doUnder(); break;
-		case POSQ:			this.doPosQ(); break;
-		case NEGQ:			this.doNegQ(); break;
-		case ABS:			this.doAbs(); break;
-		case NEGATE:		this.doNegate(); break;
+		case POSQ:			this.doPosQ(Register.T.ordinal()); break;
+		case NEGQ:			this.doNegQ(Register.T.ordinal()); break;
+		case ABS:			this.doAbs(Register.T.ordinal()); break;
+		case NEGATE:		this.doNegate(Register.T.ordinal()); break;
 		case FETCHSYSTEM:	this.doFetchSystem(this.nextSlot()); break;
 		case STORESYSTEM:	this.doStoreSystem(this.nextSlot()); break;
 		case FETCHRES:	this.doFetchReserved(); break;
@@ -1945,6 +1945,15 @@ public class Processor implements Runnable {
 
 	public void doExt3()
 	{
+		switch (Ext3.values()[this.nextSlot()]) {
+		case ABS:			this.doAbs(this.nextSlot()); break;
+		case NEGATE:		this.doNegate(this.nextSlot()); break;
+		case ROL:			this.doRol(this.nextSlot()); break;
+		case ROR:			this.doRor(this.nextSlot()); break;
+		case ROLC:			this.doRolc(this.nextSlot()); break;
+		case RORC:			this.doRorc(this.nextSlot()); break;
+		default: this.interrupt(Flag.ILLEGAL);
+		}
 	}
 
 	public void doExt4()
