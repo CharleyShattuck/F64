@@ -71,7 +71,7 @@ public class Codepoint {
 //	{
 //	}
 	
-	public boolean optimize(Optimization opt)
+	public boolean optimize(Processor processor, Optimization opt)
 	{
 		return false;
 	}

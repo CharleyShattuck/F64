@@ -1,20 +1,21 @@
 package com.F64.codepoint;
 
 import com.F64.Compiler;
+import com.F64.Ext1;
 import com.F64.Optimization;
 import com.F64.Processor;
 import com.F64.RegOp1;
 import com.F64.Register;
 
-public class Lsr extends com.F64.Codepoint {
+public class Rol extends com.F64.Codepoint {
 	private	int			cnt;
 
-	public Lsr()
+	public Rol()
 	{
 		cnt = -1;
 	}
 
-	public Lsr(int value)
+	public Rol(int value)
 	{
 		cnt = value;
 	}
@@ -34,8 +35,10 @@ public class Lsr extends com.F64.Codepoint {
 						// constant
 						Literal lit1 = (Literal) pp;
 						Literal lit2 = (Literal) p;
-						lit1.setValue(lit1.getValue() >>> lit2.getValue());
-						lit2.remove();
+						long data = lit1.getValue();
+						int shift = (int)(lit2.getValue() & (Processor.BIT_PER_CELL-1));
+						lit1.setValue(processor.rol(data, shift));
+						lit2.replaceWith(new Carry(processor.getInternalCarry()));
 						this.remove();
 						return true;
 					}
@@ -47,40 +50,20 @@ public class Lsr extends com.F64.Codepoint {
 					// top of stack is multiplied with a constant
 					// this gives a lot of opportunities for optimization
 					Literal lit = (Literal) p;
-					long data = lit.getValue();
-					if (data == 0) {
+					int shift = (int)(lit.getValue() & (Processor.BIT_PER_CELL-1));
+					if (shift == 0) {
 						lit.remove();
 						this.remove();
 						return true;
 					}
-					if (data > 0) {
-						if (data < Processor.SLOT_SIZE) {
-							lit.replaceWith(new Lsr((int)data));
-							this.remove();
-							return true;
-						}
-						else {
-							lit.replaceWith(new Zero());
-							this.remove();
-							return true;
-						}
-					}
-					else {
-						if (data == -0x8000_0000_0000_0000L) {
-							assert(false);
-							lit.remove();
-							this.remove();
-							return true;
-						}
-						lit.setValue(-data);
-						this.replaceWith(new Lsl());
-						return true;
-					}
+					lit.replaceWith(new Rol(shift));
+					this.remove();
+					return true;
 				}
-				if (p instanceof Lsr) {
-					Lsr prev = (Lsr)p;
+				if (p instanceof Rol) {
+					Rol prev = (Rol)p;
 					if ((this.cnt >= 0) && (prev.cnt >= 0)) {
-						prev.cnt += this.cnt;
+						prev.cnt = (prev.cnt+this.cnt) & (Processor.BIT_PER_CELL-1);
 						this.remove();
 						return true;
 					}
@@ -97,10 +80,10 @@ public class Lsr extends com.F64.Codepoint {
 	public void generate(Compiler c)
 	{
 		if (cnt == -1) {
-			c.generate(RegOp1.LSR, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
+			c.generate(Ext1.ROL);
 		}
 		else {
-			c.generate(RegOp1.LSRI, Register.T.ordinal(), Register.T.ordinal(), cnt);
+			c.generate(RegOp1.LSLI, Register.T.ordinal(), Register.T.ordinal(), cnt);
 		}
 	}
 

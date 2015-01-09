@@ -74,7 +74,7 @@ public class Scope extends Codepoint {
 	}
 
 	@Override
-	public boolean optimize(Optimization opt)
+	public boolean optimize(Processor processor, Optimization opt)
 	{
 		boolean res = false;
 		boolean optimized = true;
@@ -83,7 +83,7 @@ public class Scope extends Codepoint {
 			Codepoint cp = head;
 			while (cp != null) {
 				Codepoint n = cp.getNext();
-				if (cp.optimize(opt)) {optimized = true;}
+				if (cp.optimize(processor, opt)) {optimized = true;}
 				cp = n;
 			}
 			if (optimized) {res = true;}

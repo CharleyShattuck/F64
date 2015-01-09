@@ -19,6 +19,7 @@ public class Processor implements Runnable {
 	private int					slot;
 	private int					saved_slot;
 //	private int					max_slot;	// max # of slots
+	private boolean				carry;
 	private boolean				failed;
 	private boolean				waiting;
 	private boolean				reading;
@@ -149,6 +150,7 @@ public class Processor implements Runnable {
 		long mask = 1L << bitpos;
 		return data ^ mask;
 	}
+
 	
 	public Processor(System system, int x, int y, int z, int stack_size, int return_stack_size)
 	{
@@ -174,6 +176,7 @@ public class Processor implements Runnable {
 	public long getRegister(SystemRegister reg) {return this.getSystemRegister(reg.ordinal());}
 	public void setRegister(SystemRegister reg, long value) {this.setSystemRegister(reg.ordinal(), value);}
 
+	public boolean getInternalCarry() {return this.carry;}
 	public boolean hasFailed() {return this.failed;}
 	public boolean isWaiting() {return this.waiting;}
 	public int getSlot() {return this.slot;}
@@ -189,6 +192,121 @@ public class Processor implements Runnable {
 	public void setPort(Port p, boolean writing, long value) {this.setPort(p.ordinal(), writing, value);}
 	public int getPortReadMask() {return this.port_read_mask;}
 	public int getPortWriteMask() {return this.port_write_mask;}
+
+	public long asl(long data, int shift)
+	{
+		shift &= BIT_PER_CELL-1;
+		if (shift == 0) {
+			this.carry = false;
+			return data;
+		}
+		long mask = 0x8000_0000_0000_0000L >>> (shift-1);
+		this.carry = (data & mask) != 0;
+		data = data << shift;
+		return data;
+	}
+
+	public long lsl(long data, int shift)
+	{
+		shift &= BIT_PER_CELL-1;
+		if (shift == 0) {
+			this.carry = false;
+			return data;
+		}
+		long mask = 0x8000_0000_0000_0000L >>> (shift-1);
+		this.carry = (data & mask) != 0;
+		data = data << shift;
+		return data;
+	}
+
+
+	public long asr(long data, int shift)
+	{
+		shift &= BIT_PER_CELL-1;
+		if (shift == 0) {
+			this.carry = false;
+			return data;
+		}
+		long mask = 1L << (shift-1);
+		this.carry = (data & mask) != 0;
+		data = data >> shift;
+		return data;
+	}
+
+	public long lsr(long data, int shift)
+	{
+		shift &= BIT_PER_CELL-1;
+		if (shift == 0) {
+			this.carry = false;
+			return data;
+		}
+		long mask = 1L << (shift-1);
+		this.carry = (data & mask) != 0;
+		data = data >>> shift;
+		return data;
+	}
+
+	public long rol(long data, int shift)
+	{
+		shift &= BIT_PER_CELL-1;
+		if (shift == 0) {
+			this.carry = false;
+			return data;
+		}
+		data = (data << shift) | (data >>> (BIT_PER_CELL - shift));
+		this.carry = (data & 1) != 0;
+		return data;
+	}
+
+	public long ror(long data, int shift)
+	{
+		shift &= BIT_PER_CELL-1;
+		if (shift == 0) {
+			this.carry = false;
+			return data;
+		}
+		data = (data << (BIT_PER_CELL - shift)) | (data >>> shift);
+		this.carry = data < 0;
+		return data;
+	}
+
+	public long rolc(long data, int shift, boolean carry)
+	{
+		boolean c;
+		shift &= BIT_PER_CELL-1;
+		if (shift == 0) {
+			this.carry = carry;
+			return data;
+		}
+		while (shift > 0) {
+			c = data < 0;
+			data <<= 1;
+			if (carry) {++data;}
+			carry = c;
+			--shift;
+		}
+		this.carry = carry;
+		return data;
+	}
+
+	public long rorc(long data, int shift, boolean carry)
+	{
+		boolean c;
+		shift &= BIT_PER_CELL-1;
+		if (shift == 0) {
+			this.carry = carry;
+			return data;
+		}
+		while (shift > 0) {
+			c = (data & 1) != 0;
+			data = data >>> 1;
+			if (carry) {data |= 0x8000_0000_0000_0000L;}
+			carry = c;
+			--shift;
+		}
+		this.carry = carry;
+		return data;
+	}
 
 	public boolean isReadingOn(Port p)
 	{
@@ -1193,15 +1311,8 @@ public class Processor implements Runnable {
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
-		long dest;
-		if (src2 < 0) {dest = src1;}
-		else if (src2 >= BIT_PER_CELL) {
-			if (src1 >= 0) {dest = 0;}
-			else {dest = -1; dest <<= BIT_PER_CELL-1;}
-		}
-		else {
-			dest = src1 << src2;
-		}
+		long dest = this.asl(src1, (int)src2);
+		this.setFlag(Flag.CARRY, this.carry);
 		this.setRegister(d, dest);
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
@@ -1210,15 +1321,8 @@ public class Processor implements Runnable {
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
-		long dest;
-		if (src2 < 0) {dest = src1;}
-		else if (src2 >= BIT_PER_CELL) {
-			if (src1 >= 0) {dest = 0;}
-			else {dest = -1;}
-		}
-		else {
-			dest = src1 >> src2;
-		}
+		long dest = this.asr(src1, (int)src2);
+		this.setFlag(Flag.CARRY, this.carry);
 		this.setRegister(d, dest);
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
@@ -1227,24 +1331,8 @@ public class Processor implements Runnable {
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
-		long dest;
-		if (src2 < 0) {dest = src1;}
-		else if (src2 >= BIT_PER_CELL) {
-			dest = 0;
-		}
-		else {
-			dest = src1;
-			while (src2 > 0) {
-				if (dest >= 0) {
-					dest <<= 1;
-				}
-				else {
-					dest = ~(~dest << 1);
-					dest ^= 1;
-				}
-				--src2;
-			}
-		}
+		long dest = this.lsl(src1, (int)src2);
+		this.setFlag(Flag.CARRY, this.carry);
 		this.setRegister(d, dest);
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
@@ -1253,14 +1341,8 @@ public class Processor implements Runnable {
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
-		long dest;
-		if (src2 < 0) {dest = src1;}
-		else if (src2 >= BIT_PER_CELL) {
-			dest = 0;
-		}
-		else {
-			dest = src1 >>> src2;
-		}
+		long dest = this.lsr(src1, (int)src2);
+		this.setFlag(Flag.CARRY, this.carry);
 		this.setRegister(d, dest);
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
@@ -1268,42 +1350,32 @@ public class Processor implements Runnable {
 	public void doAsli(int d, int s1, int src2)
 	{
 		long src1 = this.getRegister(s1);
-		long dest;
-		dest = src1 << src2;
+		long dest = this.asl(src1, src2);
+		this.setFlag(Flag.CARRY, this.carry);
 		this.setRegister(d, dest);
 	}
 
 	public void doAsri(int d, int s1, int src2)
 	{
 		long src1 = this.getRegister(s1);
-		long dest;
-		dest = src1 >> src2;
+		long dest = this.asr(src1, src2);
+		this.setFlag(Flag.CARRY, this.carry);
 		this.setRegister(d, dest);
 	}
 
 	public void doLsli(int d, int s1, int src2)
 	{
 		long src1 = this.getRegister(s1);
-		long dest;
-		dest = src1;
-		while (src2 > 0) {
-			if (dest >= 0) {
-				dest <<= 1;
-			}
-			else {
-				dest = ~(~dest << 1);
-				dest ^= 1;
-			}
-			--src2;
-		}
+		long dest = this.lsl(src1, src2);
+		this.setFlag(Flag.CARRY, this.carry);
 		this.setRegister(d, dest);
 	}
 
 	public void doLsri(int d, int s1, int src2)
 	{
 		long src1 = this.getRegister(s1);
-		long dest;
-		dest = src1 >>> src2;
+		long dest = this.lsr(src1, src2);
+		this.setFlag(Flag.CARRY, this.carry);
 		this.setRegister(d, dest);
 	}
 
@@ -1547,58 +1619,28 @@ public class Processor implements Runnable {
 		//TODO
 	}
 
-	public void doRol(int reg)
+	public void doRol(int reg, int shift)
 	{
-		long value = this.register[reg];
-		if (value < 0) {
-			this.register[reg] = (value << 1) | 1;
-			setFlag(Flag.CARRY, true);
-		}
-		else {
-			this.register[reg] = (value << 1);
-			setFlag(Flag.CARRY, false);
-		}
+		this.register[reg] = this.rol(this.register[reg], shift);
+		setFlag(Flag.CARRY, this.carry);
 	}
 
-	public void doRor(int reg)
+	public void doRor(int reg, int shift)
 	{
-		long value = this.register[reg];
-		if ((value & 1) != 0) {
-			long mask = 1;
-			mask <<= 63;
-			this.register[reg] = (value >> 1) | mask;
-			setFlag(Flag.CARRY, true);
-		}
-		else {
-			this.register[reg] = (value >>> 1);
-			setFlag(Flag.CARRY, false);
-		}
+		this.register[reg] = this.ror(this.register[reg], shift);
+		setFlag(Flag.CARRY, this.carry);
 	}
 
-	public void doRolc(int reg)
+	public void doRolc(int reg, int shift)
 	{
-		long value = this.register[reg];
-		if (getFlag(Flag.CARRY)) {
-			this.register[reg] = (value << 1) | 1;
-		}
-		else {
-			this.register[reg] = (value << 1);
-		}
-		setFlag(Flag.CARRY, (value < 0));
+		this.register[reg] = this.rolc(this.register[reg], shift, getFlag(Flag.CARRY));
+		setFlag(Flag.CARRY, this.carry);
 	}
 
-	public void doRorc(int reg)
+	public void doRorc(int reg, int shift)
 	{
-		long value = this.register[reg];
-		long mask = 1;
-		mask <<= 63;
-		if (getFlag(Flag.CARRY)) {
-			this.register[reg] = (value >> 1) | mask;
-		}
-		else {
-			this.register[reg] = (value >>> 1);
-		}
-		setFlag(Flag.CARRY, (value & mask) != 0);
+		this.register[reg] = this.rorc(this.register[reg], shift, getFlag(Flag.CARRY));
+		setFlag(Flag.CARRY, this.carry);
 	}
 
 	public void doSetBit(int reg, int bit, boolean bit_is_reg, boolean swap_source)
@@ -1757,56 +1799,6 @@ public class Processor implements Runnable {
 		this.setFlag(flag, false);
 	}
 
-	public void doExt1()
-	{
-		switch (Ext1.values()[this.nextSlot()]) {
-		case RDROP:		this.doRDrop(); break;
-		case EXITI:		this.doExitInterrupt(this.nextSlot()); break;
-		case ADDC:		this.doAddWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
-		case SUBC:		this.doSubtractWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
-		case MULS:		this.doMultiplyStep(); break;
-		case DIVS:		this.doDivideStep(); break;
-		case ROL:		this.doRol(Register.T.ordinal()); break;
-		case ROR:		this.doRor(Register.T.ordinal()); break;
-		case ROLC:		this.doRolc(Register.T.ordinal()); break;
-		case RORC:		this.doRorc(Register.T.ordinal()); break;
-		case SFLAG:		this.doSetFlags(this.nextSlot()); break;
-		case CFLAG:		this.doClearFlags(this.nextSlot()); break;
-		case SBIT:		this.doSetBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
-		case CBIT:		this.doClearBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
-		case TBIT:		this.doToggleBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
-		case RBIT:		this.doReadBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
-		case WBIT:		this.doWriteBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
-		case SBITS:		this.doSetBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
-		case CBITS:		this.doClearBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
-		case TBITS:		this.doToggleBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
-		case RBITS:		this.doReadBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
-		case WBITS:		this.doWriteBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
-		case ENTERM:	this.doEnterM(); break;
-		case LCALLM:	this.doCallMethod(this.drop()); break;
-		case LJMPM:		this.doJumpMethod(this.drop()); break;
-		case FETCHINC:	this.doFetchRegisterInc(this.nextSlot()); break;
-		case STOREINC:	this.doStoreRegisterInc(this.nextSlot()); break;
-		case RSBIT:		this.doSetBit(this.nextSlot(), this.nextSlot(), false, false); break;
-		case RCBIT:		this.doClearBit(this.nextSlot(), this.nextSlot(), false, false); break;
-		case RTBIT:		this.doToggleBit(this.nextSlot(), this.nextSlot(), false, false); break;
-		case RRBIT:		this.doReadBit(this.nextSlot(), this.nextSlot(), false, false); break;
-		case RWBIT:		this.doWriteBit(this.nextSlot(), this.nextSlot(), false, false); break;
-		case RRSBIT:	this.doSetBit(this.nextSlot(), this.nextSlot(), true, false); break;
-		case RRCBIT:	this.doClearBit(this.nextSlot(), this.nextSlot(), true, false); break;
-		case RRTBIT:	this.doToggleBit(this.nextSlot(), this.nextSlot(), true, false); break;
-		case RRRBIT:	this.doReadBit(this.nextSlot(), this.nextSlot(), true, false); break;
-		case RRWBIT:	this.doWriteBit(this.nextSlot(), this.nextSlot(), true, false); break;
-		case BITCNT:	this.doBitCnt(this.nextSlot(), this.nextSlot()); break;
-		case BITFF1:	this.doBitFindFirst1(this.nextSlot(), this.nextSlot()); break;
-		case BITFL1:	this.doBitFindLast1(this.nextSlot(), this.nextSlot()); break;
-		case NLIT:		this.doLiteralNot(this.nextSlot()); break;
-		case JMPIO:		this.doJumpIO(this.nextSlot()); break;
-		case CONFIGFETCH:	this.doConfigFetch(this.nextSlot()); break;
-		default: this.interrupt(Flag.ILLEGAL);
-		}
-	}
-
 	/**
 	 * ( a - n )
 	 * Fetch a value and mark the location as reserved. Any write access to this location
@@ -1922,6 +1914,56 @@ public class Processor implements Runnable {
 		this.register[reg] = -this.register[reg];
 	}
 
+	public void doExt1()
+	{
+		switch (Ext1.values()[this.nextSlot()]) {
+		case RDROP:		this.doRDrop(); break;
+		case EXITI:		this.doExitInterrupt(this.nextSlot()); break;
+		case ADDC:		this.doAddWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
+		case SUBC:		this.doSubtractWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
+		case MULS:		this.doMultiplyStep(); break;
+		case DIVS:		this.doDivideStep(); break;
+		case ROL:		this.doRol(Register.T.ordinal(), 1); break;
+		case ROR:		this.doRor(Register.T.ordinal(), 1); break;
+		case ROLC:		this.doRolc(Register.T.ordinal(), 1); break;
+		case RORC:		this.doRorc(Register.T.ordinal(), 1); break;
+		case SFLAG:		this.doSetFlags(this.nextSlot()); break;
+		case CFLAG:		this.doClearFlags(this.nextSlot()); break;
+		case SBIT:		this.doSetBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
+		case CBIT:		this.doClearBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
+		case TBIT:		this.doToggleBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
+		case RBIT:		this.doReadBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
+		case WBIT:		this.doWriteBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
+		case SBITS:		this.doSetBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
+		case CBITS:		this.doClearBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
+		case TBITS:		this.doToggleBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
+		case RBITS:		this.doReadBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
+		case WBITS:		this.doWriteBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
+		case ENTERM:	this.doEnterM(); break;
+		case LCALLM:	this.doCallMethod(this.drop()); break;
+		case LJMPM:		this.doJumpMethod(this.drop()); break;
+		case FETCHINC:	this.doFetchRegisterInc(this.nextSlot()); break;
+		case STOREINC:	this.doStoreRegisterInc(this.nextSlot()); break;
+		case RSBIT:		this.doSetBit(this.nextSlot(), this.nextSlot(), false, false); break;
+		case RCBIT:		this.doClearBit(this.nextSlot(), this.nextSlot(), false, false); break;
+		case RTBIT:		this.doToggleBit(this.nextSlot(), this.nextSlot(), false, false); break;
+		case RRBIT:		this.doReadBit(this.nextSlot(), this.nextSlot(), false, false); break;
+		case RWBIT:		this.doWriteBit(this.nextSlot(), this.nextSlot(), false, false); break;
+		case RRSBIT:	this.doSetBit(this.nextSlot(), this.nextSlot(), true, false); break;
+		case RRCBIT:	this.doClearBit(this.nextSlot(), this.nextSlot(), true, false); break;
+		case RRTBIT:	this.doToggleBit(this.nextSlot(), this.nextSlot(), true, false); break;
+		case RRRBIT:	this.doReadBit(this.nextSlot(), this.nextSlot(), true, false); break;
+		case RRWBIT:	this.doWriteBit(this.nextSlot(), this.nextSlot(), true, false); break;
+		case BITCNT:	this.doBitCnt(this.nextSlot(), this.nextSlot()); break;
+		case BITFF1:	this.doBitFindFirst1(this.nextSlot(), this.nextSlot()); break;
+		case BITFL1:	this.doBitFindLast1(this.nextSlot(), this.nextSlot()); break;
+		case NLIT:		this.doLiteralNot(this.nextSlot()); break;
+		case JMPIO:		this.doJumpIO(this.nextSlot()); break;
+		case CONFIGFETCH:	this.doConfigFetch(this.nextSlot()); break;
+		default: this.interrupt(Flag.ILLEGAL);
+		}
+	}
+
 	public void doExt2()
 	{
 		switch (Ext2.values()[this.nextSlot()]) {
@@ -1931,6 +1973,10 @@ public class Processor implements Runnable {
 		case NEGQ:			this.doNegQ(Register.T.ordinal()); break;
 		case ABS:			this.doAbs(Register.T.ordinal()); break;
 		case NEGATE:		this.doNegate(Register.T.ordinal()); break;
+		case ROL:			this.doRol(Register.T.ordinal(), this.nextSlot()); break;
+		case ROR:			this.doRor(Register.T.ordinal(), this.nextSlot()); break;
+		case ROLC:			this.doRolc(Register.T.ordinal(), this.nextSlot()); break;
+		case RORC:			this.doRorc(Register.T.ordinal(), this.nextSlot()); break;
 		case FETCHSYSTEM:	this.doFetchSystem(this.nextSlot()); break;
 		case STORESYSTEM:	this.doStoreSystem(this.nextSlot()); break;
 		case FETCHRES:	this.doFetchReserved(); break;
@@ -1948,16 +1994,23 @@ public class Processor implements Runnable {
 		switch (Ext3.values()[this.nextSlot()]) {
 		case ABS:			this.doAbs(this.nextSlot()); break;
 		case NEGATE:		this.doNegate(this.nextSlot()); break;
-		case ROL:			this.doRol(this.nextSlot()); break;
-		case ROR:			this.doRor(this.nextSlot()); break;
-		case ROLC:			this.doRolc(this.nextSlot()); break;
-		case RORC:			this.doRorc(this.nextSlot()); break;
+		case ROL:			this.doRol(this.nextSlot(), 1); break;
+		case ROR:			this.doRor(this.nextSlot(), 1); break;
+		case ROLC:			this.doRolc(this.nextSlot(), 1); break;
+		case RORC:			this.doRorc(this.nextSlot(), 1); break;
 		default: this.interrupt(Flag.ILLEGAL);
 		}
 	}
 
 	public void doExt4()
 	{
+		switch (Ext4.values()[this.nextSlot()]) {
+		case ROL:			this.doRol(this.nextSlot(), this.nextSlot()); break;
+		case ROR:			this.doRor(this.nextSlot(), this.nextSlot()); break;
+		case ROLC:			this.doRolc(this.nextSlot(), this.nextSlot()); break;
+		case RORC:			this.doRorc(this.nextSlot(), this.nextSlot()); break;
+		default: this.interrupt(Flag.ILLEGAL);
+		}
 	}
 
 	public void doExt5()

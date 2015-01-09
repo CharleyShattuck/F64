@@ -71,7 +71,7 @@ public class ISACode extends com.F64.Codepoint {
 	}
 
 	@Override
-	public boolean optimize(Optimization opt)
+	public boolean optimize(Processor processor, Optimization opt)
 	{
 		if (this.getPrevious() == null) {return false;}
 		return false;

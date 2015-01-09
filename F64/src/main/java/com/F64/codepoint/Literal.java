@@ -21,7 +21,7 @@ public class Literal extends com.F64.Codepoint {
 	public void setValue(long value) {this.value = value;}
 
 	@Override
-	public boolean optimize(Optimization opt)
+	public boolean optimize(Processor processor, Optimization opt)
 	{
 		if (this.getPrevious() == null) {return false;}
 		com.F64.Codepoint p = this.getPrevious();

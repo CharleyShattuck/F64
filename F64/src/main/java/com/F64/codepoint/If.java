@@ -2,6 +2,7 @@ package com.F64.codepoint;
 
 import com.F64.Condition;
 import com.F64.Optimization;
+import com.F64.Processor;
 import com.F64.Scope;
 import com.F64.Compiler;
 
@@ -30,7 +31,7 @@ public class If extends com.F64.Scope {
 	}
 
 	@Override
-	public boolean optimize(Optimization opt)
+	public boolean optimize(Processor processor, Optimization opt)
 	{
 		boolean res = false;
 		if (opt == Optimization.DEAD_CODE_ELIMINATION) {
@@ -38,7 +39,7 @@ public class If extends com.F64.Scope {
 				if (true_part != null) {
 					true_part = null;
 					if (false_part != null) {
-						false_part.optimize(opt);
+						false_part.optimize(processor, opt);
 					}
 					res = true;
 				}
@@ -47,7 +48,7 @@ public class If extends com.F64.Scope {
 				if (false_part != null) {
 					false_part = null;
 					if (true_part != null) {
-						true_part.optimize(opt);
+						true_part.optimize(processor, opt);
 					}
 					res = true;
 				}
@@ -85,10 +86,10 @@ public class If extends com.F64.Scope {
 			}
 		}
 		if (false_part != null) {
-			if (false_part.optimize(opt)) {res = true;}
+			if (false_part.optimize(processor, opt)) {res = true;}
 		}
 		if (true_part != null) {
-			if (true_part.optimize(opt)) {res = true;}
+			if (true_part.optimize(processor, opt)) {res = true;}
 		}
 		return res;
 	}

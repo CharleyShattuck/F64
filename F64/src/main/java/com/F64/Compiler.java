@@ -468,10 +468,10 @@ public class Compiler {
 		boolean cont = true;
 		while (cont) {
 			cont = false;
-			cont |= allowConstantFolding		&& getMainScope().optimize(Optimization.CONSTANT_FOLDING);
-			cont |= allowDeadCodeElimkination	&& getMainScope().optimize(Optimization.DEAD_CODE_ELIMINATION);
-			cont |= allowLoopUnrolling			&& getMainScope().optimize(Optimization.LOOP_UNROLLING);
-			cont |= allowPeepholeOptimization	&& getMainScope().optimize(Optimization.PEEPHOLE);
+			cont |= allowConstantFolding		&& getMainScope().optimize(processor, Optimization.CONSTANT_FOLDING);
+			cont |= allowDeadCodeElimkination	&& getMainScope().optimize(processor, Optimization.DEAD_CODE_ELIMINATION);
+			cont |= allowLoopUnrolling			&& getMainScope().optimize(processor, Optimization.LOOP_UNROLLING);
+			cont |= allowPeepholeOptimization	&& getMainScope().optimize(processor, Optimization.PEEPHOLE);
 		};
 	}
 	

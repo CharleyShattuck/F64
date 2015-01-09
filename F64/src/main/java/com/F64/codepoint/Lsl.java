@@ -20,7 +20,7 @@ public class Lsl extends com.F64.Codepoint {
 	}
 
 	@Override
-	public boolean optimize(Optimization opt)
+	public boolean optimize(Processor processor, Optimization opt)
 	{
 		if (this.getPrevious() == null) {return false;}
 		if (this.cnt >= 0) {return false;}
@@ -49,7 +49,6 @@ public class Lsl extends com.F64.Codepoint {
 					Literal lit = (Literal) p;
 					long data = lit.getValue();
 					if (data == 0) {
-						// add by 0 does nothing
 						lit.remove();
 						this.remove();
 						return true;
@@ -75,6 +74,14 @@ public class Lsl extends com.F64.Codepoint {
 						}
 						lit.setValue(-data);
 						this.replaceWith(new Lsr());
+						return true;
+					}
+				}
+				if (p instanceof Lsl) {
+					Lsl prev = (Lsl)p;
+					if ((this.cnt >= 0) && (prev.cnt >= 0)) {
+						prev.cnt += this.cnt;
+						this.remove();
 						return true;
 					}
 				}

@@ -8,7 +8,7 @@ import com.F64.Ext2;
 public class NegQ extends com.F64.Codepoint {
 
 	@Override
-	public boolean optimize(Optimization opt)
+	public boolean optimize(Processor processor, Optimization opt)
 	{
 		if (this.getPrevious() == null) {return false;}
 		com.F64.Codepoint p = this.getPrevious();
