@@ -1400,6 +1400,26 @@ public class Processor implements Runnable {
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 
+	public void doRcl(int d, int s1, int s2)
+	{
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest = this.rcl(src1, (int)src2, getFlag(Flag.CARRY));
+		this.setFlag(Flag.CARRY, this.carry);
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
+	}
+
+	public void doRcr(int d, int s1, int s2)
+	{
+		long src1 = this.getRegister(s1);
+		long src2 = this.getRegister(s2);
+		long dest = this.rcr(src1, (int)src2, getFlag(Flag.CARRY));
+		this.setFlag(Flag.CARRY, this.carry);
+		this.setRegister(d, dest);
+		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
+	}
+
 	public void doRoli(int d, int s1, int src2)
 	{
 		long src1 = this.getRegister(s1);
@@ -1412,6 +1432,22 @@ public class Processor implements Runnable {
 	{
 		long src1 = this.getRegister(s1);
 		long dest = this.ror(src1, src2);
+		this.setFlag(Flag.CARRY, this.carry);
+		this.setRegister(d, dest);
+	}
+
+	public void doRcli(int d, int s1, int src2)
+	{
+		long src1 = this.getRegister(s1);
+		long dest = this.rcl(src1, src2, getFlag(Flag.CARRY));
+		this.setFlag(Flag.CARRY, this.carry);
+		this.setRegister(d, dest);
+	}
+
+	public void doRcri(int d, int s1, int src2)
+	{
+		long src1 = this.getRegister(s1);
+		long dest = this.rcr(src1, src2, getFlag(Flag.CARRY));
 		this.setFlag(Flag.CARRY, this.carry);
 		this.setRegister(d, dest);
 	}
@@ -1918,7 +1954,37 @@ public class Processor implements Runnable {
 		this.doDrop();
 	}
 
-	public void doPosQ(int reg)
+	public void doEQ0Q(int reg)
+	{
+		if (this.register[reg] == 0) {
+			this.register[reg] = TRUE;
+		}
+		else {
+			this.register[reg] = FALSE;
+		}
+	}
+
+	public void doNE0Q(int reg)
+	{
+		if (this.register[reg] != 0) {
+			this.register[reg] = TRUE;
+		}
+		else {
+			this.register[reg] = FALSE;
+		}
+	}
+
+	public void doGT0Q(int reg)
+	{
+		if (this.register[reg] > 0) {
+			this.register[reg] = TRUE;
+		}
+		else {
+			this.register[reg] = FALSE;
+		}
+	}
+
+	public void doGE0Q(int reg)
 	{
 		if (this.register[reg] >= 0) {
 			this.register[reg] = TRUE;
@@ -1928,9 +1994,19 @@ public class Processor implements Runnable {
 		}
 	}
 
-	public void doNegQ(int reg)
+	public void doLT0Q(int reg)
 	{
 		if (this.register[reg] < 0) {
+			this.register[reg] = TRUE;
+		}
+		else {
+			this.register[reg] = FALSE;
+		}
+	}
+
+	public void doLE0Q(int reg)
+	{
+		if (this.register[reg] <= 0) {
 			this.register[reg] = TRUE;
 		}
 		else {
@@ -2007,8 +2083,12 @@ public class Processor implements Runnable {
 		switch (Ext2.values()[this.nextSlot()]) {
 		case TUCK:			this.doTuck(); break;
 		case UNDER:			this.doUnder(); break;
-		case POSQ:			this.doPosQ(Register.T.ordinal()); break;
-		case NEGQ:			this.doNegQ(Register.T.ordinal()); break;
+		case EQ0Q:			this.doEQ0Q(Register.T.ordinal()); break;
+		case NE0Q:			this.doNE0Q(Register.T.ordinal()); break;
+		case GT0Q:			this.doGT0Q(Register.T.ordinal()); break;
+		case GE0Q:			this.doGE0Q(Register.T.ordinal()); break;
+		case LT0Q:			this.doLT0Q(Register.T.ordinal()); break;
+		case LE0Q:			this.doLE0Q(Register.T.ordinal()); break;
 		case ABS:			this.doAbs(Register.T.ordinal()); break;
 		case NEGATE:		this.doNegate(Register.T.ordinal()); break;
 		case ROL:			this.doRol(Register.T.ordinal(), this.nextSlot()); break;
@@ -2193,12 +2273,16 @@ public class Processor implements Runnable {
 		case LSR: this.doLsr(d, s1, s2); break;
 		case ROL: this.doRol(d, s1, s2); break;
 		case ROR: this.doRor(d, s1, s2); break;
+		case RCL: this.doRcl(d, s1, s2); break;
+		case RCR: this.doRcr(d, s1, s2); break;
 		case ASLI: this.doAsli(d, s1, s2); break;
 		case ASRI: this.doAsri(d, s1, s2); break;
 		case LSLI: this.doLsli(d, s1, s2); break;
 		case LSRI: this.doLsri(d, s1, s2); break;
 		case ROLI: this.doRoli(d, s1, s2); break;
-		case RORI: this.doRori(d, s1, s2); break;
+		case RORI: this.doRcri(d, s1, s2); break;
+		case RCLI: this.doRcli(d, s1, s2); break;
+		case RCRI: this.doRori(d, s1, s2); break;
 		case MUL2ADD: this.doMul2Add(d, s1, s2); break;
 		case DIV2SUB: this.doDiv2Sub(d, s1, s2); break;
 		default: this.interrupt(Flag.ILLEGAL);

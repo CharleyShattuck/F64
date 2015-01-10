@@ -21,12 +21,16 @@ public enum RegOp1 {
 	LSR("Logical shift right. dest = src1 >>> src2. If src2 < 0 then dest = src1. If src2 >= 64 then dest = 0. If either src2 or src2 is register S then a nip operation is appended"),
 	ROL("Rotate left. dest = src1 ^<< src2. If src2 < 0 then dest = src1. If either src2 or src2 is register S then a nip operation is appended"),
 	ROR("Rotate right. dest = src1 >>^ src2. If src2 < 0 then dest = src1. If either src2 or src2 is register S then a nip operation is appended"),
+	RCL("Rotate left with carry. dest = src1 ^<< src2. If src2 < 0 then dest = src1. If either src2 or src2 is register S then a nip operation is appended"),
+	RCR("Rotate right with carry. dest = src1 >>^ src2. If src2 < 0 then dest = src1. If either src2 or src2 is register S then a nip operation is appended"),
 	ASLI("Arithmetic shift left immediate (src2). dest = src1 << src2"),
 	ASRI("Arithmetic shift right immediate (src2). dest = src1 >> src2"),
 	LSLI("Logical shift left immediate (src2). dest = src1 <<< src2"),
 	LSRI("Logical shift right immediate (src2). dest = src1 >>> src2"),
 	ROLI("Rotate left immediate (src2). dest = src1 ^<< src2"),
-	RORI("Rotate right immediate (src2). dest = src1 >>^ src2"),
+	RORI("Rotate right immediate with carry (src2). dest = src1 >>^ src2"),
+	RCLI("Rotate left immediate with carry (src2). dest = src1 ^<< src2"),
+	RCRI("Rotate right immediate (src2). dest = src1 >>^ src2"),
 	MUL2ADD("*2 and add. dest = src1*2 + src2. If either src2 or src2 is register S then a nip operation is appended"),
 	DIV2SUB("/2 and subtract. dest = src1/2 - src2. If either src2 or src2 is register S then a nip operation is appended");
 

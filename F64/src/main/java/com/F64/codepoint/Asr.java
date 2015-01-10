@@ -60,7 +60,7 @@ public class Asr extends com.F64.Codepoint {
 							return true;
 						}
 						else {
-							lit.replaceWith(new NegQ());
+							lit.replaceWith(new Lt0Q());
 							this.remove();
 							return true;
 						}

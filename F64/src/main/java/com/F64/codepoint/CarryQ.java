@@ -1,21 +1,12 @@
 package com.F64.codepoint;
 
 import com.F64.Compiler;
-import com.F64.Ext1;
-import com.F64.Flag;
+import com.F64.Ext2;
 import com.F64.Optimization;
 import com.F64.Processor;
 
-public class Carry extends com.F64.Codepoint {
-	private	boolean			set;
+public class CarryQ extends com.F64.Codepoint {
 
-	public Carry(boolean value)
-	{
-		set = value;
-	}
-
-	public boolean getValue() {return set;}
-	
 	@Override
 	public boolean optimize(Processor processor, Optimization opt)
 	{
@@ -25,7 +16,9 @@ public class Carry extends com.F64.Codepoint {
 			switch (opt) {
 			case CONSTANT_FOLDING:
 				if (p instanceof Carry) {
-					p.remove();
+					Carry cry = (Carry) p;
+					cry.replaceWith(new Literal( cry.getValue() ? Processor.TRUE : Processor.FALSE));
+					this.remove();
 					return true;
 				}
 				break;
@@ -40,12 +33,7 @@ public class Carry extends com.F64.Codepoint {
 	@Override
 	public void generate(Compiler c)
 	{
-		if (set) {
-			c.generate(Ext1.SFLAG, Flag.CARRY.ordinal());
-		}
-		else {
-			c.generate(Ext1.CFLAG, Flag.CARRY.ordinal());
-		}
+		c.generate(Ext2.CARRYQ);
 	}
 
 

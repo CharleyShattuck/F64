@@ -1,11 +1,11 @@
 package com.F64.codepoint;
 
 import com.F64.Compiler;
+import com.F64.Ext2;
 import com.F64.Optimization;
 import com.F64.Processor;
-import com.F64.Ext2;
 
-public class NegQ extends com.F64.Codepoint {
+public class Gt0Q extends com.F64.Codepoint {
 
 	@Override
 	public boolean optimize(Processor processor, Optimization opt)
@@ -17,7 +17,7 @@ public class NegQ extends com.F64.Codepoint {
 			case CONSTANT_FOLDING:
 				if (p instanceof Literal) {
 					Literal lit = (Literal) p;
-					lit.setValue(lit.getValue() < 0 ? Processor.TRUE : Processor.FALSE);
+					lit.setValue(lit.getValue() > 0 ? Processor.TRUE : Processor.FALSE);
 					this.remove();
 					return true;
 				}
@@ -33,7 +33,8 @@ public class NegQ extends com.F64.Codepoint {
 	@Override
 	public void generate(Compiler c)
 	{
-		c.generate(Ext2.NEGQ);
+		c.generate(Ext2.GT0Q);
 	}
+
 
 }
