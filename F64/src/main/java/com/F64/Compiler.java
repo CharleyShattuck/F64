@@ -30,6 +30,40 @@ public class Compiler {
 	public void setScope(Scope s) {current_scope = s;}
 	public int getRemainingSlots() {return Processor.NO_OF_SLOTS - current_slot;}
 	
+	public int getRemainingBits()
+	{
+		if (current_slot > Processor.FINAL_SLOT) {
+			return 0;
+		}
+		if (current_slot == Processor.FINAL_SLOT) {
+			return Processor.FINAL_SLOT_BITS;
+		}
+		return (Processor.FINAL_SLOT - 1 - current_slot) * Processor.SLOT_BITS + Processor.FINAL_SLOT_BITS;
+	}
+
+	public int getDifferentBits(long value1, long value2)
+	{
+		int diff = 0;
+		long mask = -1;
+		while ((value1 & mask) != (value2 & mask)) {
+			++diff;
+			mask <<= 1;
+		}
+		return diff;
+	}
+	
+	public long getAddressMask(int slot)
+	{
+		if (slot > Processor.FINAL_SLOT) {return 0;}
+		else if (slot == Processor.FINAL_SLOT) {return Processor.FINAL_SLOT_MASK;}
+		long mask = -1L >>> (Processor.SLOT_BITS - Processor.FINAL_SLOT_BITS);
+		while (slot > 0) {
+			--slot;
+			mask = mask >>> Processor.SLOT_BITS;
+		}
+		return mask;
+	}
+	
 	public void start()
 	{
 		this.main_scope = new Main();
@@ -245,6 +279,9 @@ public class Compiler {
 	public void flush()
 	{
 		if (this.current_slot > 0) {
+			if (current_slot < Processor.FINAL_SLOT) {
+				this.generate(ISA.USKIP);
+			}
 			this.system.compileCode(this.current_cell);
 			for (int i=0; i<this.addtional_cnt; ++i) {
 				this.system.compileCode(this.additional_cell[i]);
@@ -423,7 +460,24 @@ public class Compiler {
 		
 	}
 
-	
+	public void generateCall(long adr, boolean useJumpInsteadOfCall)
+	{
+		long here = this.current_cell + this.addtional_cnt; // that is the value of P
+		// now we must replace the lower bits of P with some new value.
+		// first we check if we can fit it in the remaining slots of the current word
+		int remaining_bits = this.getRemainingBits();
+		int different_bits = this.getDifferentBits(adr, here);
+		if (different_bits > (remaining_bits - Processor.SLOT_BITS)) {
+			this.flush();
+		}
+		// address fits now
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, useJumpInsteadOfCall ? ISA.JMP.ordinal() : ISA.CALL.ordinal());
+		long mask = this.getAddressMask(this.current_slot);
+		this.current_cell |= adr & mask;
+		current_slot = Processor.FINAL_SLOT+1;
+		this.flush();
+	}
+
 	public void compile(Codepoint cp)
 	{
 		getScope().add(cp);		

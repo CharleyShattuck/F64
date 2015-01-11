@@ -1,9 +1,15 @@
 package com.F64.codepoint;
 
 import com.F64.Compiler;
+import com.F64.Ext1;
+import com.F64.ISA;
 import com.F64.Optimization;
 import com.F64.Processor;
 
+/**
+ * 64x64 bit signed multiplication with a 64 bit result.
+ * After the operation the system register MD and the flag CARRY are undefined.
+ */
 public class Mul extends com.F64.Codepoint {
 
 	@Override
@@ -78,6 +84,10 @@ public class Mul extends com.F64.Codepoint {
 	@Override
 	public void generate(Compiler c)
 	{
-		
+//		c.generate(ISA.LIT, Processor.BIT_PER_CELL-1);
+//		c.generate(ISA.PUSH);
+//		c.flush();
+//		c.generate(Ext1.MULS);
+//		c.generate(ISA.UNEXT);
 	}
 }

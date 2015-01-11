@@ -44,8 +44,6 @@ public class Lsl extends com.F64.Codepoint {
 
 			case PEEPHOLE:
 				if (p instanceof Literal) {
-					// top of stack is multiplied with a constant
-					// this gives a lot of opportunities for optimization
 					Literal lit = (Literal) p;
 					long data = lit.getValue();
 					if (data == 0) {

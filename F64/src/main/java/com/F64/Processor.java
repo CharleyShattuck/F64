@@ -193,6 +193,17 @@ public class Processor implements Runnable {
 	public int getPortReadMask() {return this.port_read_mask;}
 	public int getPortWriteMask() {return this.port_write_mask;}
 
+	public long adc(long a, long b, boolean carry)
+	{
+		long c = a+b;
+		boolean overflow = (a > 0 && b > 0 && c < 0) || (a < 0 && b < 0 && c > 0);
+		if (carry) {
+			if (++c == 0) {overflow = true;}
+		}
+		setFlag(Flag.CARRY, overflow);
+		return c;
+	}
+
 	public long asl(long data, int shift)
 	{
 		shift &= BIT_PER_CELL-1;
@@ -1230,13 +1241,7 @@ public class Processor implements Runnable {
 		boolean carry = getFlag(Flag.CARRY);
 		long a = this.getRegister(s1);
 		long b = this.getRegister(s2);
-		long c = a+b;
-		boolean overflow = (a > 0 && b > 0 && c < 0) || (a < 0 && b < 0 && c > 0);
-		if (carry) {
-			if (++c == 0) {overflow = true;}
-		}
-		this.setRegister(d, c);
-		setFlag(Flag.CARRY, overflow);
+		this.setRegister(d, this.adc(a, b, carry));
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 
@@ -1260,13 +1265,7 @@ public class Processor implements Runnable {
 		boolean carry = getFlag(Flag.CARRY);
 		long a = this.getRegister(s1);
 		long b = ~this.getRegister(s2);
-		long c = a+b;
-		boolean overflow = (a > 0 && b > 0 && c < 0) || (a < 0 && b < 0 && c > 0);
-		if (carry) {
-			if (++c == 0) {overflow = true;}
-		}
-		this.setRegister(d, c);
-		setFlag(Flag.CARRY, overflow);
+		this.setRegister(d, this.adc(a, ~b, carry));
 		if ((s1 == Register.S.ordinal()) || (s2 == Register.S.ordinal())) {this.doNip();}
 	}
 
@@ -1685,10 +1684,30 @@ public class Processor implements Runnable {
 
 	public void doMultiplyStep()
 	{
-		//TODO
+		long tmp = 0;
+		long t = this.register[Register.T.ordinal()];
+		if ((t & 1) != 0) {
+			tmp = this.register[Register.S.ordinal()];
+		}
+		long md = this.system_register[SystemRegister.MD.ordinal()];
+		md = this.adc(tmp, md, false);
+		md = this.rcr(md, 1, this.getFlag(Flag.CARRY));
+		t = this.rcr(t, 1, this.getFlag(Flag.CARRY));
+		this.system_register[SystemRegister.MD.ordinal()] = md;
+		this.register[Register.T.ordinal()] = t;
 	}
 
 	public void doDivideStep()
+	{
+		//TODO
+	}
+
+
+	/**
+	 * S = System(MD):S / T (floored division)
+	 * T = System(MD):S MOD T (floored division)
+	 */
+	public void doDivMod()
 	{
 		//TODO
 	}
@@ -2083,18 +2102,18 @@ public class Processor implements Runnable {
 		switch (Ext2.values()[this.nextSlot()]) {
 		case TUCK:			this.doTuck(); break;
 		case UNDER:			this.doUnder(); break;
-		case EQ0Q:			this.doEQ0Q(Register.T.ordinal()); break;
-		case NE0Q:			this.doNE0Q(Register.T.ordinal()); break;
-		case GT0Q:			this.doGT0Q(Register.T.ordinal()); break;
-		case GE0Q:			this.doGE0Q(Register.T.ordinal()); break;
-		case LT0Q:			this.doLT0Q(Register.T.ordinal()); break;
-		case LE0Q:			this.doLE0Q(Register.T.ordinal()); break;
 		case ABS:			this.doAbs(Register.T.ordinal()); break;
 		case NEGATE:		this.doNegate(Register.T.ordinal()); break;
 		case ROL:			this.doRol(Register.T.ordinal(), this.nextSlot()); break;
 		case ROR:			this.doRor(Register.T.ordinal(), this.nextSlot()); break;
 		case RCL:			this.doRcl(Register.T.ordinal(), this.nextSlot()); break;
 		case RCR:			this.doRcr(Register.T.ordinal(), this.nextSlot()); break;
+		case EQ0Q:			this.doEQ0Q(Register.T.ordinal()); break;
+		case NE0Q:			this.doNE0Q(Register.T.ordinal()); break;
+		case GT0Q:			this.doGT0Q(Register.T.ordinal()); break;
+		case GE0Q:			this.doGE0Q(Register.T.ordinal()); break;
+		case LT0Q:			this.doLT0Q(Register.T.ordinal()); break;
+		case LE0Q:			this.doLE0Q(Register.T.ordinal()); break;
 		case FETCHSYSTEM:	this.doFetchSystem(this.nextSlot()); break;
 		case STORESYSTEM:	this.doStoreSystem(this.nextSlot()); break;
 		case FETCHRES:	this.doFetchReserved(); break;

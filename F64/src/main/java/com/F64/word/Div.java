@@ -5,23 +5,21 @@ import com.F64.Interpreter;
 import com.F64.Processor;
 import com.F64.Register;
 
-public class EqQ extends com.F64.Word {
+public class Div extends com.F64.Word {
 
 	@Override
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.setRegister(Register.T, p.getRegister(Register.S) - p.getRegister(Register.T));
+		p.setRegister(Register.T, p.getRegister(Register.S)/p.getRegister(Register.T));
 		p.doNip();
-		p.doEQ0Q(Register.T.ordinal());
 	}
 
 	@Override
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(new com.F64.codepoint.Sub());
-		c.compile(new com.F64.codepoint.Eq0Q());
+		c.compile(new com.F64.codepoint.Div());
 	}
 
 
