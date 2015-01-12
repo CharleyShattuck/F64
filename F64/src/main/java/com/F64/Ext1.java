@@ -5,8 +5,6 @@ public enum Ext1 {
 	EXITI(3,"return from interrupt (interrupt # in next slot)"),
 	ADDC(2,"add with carry"),
 	SUBC(2,"subtract with carry"),
-	MULS(2,"multiply step"),
-	DIVS(2,"divide step"),
 	ROL(2,"rotate S left by T and copy most significant bit into carry"),
 	ROR(2,"rotate S right by T and copy least significant bit into carry"),
 	RCL(2,"rotate S left by T with carry"),

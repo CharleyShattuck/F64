@@ -51,6 +51,56 @@ public class Machine {
 		dictionary.createStandardWords();
 		compiler = new Compiler(system, processor);
 		interpreter = new Interpreter(system, processor, compiler, dictionary);
+		// * secondary
+		com.F64.codepoint.Mul.setAdr(system.getCodePosition());
+		compiler.generate(ISA.LIT, 0);
+		compiler.generate(Ext2.STORESYSTEM, SystemRegister.MD.ordinal());
+		compiler.generate(ISA.LIT, Processor.BIT_PER_CELL-1);
+		compiler.generate(ISA.PUSH);
+		compiler.flush();
+		compiler.generate(Ext2.MULS);
+		compiler.generate(ISA.UNEXT);
+		compiler.generate(Ext2.MULF);
+		compiler.generate(ISA.EXIT);
+		compiler.flush();
+		// / secondary
+		com.F64.codepoint.Div.setAdr(system.getCodePosition());
+		compiler.generate(ISA.LIT, 0);
+		compiler.generate(Ext2.STORESYSTEM, SystemRegister.MD.ordinal());
+		compiler.generate(ISA.LIT, Processor.BIT_PER_CELL-1);
+		compiler.generate(ISA.PUSH);
+		compiler.flush();
+		compiler.generate(Ext2.DIVS);
+		compiler.generate(ISA.UNEXT);
+		compiler.generate(Ext2.DIVF);
+		compiler.generate(ISA.EXIT);
+		compiler.flush();
+		// /mod secondary
+		com.F64.codepoint.DivMod.setAdr(system.getCodePosition());
+		compiler.generate(ISA.LIT, 0);
+		compiler.generate(Ext2.STORESYSTEM, SystemRegister.MD.ordinal());
+		compiler.generate(ISA.LIT, Processor.BIT_PER_CELL-1);
+		compiler.generate(ISA.PUSH);
+		compiler.flush();
+		compiler.generate(Ext2.DIVS);
+		compiler.generate(ISA.UNEXT);
+		compiler.generate(Ext2.DIVMODF);
+		compiler.generate(ISA.EXIT);
+		compiler.flush();
+		// mod secondary
+		com.F64.codepoint.Mod.setAdr(system.getCodePosition());
+		compiler.generate(ISA.LIT, 0);
+		compiler.generate(Ext2.STORESYSTEM, SystemRegister.MD.ordinal());
+		compiler.generate(ISA.LIT, Processor.BIT_PER_CELL-1);
+		compiler.generate(ISA.PUSH);
+		compiler.flush();
+		compiler.generate(Ext2.DIVS);
+		compiler.generate(ISA.UNEXT);
+		compiler.generate(Ext2.DIVMODF);
+		compiler.generate(ISA.NIP);
+		compiler.generate(ISA.EXIT);
+		compiler.flush();
+		//
 //		processor.powerOn();
 		view = new com.F64.view.ProcessorArray(processor_array, interpreter, compiler, system, dictionary);
 		view.update();

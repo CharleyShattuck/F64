@@ -21,23 +21,23 @@ import javax.swing.ScrollPaneConstants;
 public class System extends JFrame implements ActionListener {
 	private com.F64.System				system;
 	private JToggleButton[]				toggle_list;
-	private JTextField[]				bytes;
+	private JTextField[]				cells;
 	private JSplitPane 					split;
 	private JPanel						area;
 	private JPanel						memory;
 	private JScrollPane 				scroll;
 	private int							selected_area;
 	private boolean						updating;
-	private final int BUTTON_COLUMNS = 4;
-	private final int MEMORY_COLUMNS = 16;
-	private final int MEMORY_SIZE = 256;
+	private final int BUTTON_COLUMNS = 8;
+//	private final int MEMORY_COLUMNS = 16;
+	private final int MEMORY_SIZE = 16;
 //	private final int MEMORY_DIGITS = MEMORY_SIZE / 16;
 
 	public System(com.F64.System s)
 	{
 		JLabel label;
 		system = s;
-		this.setSize(700,500);
+		this.setSize(800,500);
 		this.setPreferredSize(new Dimension(700, 800));
 		this.setTitle("Memory View");
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -53,7 +53,7 @@ public class System extends JFrame implements ActionListener {
 		Insets button_insets = new Insets( 0, 0, 0, 0);
 
 		split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scroll, memory);
-		split.setDividerLocation(350);
+		split.setDividerLocation(580);
 	
 		int no_of_areas = (int)(system.getMemorySize() / MEMORY_SIZE);
 		toggle_list = new JToggleButton[no_of_areas];
@@ -63,7 +63,7 @@ public class System extends JFrame implements ActionListener {
 		int y = 0;
 		int x = 0;
 		for (int i=0; i<no_of_areas; ++i) {
-			toggle_list[i] = new JToggleButton(String.format("%04xxx", i));
+			toggle_list[i] = new JToggleButton(String.format("%04xx", i));
 			toggle_list[i].setFont(font);
 			toggle_list[i].addActionListener(this);
 
@@ -86,47 +86,47 @@ public class System extends JFrame implements ActionListener {
 			}
 		}
 		this.toggle_list[0].setSelected(true);
-		this.bytes = new JTextField[MEMORY_SIZE];
+		this.cells = new JTextField[MEMORY_SIZE];
 		y = y0;
 		x = x0;
-		for (int i=0; i<MEMORY_COLUMNS; ++i) {
-			label = new JLabel(String.format("%01x", i));
-			label.setFont(font);
-			label.setHorizontalAlignment(JTextField.CENTER);
-			this.memory.add(
-				label,
-				new GridBagConstraints(
-					x+i + ((i<8) ? 1 : 2), y,
-					1, 1,
-					0.0, 0.0,
-					GridBagConstraints.WEST,
-					GridBagConstraints.BOTH,
-					label_insets,
-					0, 0
-				)
-			);
-
-		}
-		label = new JLabel("  ");
-		label.setFont(font);
-		label.setHorizontalAlignment(JTextField.CENTER);
-		this.memory.add(
-			label,
-			new GridBagConstraints(
-				x+9, y,
-				1, 1,
-				0.0, 0.0,
-				GridBagConstraints.WEST,
-				GridBagConstraints.BOTH,
-				label_insets,
-				0, 0
-			)
-		);
+//		for (int i=0; i<MEMORY_SIZE; ++i) {
+//			label = new JLabel(String.format("%01x", i));
+//			label.setFont(font);
+//			label.setHorizontalAlignment(JTextField.CENTER);
+//			this.memory.add(
+//				label,
+//				new GridBagConstraints(
+//					x+i + ((i<8) ? 1 : 2), y,
+//					1, 1,
+//					0.0, 0.0,
+//					GridBagConstraints.WEST,
+//					GridBagConstraints.BOTH,
+//					label_insets,
+//					0, 0
+//				)
+//			);
+//
+//		}
+//		label = new JLabel("  ");
+//		label.setFont(font);
+//		label.setHorizontalAlignment(JTextField.CENTER);
+//		this.memory.add(
+//			label,
+//			new GridBagConstraints(
+//				x+9, y,
+//				1, 1,
+//				0.0, 0.0,
+//				GridBagConstraints.WEST,
+//				GridBagConstraints.BOTH,
+//				label_insets,
+//				0, 0
+//			)
+//		);
 		y = 0;
 		x = 0;
 		for (int i=0; i<MEMORY_SIZE; ++i) {
 			if (x == 0) {
-				label = new JLabel(String.format("%01xx ", y));
+				label = new JLabel(String.format(" %01x ", y));
 				label.setFont(font);
 				label.setHorizontalAlignment(JTextField.RIGHT);
 				this.memory.add(
@@ -142,14 +142,14 @@ public class System extends JFrame implements ActionListener {
 					)
 				);
 			}
-			bytes[i] = new JTextField(2);
-			bytes[i].setFont(font);
-			bytes[i].setHorizontalAlignment(JTextField.CENTER);
-			bytes[i].addActionListener(this);
+			cells[i] = new JTextField(20);
+			cells[i].setFont(font);
+			cells[i].setHorizontalAlignment(JTextField.CENTER);
+			cells[i].addActionListener(this);
 			this.memory.add(
-				bytes[i],
+				cells[i],
 				new GridBagConstraints(
-					x0+x+((x<8) ? 1 : 2), y0+y+1,
+					x0+1, y0+y+1,
 					1, 1,
 					1.0, 1.0,
 					GridBagConstraints.WEST,
@@ -158,10 +158,7 @@ public class System extends JFrame implements ActionListener {
 					0, 0
 				)
 			);
-			if (++x >= MEMORY_COLUMNS) {
-				x -= MEMORY_COLUMNS;
-				++y;
-			}
+			++y;
 		}
 		this.add(this.split);
 		setVisible(true);
@@ -188,26 +185,20 @@ public class System extends JFrame implements ActionListener {
 				return;
 			}
 		}
-		for (int i=0; i<bytes.length; ++i) {
-			if (bytes[i] == source) {
+		for (int i=0; i<cells.length; ++i) {
+			if (cells[i] == source) {
 				long adr = selected_area;
-				adr *= MEMORY_SIZE / 8;
-				adr += i/8;
-				int byte_pos = i & 7;
+				adr *= MEMORY_SIZE;
+				++adr;
 				long data = this.system.getMemory(adr);
 				try {
-					long value = Integer.parseInt(ev.getActionCommand(), 16);
-					if ((value >= 0) && (value < 0x100)) {
-						long mask = 0xff;
-						mask <<= 8*byte_pos;
-						value <<= 8*byte_pos;
-						data = (data & ~mask) | value;
-						this.system.setMemory(adr, data);
-					}
+					String txt = ev.getActionCommand();
+					data = Long.parseLong(txt.replaceAll(" ", ""), 16);
+					this.system.setMemory(adr, data);
 				}
 				catch (Exception ex) {}
 				this.updating = true;
-				this.bytes[i].setText(String.format("%02x", (int)((data >>> (i*8)) & 0xff)));
+				this.cells[i].setText(Processor.convertLongToString(data));
 				this.updating = false;
 				return;
 			}
@@ -216,15 +207,10 @@ public class System extends JFrame implements ActionListener {
 
 	public void update()
 	{
-		long data = 0;
 		long adr = selected_area;
-		adr *= MEMORY_SIZE / 8;
+		adr *= MEMORY_SIZE;
 		for (int i=0; i<MEMORY_SIZE; ++i) {
-			if ((i & 7) == 0) {
-				data = this.system.getMemory(adr++);
-			}
-			this.bytes[i].setText(String.format("%02x", (int)(data & 0xff)));
-			data = data >>> 8;
+			this.cells[i].setText(Processor.convertLongToString(this.system.getMemory(adr++)));
 		}
 	}
 

@@ -1,10 +1,18 @@
 package com.F64.codepoint;
 
-import com.F64.Compiler;
 import com.F64.Optimization;
 import com.F64.Processor;
 
-public class Div extends com.F64.Codepoint {
+public class Div extends Secondary {
+
+	private static long adr;
+	
+	public static void setAdr(long value) {adr = value;}
+	
+	public Div()
+	{
+		super(adr);
+	}
 
 	@Override
 	public boolean optimize(Processor processor, Optimization opt)
@@ -73,12 +81,6 @@ public class Div extends com.F64.Codepoint {
 			}
 		}
 		return false;
-	}
-	
-	@Override
-	public void generate(Compiler c)
-	{
-		
 	}
 
 }

@@ -431,6 +431,15 @@ public class Compiler {
 		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 	}
 
+	public void generate(Ext2 opcode, int arg0)
+	{
+		if (!doesFit(ISA.EXT2.ordinal(), opcode.ordinal(), arg0)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.EXT2.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, arg0);
+		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
+	}
+
 	public void generate(Ext3 opcode)
 	{
 		if (!doesFit(ISA.EXT3.ordinal(), opcode.ordinal())) {flush();}

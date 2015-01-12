@@ -1682,6 +1682,78 @@ public class Processor implements Runnable {
 		}
 	}
 
+	/**
+	 * set the system register MDP with sign information about S & T.
+	 * Convert T & S into unsigned numbers
+	 */
+	public void doMultiplyDividePrepare()
+	{
+		long res = 0;
+		long data = this.register[Register.T.ordinal()];
+		if (data < 0) {
+			res |= 1;
+			this.register[Register.T.ordinal()] = -data;
+		}
+		data = this.register[Register.S.ordinal()];
+		if (data < 0) {
+			res |= 2;
+			this.register[Register.S.ordinal()] = -data;
+		}
+		this.system_register[SystemRegister.MDP.ordinal()] = res;
+	}
+
+	/*
+	 * S = multiplicand
+	 * T = result low
+	 * MD = result high
+	 */
+	public void doMultiplyFinished()
+	{
+		int mdp = (int)this.system_register[SystemRegister.MDP.ordinal()];
+		if ((mdp == 1) || (mdp == 2)) {
+			this.register[Register.T.ordinal()] = -this.register[Register.T.ordinal()];
+		}
+		this.doNip();
+	}
+
+	public void doDivideFinished()
+	{
+		int mdp = (int)this.system_register[SystemRegister.MDP.ordinal()];
+		if ((mdp == 1) || (mdp == 2)) {
+			this.register[Register.S.ordinal()] = -this.register[Register.S.ordinal()];
+		}
+		this.doDrop();
+	}
+
+	public void doDivideModFinished()
+	{
+		int mdp = (int)this.system_register[SystemRegister.MDP.ordinal()];
+		long q = this.register[Register.S.ordinal()];
+		long r = this.system_register[SystemRegister.MD.ordinal()];
+		switch (mdp) {
+		case 0: break;
+		case 1: // divident < 0, divisor > 0
+			q = ~q;
+			break;
+		case 2: // divident > 0, divisor < 0
+			q = -q;
+			r = -r;
+			break;
+		case 3: // divident < 0, divisor < 0
+			r = -r;
+			break;
+		}
+		if ((mdp == 1) || (mdp == 2)) {
+			q = -q;
+		}
+		this.register[Register.S.ordinal()] = q;
+		this.register[Register.T.ordinal()] = r;
+	}
+
+	
+	/**
+	 *
+	 */
 	public void doMultiplyStep()
 	{
 		long tmp = 0;
@@ -1697,20 +1769,38 @@ public class Processor implements Runnable {
 		this.register[Register.T.ordinal()] = t;
 	}
 
+	/**
+	 * S = Dividend
+	 * T = Divisor
+	 * MD = Remainder
+	 */
 	public void doDivideStep()
 	{
-		//TODO
+		long dd = this.register[Register.S.ordinal()];
+		long ds = this.register[Register.T.ordinal()];
+		long md = this.system_register[SystemRegister.MD.ordinal()];
+		md <<= 1;
+		if ((dd & 0x8000_0000_0000_0000L) != 0) {
+			++md;
+		}
+		dd <<= 1;
+		if (md >= ds) {
+			md-= ds;
+			++dd;
+		}
+		this.register[Register.S.ordinal()] = dd;
+		this.system_register[SystemRegister.MD.ordinal()] = md;
 	}
 
 
-	/**
-	 * S = System(MD):S / T (floored division)
-	 * T = System(MD):S MOD T (floored division)
-	 */
-	public void doDivMod()
-	{
-		//TODO
-	}
+//	/**
+//	 * S = System(MD):S / T (floored division)
+//	 * T = System(MD):S MOD T (floored division)
+//	 */
+//	public void doDivMod()
+//	{
+//		//TODO
+//	}
 
 	public void doRol(int reg, int shift)
 	{
@@ -2054,8 +2144,6 @@ public class Processor implements Runnable {
 		case EXITI:		this.doExitInterrupt(this.nextSlot()); break;
 		case ADDC:		this.doAddWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
 		case SUBC:		this.doSubtractWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
-		case MULS:		this.doMultiplyStep(); break;
-		case DIVS:		this.doDivideStep(); break;
 		case ROL:		this.doRol(Register.T.ordinal(), 1); break;
 		case ROR:		this.doRor(Register.T.ordinal(), 1); break;
 		case RCL:		this.doRcl(Register.T.ordinal(), 1); break;
@@ -2102,6 +2190,12 @@ public class Processor implements Runnable {
 		switch (Ext2.values()[this.nextSlot()]) {
 		case TUCK:			this.doTuck(); break;
 		case UNDER:			this.doUnder(); break;
+		case MULS:			this.doMultiplyStep(); break;
+		case DIVS:			this.doDivideStep(); break;
+		case MDP:			this.doMultiplyDividePrepare(); break;
+		case MULF:			this.doMultiplyFinished(); break;
+		case DIVF:			this.doDivideFinished(); break;
+		case DIVMODF:		this.doDivideModFinished(); break;
 		case ABS:			this.doAbs(Register.T.ordinal()); break;
 		case NEGATE:		this.doNegate(Register.T.ordinal()); break;
 		case ROL:			this.doRol(Register.T.ordinal(), this.nextSlot()); break;
@@ -2116,10 +2210,10 @@ public class Processor implements Runnable {
 		case LE0Q:			this.doLE0Q(Register.T.ordinal()); break;
 		case FETCHSYSTEM:	this.doFetchSystem(this.nextSlot()); break;
 		case STORESYSTEM:	this.doStoreSystem(this.nextSlot()); break;
-		case FETCHRES:	this.doFetchReserved(); break;
-		case STORECOND:	this.doStoreConditional(); break;
-		case FETCHPORT: this.doFetchPort(this.nextSlot(), false); break;
-		case STOREPORT: this.doStorePort(this.nextSlot(), false); break;
+		case FETCHRES:		this.doFetchReserved(); break;
+		case STORECOND:		this.doStoreConditional(); break;
+		case FETCHPORT: 	this.doFetchPort(this.nextSlot(), false); break;
+		case STOREPORT: 	this.doStorePort(this.nextSlot(), false); break;
 		case FETCHPORTWAIT: this.doFetchPort(this.nextSlot(), true); break;
 		case STOREPORTWAIT: this.doStorePort(this.nextSlot(), true); break;
 		default: this.interrupt(Flag.ILLEGAL);

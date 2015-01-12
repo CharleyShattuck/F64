@@ -5,21 +5,24 @@ import com.F64.Interpreter;
 import com.F64.Processor;
 import com.F64.Register;
 
-public class Mul2 extends com.F64.Word {
+public class DivMod extends com.F64.Word {
 
 	@Override
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doMul2Add(Register.T.ordinal(), Register.T.ordinal(), Register.Z.ordinal());
+		long dd = p.getRegister(Register.S);
+		long ds = p.getRegister(Register.T);
+		p.setRegister(Register.S, dd/ds);
+		p.setRegister(Register.T, dd%ds);
 	}
 
 	@Override
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(new com.F64.codepoint.Literal(2));
-		c.compile(new com.F64.codepoint.Mul());
+		c.compile(new com.F64.codepoint.DivMod());
 	}
+
 
 }

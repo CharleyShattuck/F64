@@ -26,6 +26,7 @@ public enum SystemRegister {
 	INTS("interrupt service register"),
 	INTV("interrupt vector register"),
 	MD("multiply/divide register"),
+	MDP("multiply/divide prepare register"),
 	EX("exception register. Contains last exception thrown"),
 	EXF("exception frame register"),
 	CLK("external clock counter"),
