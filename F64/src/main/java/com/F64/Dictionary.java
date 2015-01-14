@@ -134,6 +134,7 @@ public class Dictionary {
 		this.register("ones",		false,	new Ones());
 		this.register("or",			false,	new Or());
 		this.register("over",		false,	new Over());
+		this.register("reverse",	false,	new Reverse());
 		this.register("swap",		false,	new Swap());
 		this.register("tuck",		false,	new Tuck());
 		this.register("under",		false,	new Under());

@@ -45,8 +45,8 @@ public enum ISA {
 	STORER(2,"store via register (register in next slot)"),
 	RINC(2,"increment register"),
 	RDEC(2,"decrement register"),
-	RPINC(2,"increment register"),
-	RPDEC(2,"decrement register"),
+	RPINC(2,"increment register (pointer)"),
+	RPDEC(2,"decrement register (pointer)"),
 	FETCHPINC(1,"fetch via register P post-increment"),
 	STOREPINC(1,"store via register P post-increment"),
 	ADD(1,"+"),
@@ -63,8 +63,8 @@ public enum ISA {
 	EXT4(0,"code extension 4"),
 	EXT5(0,"code extension 5"),
 	EXT6(0,"code extension 6"),
-	REGOP(5,"register operation set 1 (operation in next slot, source 1 in next slot+1, source 2 in next slot+2, destination in next slot+3)"),
-	SIMD(6,"SIMD operation set 1 (operation in next slot, additional parmater in next slot+1, source 1 in next slot+2, source 2 in next slot+3, destination in next slot+4)");
+	REGOP(5,"register operation set 1 (operation in next slot, destination in next slot+1, source 1 in next slot+2, source 2 in next slot+3)"),
+	SIMD(6,"SIMD operation set 1 (operation in next slot, additional parmater in next slot+1, destination in next slot+2, source 1 in next slot+3, source 2 in next slot+4)");
 
 	private int size;
 	private String tooltip;

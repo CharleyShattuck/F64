@@ -29,12 +29,6 @@ public class Machine {
 
 	Machine(int columns, int rows, int dictionary_size, int heap_size, int stack_size, int return_stack_size, int no_of_threads)
 	{
-		assert(ISA.values().length <= Processor.SLOT_SIZE);
-		assert(Ext1.values().length <= Processor.SLOT_SIZE);
-		assert(Ext2.values().length <= Processor.SLOT_SIZE);
-		assert(RegOp1.values().length <= Processor.SLOT_SIZE);
-		assert(SimdOp1.values().length <= Processor.SLOT_SIZE);
-		assert(Flag.values().length <= (Processor.BIT_PER_CELL - 3*Processor.SLOT_BITS));
 		rom = new BootROM();
 		system = new System(dictionary_size, heap_size, stack_size, return_stack_size, no_of_threads);
 		//
@@ -72,7 +66,8 @@ public class Machine {
 		compiler.flush();
 		compiler.generate(Ext2.DIVS);
 		compiler.generate(ISA.UNEXT);
-		compiler.generate(Ext2.DIVF);
+		compiler.generate(Ext2.DIVMODF);
+		compiler.generate(ISA.DROP);
 		compiler.generate(ISA.EXIT);
 		compiler.flush();
 		// /mod secondary
@@ -128,6 +123,14 @@ public class Machine {
 	
 	public static void main(String[] args)
 	{
+		assert(Branch.values().length <= (1 << (Processor.SLOT_BITS-2)));
+		assert(ISA.values().length <= Processor.SLOT_SIZE);
+		assert(Ext1.values().length <= Processor.SLOT_SIZE);
+		assert(Ext2.values().length <= Processor.SLOT_SIZE);
+		assert(Ext3.values().length <= Processor.SLOT_SIZE);
+		assert(RegOp1.values().length <= Processor.SLOT_SIZE);
+		assert(SimdOp1.values().length <= Processor.SLOT_SIZE);
+		assert(Flag.values().length <= (Processor.BIT_PER_CELL - 3*Processor.SLOT_BITS));
 		Machine main = new Machine(8, 4, 10000, 100000, 32, 16, 10);
 		main.interpret();
 	}

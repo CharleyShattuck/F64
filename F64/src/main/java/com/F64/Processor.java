@@ -1,6 +1,152 @@
 package com.F64;
 
 public class Processor implements Runnable {
+
+	public static final int		VERSION = 0x010000;
+	public static final long	IO_BASE = 0xFFFF_FFFF_FFFF_FF00L;
+	public static final int		BIT_PER_CELL = 64;
+	public static final int		NO_OF_REG = 64;
+	public static final int		SLOT_BITS = 6;
+	public static final int		NO_OF_FULL_SLOTS = BIT_PER_CELL / SLOT_BITS;
+	public static final int		SLOT_SIZE = 1 << SLOT_BITS;
+	public static final int		SLOT_MASK = SLOT_SIZE - 1;
+	public static final int		FINAL_SLOT_BITS = BIT_PER_CELL - (NO_OF_FULL_SLOTS*SLOT_BITS);
+	public static final int		FINAL_SLOT_SIZE = 1 << FINAL_SLOT_BITS;
+	public static final int		FINAL_SLOT_MASK = FINAL_SLOT_SIZE - 1;
+	public static final int		FINAL_SLOT = NO_OF_FULL_SLOTS;
+	public static final int		NO_OF_SLOTS = FINAL_SLOT+1;
+	public static final long	TRUE = -1L;
+	public static final long	FALSE = 0L;
+
+	public static final long	SLOT0_MASK = -1L << (BIT_PER_CELL-SLOT_BITS);
+	public static final long[]	SLOT_MASKS = {
+		SLOT0_MASK,
+		SLOT0_MASK >>> SLOT_BITS,
+		SLOT0_MASK >>> (SLOT_BITS*2),
+		SLOT0_MASK >>> (SLOT_BITS*3),
+		SLOT0_MASK >>> (SLOT_BITS*4),
+		SLOT0_MASK >>> (SLOT_BITS*5),
+		SLOT0_MASK >>> (SLOT_BITS*6),
+		SLOT0_MASK >>> (SLOT_BITS*7),
+		SLOT0_MASK >>> (SLOT_BITS*8),
+		SLOT0_MASK >>> (SLOT_BITS*9),
+		SLOT0_MASK >>> (SLOT_BITS*10)
+	};
+
+	public static final long[]	REMAINING_MASKS = {
+		-1L >>> SLOT_BITS,
+		-1L >>> (SLOT_BITS*2),
+		-1L >>> (SLOT_BITS*3),
+		-1L >>> (SLOT_BITS*4),
+		-1L >>> (SLOT_BITS*5),
+		-1L >>> (SLOT_BITS*6),
+		-1L >>> (SLOT_BITS*7),
+		-1L >>> (SLOT_BITS*8),
+		-1L >>> (SLOT_BITS*9),
+		-1L >>> (SLOT_BITS*10)
+	};
+
+	
+	public static final long[] BIT_MASK =
+		{
+			0x0000_0000_0000_0001L,
+			0x0000_0000_0000_0002L,
+			0x0000_0000_0000_0004L,
+			0x0000_0000_0000_0008L,
+			0x0000_0000_0000_0010L,
+			0x0000_0000_0000_0020L,
+			0x0000_0000_0000_0040L,
+			0x0000_0000_0000_0080L,
+			0x0000_0000_0000_0100L,
+			0x0000_0000_0000_0200L,
+			0x0000_0000_0000_0400L,
+			0x0000_0000_0000_0800L,
+			0x0000_0000_0000_1000L,
+			0x0000_0000_0000_2000L,
+			0x0000_0000_0000_4000L,
+			0x0000_0000_0000_8000L,
+			//
+			0x0000_0000_0001_0000L,
+			0x0000_0000_0002_0000L,
+			0x0000_0000_0004_0000L,
+			0x0000_0000_0008_0000L,
+			0x0000_0000_0010_0000L,
+			0x0000_0000_0020_0000L,
+			0x0000_0000_0040_0000L,
+			0x0000_0000_0080_0000L,
+			0x0000_0000_0100_0000L,
+			0x0000_0000_0200_0000L,
+			0x0000_0000_0400_0000L,
+			0x0000_0000_0800_0000L,
+			0x0000_0000_1000_0000L,
+			0x0000_0000_2000_0000L,
+			0x0000_0000_4000_0000L,
+			0x0000_0000_8000_0000L,
+			//
+			0x0000_0001_0000_0000L,
+			0x0000_0002_0000_0000L,
+			0x0000_0004_0000_0000L,
+			0x0000_0008_0000_0000L,
+			0x0000_0010_0000_0000L,
+			0x0000_0020_0000_0000L,
+			0x0000_0040_0000_0000L,
+			0x0000_0080_0000_0000L,
+			0x0000_0100_0000_0000L,
+			0x0000_0200_0000_0000L,
+			0x0000_0400_0000_0000L,
+			0x0000_0800_0000_0000L,
+			0x0000_1000_0000_0000L,
+			0x0000_2000_0000_0000L,
+			0x0000_4000_0000_0000L,
+			0x0000_8000_0000_0000L,
+			//
+			0x0001_0000_0000_0000L,
+			0x0002_0000_0000_0000L,
+			0x0004_0000_0000_0000L,
+			0x0008_0000_0000_0000L,
+			0x0010_0000_0000_0000L,
+			0x0020_0000_0000_0000L,
+			0x0040_0000_0000_0000L,
+			0x0080_0000_0000_0000L,
+			0x0100_0000_0000_0000L,
+			0x0200_0000_0000_0000L,
+			0x0400_0000_0000_0000L,
+			0x0800_0000_0000_0000L,
+			0x1000_0000_0000_0000L,
+			0x2000_0000_0000_0000L,
+			0x4000_0000_0000_0000L,
+			0x8000_0000_0000_0000L
+		};
+	
+	
+	public static int max_slot = 0;
+
+	
+	static
+	{
+		int i, size;
+		for (i=0; i<ISA.values().length; ++i) {
+			size = ISA.values()[i].size();
+			if (size < 0) {size = -size;}
+			if (size > max_slot) {max_slot = size;}
+		}
+		for (i=0; i<Ext1.values().length; ++i) {
+			size = Ext1.values()[i].size();
+			if (size < 0) {size = -size;}
+			if (size > max_slot) {max_slot = size;}
+		}
+		for (i=0; i<Ext2.values().length; ++i) {
+			size = Ext2.values()[i].size();
+			if (size < 0) {size = -size;}
+			if (size > max_slot) {max_slot = size;}
+		}
+		for (i=0; i<Ext3.values().length; ++i) {
+			size = Ext3.values()[i].size();
+			if (size < 0) {size = -size;}
+			if (size > max_slot) {max_slot = size;}
+		}
+	}
+
 	private System				system;
 	private long[]				register;
 	private long[]				system_register;
@@ -25,40 +171,6 @@ public class Processor implements Runnable {
 	private boolean				reading;
 	private volatile boolean	running;
 
-	public static final int		VERSION = 0x010000;
-	public static final long	IO_BASE = 0xFFFF_FFFF_FFFF_FF00L;
-	public static final int		BIT_PER_CELL = 64;
-	public static final int		NO_OF_REG = 64;
-	public static final int		SLOT_BITS = 6;
-	public static final int		SLOT_SIZE = 1 << SLOT_BITS;
-	public static final int		SLOT_MASK = SLOT_SIZE - 1;
-	public static final int		FINAL_SLOT_BITS = 4;
-	public static final int		FINAL_SLOT_SIZE = 1 << FINAL_SLOT_BITS;
-	public static final int		FINAL_SLOT_MASK = FINAL_SLOT_SIZE - 1;
-	public static final int		FINAL_SLOT = 10;
-	public static final int		NO_OF_SLOTS = FINAL_SLOT+1;
-	public static final long	TRUE = -1L;
-	public static final long	FALSE = 0L;
-
-	private static int max_slot = 0;
-
-	public static int getMaxSlot()
-	{
-		if (max_slot == 0) {
-			int i, size;
-			for (i=0; i<ISA.values().length; ++i) {
-				size = ISA.values()[i].size();
-				if (size < 0) {size = -size;}
-				if (size > max_slot) {max_slot = size;}
-			}
-			for (i=0; i<Ext1.values().length; ++i) {
-				size = Ext1.values()[i].size();
-				if (size < 0) {size = -size;}
-				if (size > max_slot) {max_slot = size;}
-			}
-		}
-		return max_slot;
-	}
 
 	public static long getIOAddress(int slot_bits)
 	{
@@ -76,7 +188,24 @@ public class Processor implements Runnable {
 		}
 		return res;
 	}
-	
+
+	public static long reverseBits(long data)
+	{
+		// swap odd and even bits
+		data = ((data >>> 1) & 0x55555555_55555555L) | ((data & 0x55555555_55555555L) << 1);
+		// swap consecutive pairs
+		data = ((data >>> 2) & 0x33333333_33333333L) | ((data & 0x33333333_33333333L) << 2);
+		// swap nibbles ... 
+		data = ((data >>> 4) & 0x0F0F0F0F_0F0F0F0FL) | ((data & 0x0F0F0F0F_0F0F0F0FL) << 4);
+		// swap bytes
+		data = ((data >>> 8) & 0x00FF00FF_00FF00FFL) | ((data & 0x00FF00FF_00FF00FFL) << 8);
+		// swap 16-bit pairs
+		data = ((data >>>16) & 0x0000FFFF_0000FFFFL) | ((data & 0x0000FFFF_0000FFFFL) <<16);
+		// swap 32-bit halfs
+		data = (data >>> 32) | (data << 32);
+		return data;
+	}
+
 	public static int findFirstBit1(long data)
 	{
 		if (data == 0) {return -1;}
@@ -976,26 +1105,30 @@ public class Processor implements Runnable {
 
 	public long remainingSlots()
 	{
-		long res = this.system_register[SystemRegister.I.ordinal()];
-		long mask = -1;
-		res &= mask >>> (this.slot*SLOT_BITS);
+		long res = this.system_register[SystemRegister.I.ordinal()] & REMAINING_MASKS[this.slot];
 		this.slot = NO_OF_SLOTS;
 		return res;
 	}
 
+	/**
+	 * Jump to an address. The content of I is lost.
+	 */
 	public void jumpRemainigSlots()
 	{
-		// replace to lowest bits of P with the bits in the remaining slots (except the last 4)
-		long mask = -1;
-		mask = mask >>> (this.slot*SLOT_BITS);
+		// replace to lowest bits of P with the bits in the remaining slots
+		long mask = REMAINING_MASKS[this.slot];
 		long data = this.getRegister(SystemRegister.I) & mask;
-		this.slot = (int)data & 0xf;
-		mask >>= 4;
-		data >>= 4;
-		this.system_register[SystemRegister.P.ordinal()] &= ~mask;
-		this.system_register[SystemRegister.P.ordinal()] |= data;
+		long pc = this.system_register[SystemRegister.P.ordinal()];
+		// replace lower bits of pc with the bits from the remaining slots
+		this.system_register[SystemRegister.P.ordinal()] |= pc ^ ((pc ^ data) & mask);
+		this.slot = NO_OF_SLOTS; // force to load new instruction cell & start with slot 0
 	}
 
+	/**
+	 * Replace the lowest 6 bits of a value with the next slot
+	 * @param base
+	 * @return
+	 */
 	public long replaceNextSlot(long base)
 	{
 		long res = (-1 << SLOT_BITS) & base;
@@ -1690,13 +1823,15 @@ public class Processor implements Runnable {
 	{
 		long res = 0;
 		long data = this.register[Register.T.ordinal()];
-		if (data < 0) {
-			res |= 1;
+		if (data < 0) { // divisor
+			res |= 3;
+			// bit 0 signals that the divisor is negative
+			// bit 1 signald that the signs of the divisor and dividend are different
 			this.register[Register.T.ordinal()] = -data;
 		}
 		data = this.register[Register.S.ordinal()];
-		if (data < 0) {
-			res |= 2;
+		if (data < 0) { // dividend
+			res ^= 2;
 			this.register[Register.S.ordinal()] = -data;
 		}
 		this.system_register[SystemRegister.MDP.ordinal()] = res;
@@ -1710,19 +1845,10 @@ public class Processor implements Runnable {
 	public void doMultiplyFinished()
 	{
 		int mdp = (int)this.system_register[SystemRegister.MDP.ordinal()];
-		if ((mdp == 1) || (mdp == 2)) {
+		if ((mdp & 2) != 0) {
 			this.register[Register.T.ordinal()] = -this.register[Register.T.ordinal()];
 		}
 		this.doNip();
-	}
-
-	public void doDivideFinished()
-	{
-		int mdp = (int)this.system_register[SystemRegister.MDP.ordinal()];
-		if ((mdp == 1) || (mdp == 2)) {
-			this.register[Register.S.ordinal()] = -this.register[Register.S.ordinal()];
-		}
-		this.doDrop();
 	}
 
 	public void doDivideModFinished()
@@ -1730,21 +1856,11 @@ public class Processor implements Runnable {
 		int mdp = (int)this.system_register[SystemRegister.MDP.ordinal()];
 		long q = this.register[Register.S.ordinal()];
 		long r = this.system_register[SystemRegister.MD.ordinal()];
-		switch (mdp) {
-		case 0: break;
-		case 1: // divident < 0, divisor > 0
+		if ((mdp & 2) != 0) {
 			q = ~q;
-			break;
-		case 2: // divident > 0, divisor < 0
-			q = -q;
-			r = -r;
-			break;
-		case 3: // divident < 0, divisor < 0
-			r = -r;
-			break;
 		}
-		if ((mdp == 1) || (mdp == 2)) {
-			q = -q;
+		if ((mdp & 1) != 0) {
+			r = -r;
 		}
 		this.register[Register.S.ordinal()] = q;
 		this.register[Register.T.ordinal()] = r;
@@ -2137,6 +2253,12 @@ public class Processor implements Runnable {
 		this.register[reg] = -this.register[reg];
 	}
 
+	public void doReverse(int reg)
+	{
+		this.register[reg] = reverseBits(this.register[reg]);
+	
+	}
+
 	public void doExt1()
 	{
 		switch (Ext1.values()[this.nextSlot()]) {
@@ -2194,7 +2316,6 @@ public class Processor implements Runnable {
 		case DIVS:			this.doDivideStep(); break;
 		case MDP:			this.doMultiplyDividePrepare(); break;
 		case MULF:			this.doMultiplyFinished(); break;
-		case DIVF:			this.doDivideFinished(); break;
 		case DIVMODF:		this.doDivideModFinished(); break;
 		case ABS:			this.doAbs(Register.T.ordinal()); break;
 		case NEGATE:		this.doNegate(Register.T.ordinal()); break;
@@ -2225,6 +2346,7 @@ public class Processor implements Runnable {
 		switch (Ext3.values()[this.nextSlot()]) {
 		case ABS:			this.doAbs(this.nextSlot()); break;
 		case NEGATE:		this.doNegate(this.nextSlot()); break;
+		case REVERSE:		this.doReverse(Register.T.ordinal()); break;
 		case ROL:			this.doRol(this.nextSlot(), 1); break;
 		case ROR:			this.doRor(this.nextSlot(), 1); break;
 		case RCL:			this.doRcl(this.nextSlot(), 1); break;
@@ -2363,7 +2485,7 @@ public class Processor implements Runnable {
 	}
 
 	
-	public void doRegisterOperation(int op, int s1, int s2, int d)
+	public void doRegisterOperation(int op, int d, int s1, int s2)
 	{
 		switch (RegOp1.values()[op]) {
 		case ADD: this.doAdd(d, s1, s2); break;
@@ -2402,7 +2524,7 @@ public class Processor implements Runnable {
 		}
 	}
 
-	public boolean doSIMDOperation(int op, int par, int s1, int s2, int d)
+	public boolean doSIMDOperation(int op, int par, int d, int s1, int s2)
 	{
 		SimdSize size = SimdSize.values()[par & 3];
 		switch (size) {

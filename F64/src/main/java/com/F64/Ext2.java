@@ -7,7 +7,6 @@ public enum Ext2 {
 	DIVS(2,"divide step"),
 	MDP(2,"multiply & divide prepare"),
 	MULF(2,"multiply finished"),
-	DIVF(2,"division finished"),
 	DIVMODF(2,"division & modulo finished"),
 	ABS(2,"absolute ( n1 - n2)"),
 	NEGATE(2,"negate ( n1 - n2)"),

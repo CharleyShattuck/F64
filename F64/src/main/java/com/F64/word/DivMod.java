@@ -13,8 +13,24 @@ public class DivMod extends com.F64.Word {
 		Processor p = i.getProcessor();
 		long dd = p.getRegister(Register.S);
 		long ds = p.getRegister(Register.T);
-		p.setRegister(Register.S, dd/ds);
-		p.setRegister(Register.T, dd%ds);
+		boolean ddneg = false;
+		if (dd < 0) {ddneg = true; dd = -dd;}
+		boolean dsneg = false;
+		if (ds < 0) {dsneg = true; ds = -ds;}
+		long q = dd/ds;
+		long r = dd%ds;
+//		if ((r != 0) && ((dd ^ ds) < 0)) {
+//			--q;
+//			r += ds;
+//		}
+		if (dsneg != ddneg) {
+			q = ~q;
+		}
+		if (dsneg) {
+			r = -r;
+		}
+		p.setRegister(Register.S, q);
+		p.setRegister(Register.T, r);
 	}
 
 	@Override

@@ -21,7 +21,7 @@ public class Slots extends JPanel {
 	public Slots()
 	{
 		super( new GridBagLayout() );
-		int limit = com.F64.Processor.getMaxSlot();
+		int limit = com.F64.Processor.max_slot;
 		Font font = new Font(Font.MONOSPACED, Font.BOLD , 12);
 		JLabel label;
 		int i;

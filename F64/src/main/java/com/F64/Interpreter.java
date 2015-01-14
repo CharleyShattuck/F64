@@ -36,7 +36,7 @@ public class Interpreter {
 	
 	public boolean processNumber(int offset, int base)
 	{
-		String txt = new String(this.buffer, offset, this.buffer_pos, java.nio.charset.StandardCharsets.UTF_8);
+		String txt = new String(this.buffer, offset, this.buffer_pos-offset, java.nio.charset.StandardCharsets.UTF_8);
 		try {
 			this.number = Long.parseLong(txt, base);
 			return true;
@@ -143,6 +143,34 @@ public class Interpreter {
 		return false;
 	}
 	
+	public String getNextWord()
+	{
+		try {
+			int data = this.stream.read();
+			if (data >= 0) {
+				this.buffer_pos = 0;
+				while (data <= 0x20) {
+					data = this.stream.read();
+					if (data < 0) {break;}
+				}
+				if (data >= 0) {
+					this.buffer[this.buffer_pos++] = (byte)data;
+					data = this.stream.read();
+					while (data > 0x20) {
+						this.buffer[this.buffer_pos++] = (byte)data;
+						data = this.stream.read();
+						if (data < 0) {break;}
+					}
+					return new String(this.buffer, 0, this.buffer_pos, java.nio.charset.StandardCharsets.UTF_8);
+				}
+			}
+		}
+		catch (IOException ex) {
+			
+		}
+		return null;
+	}
+
 	public void interpret(java.io.InputStream stream) throws IOException
 	{
 		this.stream = stream;
