@@ -4,7 +4,7 @@ import com.F64.Compiler;
 import com.F64.ISA;
 import com.F64.Optimization;
 import com.F64.Processor;
-import com.F64.RegOp1;
+import com.F64.RegOp3;
 import com.F64.Register;
 
 public class Sub extends com.F64.Codepoint {
@@ -50,7 +50,7 @@ public class Sub extends com.F64.Codepoint {
 							return true;
 						}
 						if (data < Processor.SLOT_SIZE) {
-							lit.replaceWith(new RegOpCode(RegOp1.SUBI, Register.T.ordinal(), Register.T.ordinal(), (int)data));
+							lit.replaceWith(new RegOpCode(RegOp3.SUBI, Register.T.ordinal(), Register.T.ordinal(), (int)data));
 							this.remove();
 							return true;
 						}
@@ -63,7 +63,7 @@ public class Sub extends com.F64.Codepoint {
 							return true;
 						}
 						if (data > -Processor.SLOT_SIZE) {
-							lit.replaceWith(new RegOpCode(RegOp1.ADDI, Register.T.ordinal(), Register.T.ordinal(), -(int)data));
+							lit.replaceWith(new RegOpCode(RegOp3.ADDI, Register.T.ordinal(), Register.T.ordinal(), -(int)data));
 							this.remove();
 							return true;
 						}

@@ -5,8 +5,6 @@ import com.F64.Ext1;
 import com.F64.ISA;
 import com.F64.Optimization;
 import com.F64.Processor;
-import com.F64.RegOp1;
-import com.F64.Register;
 
 
 public class Literal extends com.F64.Codepoint {
@@ -54,13 +52,13 @@ public class Literal extends com.F64.Codepoint {
 		}
 		if ((data & (data-1)) == 0) {
 			// 1 bit set constant
-			c.generate(ISA.BLIT, Processor.findFirstBit1(data));
+			c.generate(Ext1.BLIT, Processor.findFirstBit1(data));
 			return true;
 		}
 		data = ~data;
 		if ((data >= 0) && (data < Processor.SLOT_SIZE)) {
 			// inverted constant fits into a slot
-			c.generate(Ext1.NLIT, (int)data);
+			c.generate(ISA.NLIT, (int)data);
 			return true;
 		}
 		return false;

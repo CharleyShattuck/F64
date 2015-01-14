@@ -1,10 +1,9 @@
 package com.F64.codepoint;
 
 import com.F64.Compiler;
-import com.F64.Ext2;
-import com.F64.Ext3;
 import com.F64.Optimization;
 import com.F64.Processor;
+import com.F64.RegOp1;
 import com.F64.Register;
 
 public class Abs extends com.F64.Codepoint {
@@ -57,12 +56,7 @@ public class Abs extends com.F64.Codepoint {
 	@Override
 	public void generate(Compiler c)
 	{
-		if ((reg < 0) || (reg == Register.T.ordinal())) {
-			c.generate(Ext2.ABS);
-		}
-		else {
-			c.generate(Ext3.ABS, reg);			
-		}
+		c.generate(RegOp1.ABS, reg < 0 ? Register.T.ordinal() : reg);			
 	}
 
 }

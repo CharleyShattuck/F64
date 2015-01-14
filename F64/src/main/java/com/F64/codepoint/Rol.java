@@ -4,7 +4,7 @@ import com.F64.Compiler;
 import com.F64.Ext1;
 import com.F64.Optimization;
 import com.F64.Processor;
-import com.F64.RegOp1;
+import com.F64.RegOp3;
 import com.F64.Register;
 
 public class Rol extends com.F64.Codepoint {
@@ -83,7 +83,7 @@ public class Rol extends com.F64.Codepoint {
 			c.generate(Ext1.ROL);
 		}
 		else {
-			c.generate(RegOp1.ROLI, Register.T.ordinal(), Register.T.ordinal(), cnt);
+			c.generate(RegOp3.ROLI, Register.T.ordinal(), Register.T.ordinal(), cnt);
 		}
 	}
 

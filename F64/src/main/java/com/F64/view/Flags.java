@@ -5,7 +5,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 
 import javax.swing.JCheckBox;
-import javax.swing.JLabel;
+//import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import com.F64.Flag;
@@ -19,11 +19,11 @@ public class Flags extends JPanel {
 		super( new GridBagLayout() );
 
 		int limit = Flag.values().length;
-		JLabel label;
+//		JLabel label;
 		int i;
 		int x = 0;
 		int y = 0;
-		Insets label_insets = new Insets( 0, 10, 0, 4);
+//		Insets label_insets = new Insets( 0, 10, 0, 4);
 		Insets field_insets = new Insets( -4, 10, 0, 4);
 //		label = new JLabel("Flags");
 //		this.add(

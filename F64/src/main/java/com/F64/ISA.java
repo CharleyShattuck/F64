@@ -17,8 +17,9 @@ public enum ISA {
 	DROP(1,"( n - )"),
 	OVER(1,"( n1 n2 - n1 n2 n1 )"),
 	NIP(1,"( n1 n2 - n2 )"),
+	// 16
 	LIT(2,"literal 0..63 (value in next slot)"),
-	BLIT(2,"bit literal (bit position in next slot)"),
+	NLIT(2,"inverted literal. Push next slot on the stack and invert all bits"),
 	EXT(2,"shift T by 6 bits to the left and fill the lower 6 bits with the value from the next slot"),
 	NEXT(-2,"decrement R and branch if R is not 0 (next slot contains the conditional slot specifier)"),
 	BRANCH(-2,"branch (next slot contains the conditional slot specifier)"),
@@ -33,6 +34,7 @@ public enum ISA {
 	UJMP8(1,"jump to slot 0"),
 	UJMP9(1,"jump to slot 0"),
 	UJMP10(1,"jump to slot 0"),
+	// 32
 	SWAP(3,"swap register (register in next 2 slots)"),
 	SWAP0(3,"swap register and jump to slot 0 (register in next 2 slots)"),
 	MOV(3,"move source register (next slot) to destination register (next slot+1)"),
@@ -49,10 +51,9 @@ public enum ISA {
 	RPDEC(2,"decrement register (pointer)"),
 	FETCHPINC(1,"fetch via register P post-increment"),
 	STOREPINC(1,"store via register P post-increment"),
+	// 48
 	ADD(1,"+"),
 	SUB(1,"-"),
-	OR(1,"bitwise or"),
-	NOT(1,"bitwise invert"),
 	MUL2(1,"2*"),
 	DIV2(1,"2/"),
 	PUSH(1,">r"),
@@ -63,7 +64,9 @@ public enum ISA {
 	EXT4(0,"code extension 4"),
 	EXT5(0,"code extension 5"),
 	EXT6(0,"code extension 6"),
-	REGOP(5,"register operation set 1 (operation in next slot, destination in next slot+1, source 1 in next slot+2, source 2 in next slot+3)"),
+	REGOP1(3,"register operation with 1 operand (operation in next slot, destination in next slot+1)"),
+	REGOP2(4,"register operation with 2 operand (operation in next slot, destination in next slot+1, source in next slot+2)"),
+	REGOP3(5,"register operation with 3 operands (operation in next slot, destination in next slot+1, source 1 in next slot+2, source 2 in next slot+3)"),
 	SIMD(6,"SIMD operation set 1 (operation in next slot, additional parmater in next slot+1, destination in next slot+2, source 1 in next slot+3, source 2 in next slot+4)");
 
 	private int size;

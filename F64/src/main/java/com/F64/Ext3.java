@@ -1,9 +1,6 @@
 package com.F64;
 
 public enum Ext3 {
-	ABS(2,"absolute (register in next slot)"),
-	NEGATE(2,"negate (register in next slot)"),
-	REVERSE(2,"reverse bits ( n1 - n2)"),
 	ROL(3,"rotate left and copy most significant bit into carry (register in next slot)"),
 	ROR(3,"rotate right and copy least significant bit into carry (register in next slot)"),
 	RCL(3,"rotate left with carry (register in next slot)"),

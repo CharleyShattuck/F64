@@ -1,9 +1,6 @@
 package com.F64.codepoint;
 
 import com.F64.Compiler;
-import com.F64.Ext2;
-import com.F64.Ext3;
-import com.F64.ISA;
 import com.F64.Optimization;
 import com.F64.Processor;
 import com.F64.RegOp1;
@@ -59,12 +56,7 @@ public class Not extends com.F64.Codepoint {
 	@Override
 	public void generate(Compiler c)
 	{
-		if ((reg < 0) || (reg == Register.T.ordinal())) {
-			c.generate(ISA.NOT);
-		}
-		else {
-			c.generate(RegOp1.XNOR, reg, reg, Register.Z.ordinal());			
-		}
+		c.generate(RegOp1.NOT, reg < 0 ? Register.T.ordinal() : reg);			
 	}
 
 }

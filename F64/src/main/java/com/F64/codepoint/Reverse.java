@@ -1,8 +1,6 @@
 package com.F64.codepoint;
 
 import com.F64.Compiler;
-import com.F64.Ext3;
-import com.F64.ISA;
 import com.F64.Optimization;
 import com.F64.Processor;
 import com.F64.RegOp1;
@@ -58,12 +56,7 @@ public class Reverse extends com.F64.Codepoint {
 	@Override
 	public void generate(Compiler c)
 	{
-		if (reg < 0) {
-			c.generate(Ext3.REVERSE, Register.T.ordinal());
-		}
-		else {
-			c.generate(Ext3.REVERSE, reg);
-		}
+		c.generate(RegOp1.REVERSE, reg < 0 ? Register.T.ordinal() : reg);			
 	}
 
 

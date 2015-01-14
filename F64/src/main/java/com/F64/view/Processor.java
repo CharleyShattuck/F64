@@ -67,13 +67,13 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 			);
 	}
 
-	private void addSlots(JPanel panel, int x, int y)
-	{
-	}
-
-	private void addPorts(JPanel panel, int x, int y)
-	{
-	}
+//	private void addSlots(JPanel panel, int x, int y)
+//	{
+//	}
+//
+//	private void addPorts(JPanel panel, int x, int y)
+//	{
+//	}
 
 	public Processor(com.F64.Processor p, Interpreter i, Compiler c, System s, Dictionary d)
 	{

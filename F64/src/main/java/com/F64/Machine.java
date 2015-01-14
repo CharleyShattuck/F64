@@ -128,7 +128,8 @@ public class Machine {
 		assert(Ext1.values().length <= Processor.SLOT_SIZE);
 		assert(Ext2.values().length <= Processor.SLOT_SIZE);
 		assert(Ext3.values().length <= Processor.SLOT_SIZE);
-		assert(RegOp1.values().length <= Processor.SLOT_SIZE);
+		assert(RegOp3.values().length <= Processor.SLOT_SIZE);
+		assert(RegOp3.values().length <= Processor.SLOT_SIZE);
 		assert(SimdOp1.values().length <= Processor.SLOT_SIZE);
 		assert(Flag.values().length <= (Processor.BIT_PER_CELL - 3*Processor.SLOT_BITS));
 		Machine main = new Machine(8, 4, 10000, 100000, 32, 16, 10);

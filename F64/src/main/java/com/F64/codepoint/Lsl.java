@@ -3,7 +3,7 @@ package com.F64.codepoint;
 import com.F64.Compiler;
 import com.F64.Optimization;
 import com.F64.Processor;
-import com.F64.RegOp1;
+import com.F64.RegOp3;
 import com.F64.Register;
 
 public class Lsl extends com.F64.Codepoint {
@@ -95,10 +95,10 @@ public class Lsl extends com.F64.Codepoint {
 	public void generate(Compiler c)
 	{
 		if (cnt == -1) {
-			c.generate(RegOp1.LSL, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
+			c.generate(RegOp3.LSL, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
 		}
 		else {
-			c.generate(RegOp1.LSLI, Register.T.ordinal(), Register.T.ordinal(), cnt);
+			c.generate(RegOp3.LSLI, Register.T.ordinal(), Register.T.ordinal(), cnt);
 		}
 	}
 

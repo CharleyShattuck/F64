@@ -1,6 +1,5 @@
 package com.F64;
 
-import com.F64.codepoint.ISACode;
 import com.F64.scope.Main;
 
 //import java.io.IOException;
@@ -457,14 +456,35 @@ public class Compiler {
 		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 	}
 
-	public void generate(RegOp1 opcode, int dest, int src1, int src2)
+	public void generate(RegOp1 opcode, int dest)
 	{
-		if (!doesFit(ISA.REGOP.ordinal(), opcode.ordinal(), src1, src2, dest)) {flush();}
-		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.EXT1.ordinal());
+		if (!doesFit(ISA.REGOP1.ordinal(), opcode.ordinal(), dest)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.REGOP1.ordinal());
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, dest);
+		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
+		
+	}
+
+	public void generate(RegOp2 opcode, int dest, int src)
+	{
+		if (!doesFit(ISA.REGOP2.ordinal(), opcode.ordinal(), dest, src)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.REGOP2.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, dest);
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, src);
+		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
+		
+	}
+
+	public void generate(RegOp3 opcode, int dest, int src1, int src2)
+	{
+		if (!doesFit(ISA.REGOP3.ordinal(), opcode.ordinal(), dest, src1, src2)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.REGOP3.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, dest);
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, src1);
 		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, src2);
-		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, dest);
 		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 		
 	}

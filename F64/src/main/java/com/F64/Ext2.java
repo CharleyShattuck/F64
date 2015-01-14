@@ -8,8 +8,6 @@ public enum Ext2 {
 	MDP(2,"multiply & divide prepare"),
 	MULF(2,"multiply finished"),
 	DIVMODF(2,"division & modulo finished"),
-	ABS(2,"absolute ( n1 - n2)"),
-	NEGATE(2,"negate ( n1 - n2)"),
 	ROL(3,"rotate left T and copy most significant bit into carry (shift in next slot)"),
 	ROR(3,"rotate right T and copy least significant bit into carry (shift in next slot)"),
 	RCL(3,"rotate left T with carry (shift in next slot)"),

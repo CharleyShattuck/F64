@@ -4,7 +4,6 @@ import com.F64.Compiler;
 import com.F64.ISA;
 import com.F64.Optimization;
 import com.F64.Processor;
-import com.F64.Register;
 
 public class Ones extends com.F64.Codepoint {
 
@@ -44,8 +43,7 @@ public class Ones extends com.F64.Codepoint {
 	@Override
 	public void generate(Compiler c)
 	{
-		c.generate(ISA.MOV, Register.T.ordinal(), Register.Z.ordinal());
-		c.generate(ISA.NOT);
+		c.generate(ISA.NLIT, 0);
 	}
 
 
