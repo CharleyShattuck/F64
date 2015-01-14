@@ -116,7 +116,7 @@ public class Machine {
 				java.lang.System.out.println(" ok");
 			}
 			catch (IOException ex) {
-				
+//				scanner.close();
 			}
 		}
 	}
