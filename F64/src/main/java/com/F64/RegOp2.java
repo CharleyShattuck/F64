@@ -5,6 +5,8 @@ public enum RegOp2 {
 	NEGATE("Negate. dest = -src"),
 	NOT("Not. dest = ~src"),
 	REVERSE("reverse bits. dest = reverse(src)"),
+	BITCNT1("count 1 bits. dest = bitcount1(src)"),
+	BITCNT0("count 0 bits. dest = bitcount0(src)"),
 	ADD("Add. dest += src. If src is register S then a nip operation is appended"),
 	ADDI("Add immediate (value in next slot). dest += imm"),
 	ADDC("Add with carry. C,dest = src + C. If src is register S then a nip operation is appended"),

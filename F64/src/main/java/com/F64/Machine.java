@@ -48,7 +48,7 @@ public class Machine {
 		// * secondary
 		com.F64.codepoint.Mul.setAdr(system.getCodePosition());
 		compiler.generate(ISA.LIT, 0);
-		compiler.generate(Ext2.STORESYSTEM, SystemRegister.MD.ordinal());
+		compiler.generate(Ext2.SSTORE, SystemRegister.MD.ordinal());
 		compiler.generate(ISA.LIT, Processor.BIT_PER_CELL-1);
 		compiler.generate(ISA.PUSH);
 		compiler.flush();
@@ -60,7 +60,7 @@ public class Machine {
 		// / secondary
 		com.F64.codepoint.Div.setAdr(system.getCodePosition());
 		compiler.generate(ISA.LIT, 0);
-		compiler.generate(Ext2.STORESYSTEM, SystemRegister.MD.ordinal());
+		compiler.generate(Ext2.SSTORE, SystemRegister.MD.ordinal());
 		compiler.generate(ISA.LIT, Processor.BIT_PER_CELL-1);
 		compiler.generate(ISA.PUSH);
 		compiler.flush();
@@ -73,7 +73,7 @@ public class Machine {
 		// /mod secondary
 		com.F64.codepoint.DivMod.setAdr(system.getCodePosition());
 		compiler.generate(ISA.LIT, 0);
-		compiler.generate(Ext2.STORESYSTEM, SystemRegister.MD.ordinal());
+		compiler.generate(Ext2.SSTORE, SystemRegister.MD.ordinal());
 		compiler.generate(ISA.LIT, Processor.BIT_PER_CELL-1);
 		compiler.generate(ISA.PUSH);
 		compiler.flush();
@@ -85,7 +85,7 @@ public class Machine {
 		// mod secondary
 		com.F64.codepoint.Mod.setAdr(system.getCodePosition());
 		compiler.generate(ISA.LIT, 0);
-		compiler.generate(Ext2.STORESYSTEM, SystemRegister.MD.ordinal());
+		compiler.generate(Ext2.SSTORE, SystemRegister.MD.ordinal());
 		compiler.generate(ISA.LIT, Processor.BIT_PER_CELL-1);
 		compiler.generate(ISA.PUSH);
 		compiler.flush();

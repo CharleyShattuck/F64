@@ -3,6 +3,7 @@ package com.F64;
 public enum Ext1 {
 	RDROP(2,"drop R"),
 	EXITI(3,"return from interrupt (interrupt # in next slot)"),
+	SWAP0(4,"swap register and jump to slot 0 (register in next 2 slots)"),
 	OR(2,"bitwise or"),
 	ADDC(2,"add with carry"),
 	SUBC(2,"subtract with carry"),
@@ -37,9 +38,6 @@ public enum Ext1 {
 	RRTBIT(4,"toggle bit in register and put old bit in carry (register in next slot, register with bit position in next slot+1). If the bit position register is S then a nip is appended"),
 	RRRBIT(4,"read bit from register into carry (register in next slot, register with bit position in next slot+1). If the bit position register is S then a nip is appended"),
 	RRWBIT(4,"write bit from carry into register (register in next slot, register with bit position in next slot+1). If the bit position register is S then a nip is appended"),
-	BITCNT(4,"count the number of bits in a register (source register in next slot, destination register in next slot+1)"),
-	BITFF1(4,"find first 1 bit in a register (source register in next slot, destination register in next slot+1)"),
-	BITFL1(4,"find last 1 bit in a register (source register in next slot, destination register in next slot+1)"),
 	BLIT(3,"bit literal (bit position in next slot)"),
 	JMPIO(3,"jump to I/O address (mask in next slot)"),
 	CONFIGFETCH(3,"fetch processor configuration (selector in next slot) ( - n)");

@@ -5,20 +5,21 @@ import com.F64.Interpreter;
 import com.F64.Processor;
 import com.F64.Register;
 
-public class Negate extends com.F64.Word {
+public class BitReverse extends com.F64.Word {
 
 	@Override
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doNegate(Register.T.ordinal(), Register.T.ordinal());
+		p.setRegister(Register.T, Processor.reverseBits(p.getRegister(Register.T)));
 	}
 
 	@Override
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(new com.F64.codepoint.Negate());
+		c.compile(new com.F64.codepoint.BitReverse());
 	}
+
 
 }

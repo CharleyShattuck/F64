@@ -5,6 +5,8 @@ public enum RegOp1 {
 	NEGATE("Negate. dest = -dest"),
 	NOT("Not. dest = ~dest"),
 	REVERSE("reverse bits. dest = reverse(dest)"),
+	BITCNT1("reverse bits. dest = bitcount1(src)"),
+	BITCNT0("reverse bits. dest = bitcount1(src)"),
 	ASL1("Arithmetic shift left. dest = dest << 1"),
 	ASR1("Arithmetic shift right. dest = dest >> 1"),
 	LSL1("Logical shift left. dest = dest <<< 1"),

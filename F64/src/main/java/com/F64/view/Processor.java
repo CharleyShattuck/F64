@@ -44,6 +44,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 	private JPanel				main_panel;
 	private JTabbedPane			register_pane;
 	private Register			register_panel;
+	private LocalRegister		local_panel;
 	private SystemRegister		system_register_panel;
 	private Flags				flag_panel;
 	private Ports				port_panel;
@@ -103,6 +104,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		this.main_split_pane.setBottomComponent(this.scroll);
 //		this.register_panel = new JPanel( new GridBagLayout() );
 		this.register_panel = new Register(p);
+		this.local_panel = new LocalRegister(p);
 		this.system_register_panel = new SystemRegister(p);
 		this.parameter_stack = new ParameterStack(p);
 		this.return_stack = new ReturnStack(p);
@@ -115,6 +117,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 //		this.addRegister(this.register_panel, 0, 0);
 
 		this.register_pane.addTab("Register", null, this.register_panel, "General purpose register");
+		this.register_pane.addTab("Local", null, this.local_panel, "Local register");
 		this.register_pane.addTab("System", null, this.system_register_panel, "System register");
 		this.register_pane.addTab("Flags", null, this.flag_panel, "Flags");
 		this.register_pane.addTab("Stack", null, this.parameter_stack, "Parameter stack");
@@ -221,6 +224,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		if (processor.hasFailed()) {
 			this.main_panel.setBackground(Color.RED);
 			this.register_panel.setBackground(Color.RED);
+			this.local_panel.setBackground(Color.RED);
 			this.system_register_panel.setBackground(Color.RED);
 			this.flag_panel.setBackground(Color.RED);
 			this.port_panel.setBackground(Color.RED);
@@ -229,12 +233,14 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		else {
 			this.main_panel.setBackground(null);
 			this.register_panel.setBackground(null);
+			this.local_panel.setBackground(null);
 			this.system_register_panel.setBackground(null);
 			this.flag_panel.setBackground(null);
 			this.port_panel.setBackground(null);
 			this.slot_panel.setBackground(null);
 		}
 		this.register_panel.update();
+		this.local_panel.update();
 		this.system_register_panel.update();
 		this.parameter_stack.update();
 		this.return_stack.update();
@@ -255,6 +261,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 	{
 		this.processor = p;
 		this.register_panel.setProcessor(p);
+		this.local_panel.setProcessor(p);
 		this.system_register_panel.setProcessor(p);
 		this.parameter_stack.setProcessor(p);
 		this.return_stack.setProcessor(p);

@@ -10,7 +10,10 @@ public class Dictionary {
 	private java.util.Map<String, Word>			normal_map;
 	private java.util.Map<String, Dictionary>	package_map;
 
-	public static String[] splitName(String name) {return name.split("|");}
+	public static String[] splitName(String name)
+	{
+		return name.split("\\|");
+	}
 	
 	public Dictionary(System system)
 	{
@@ -60,7 +63,6 @@ public class Dictionary {
 	{
 		this.register(Dictionary.splitName(name), compiling, w);
 	}
-
 	
 	public Word lookup(String[] name_list, boolean compiling, boolean macro)
 	{
@@ -134,12 +136,19 @@ public class Dictionary {
 		this.register("ones",		false,	new Ones());
 		this.register("or",			false,	new Or());
 		this.register("over",		false,	new Over());
-		this.register("reverse",	false,	new Reverse());
 		this.register("swap",		false,	new Swap());
 		this.register("tuck",		false,	new Tuck());
 		this.register("under",		false,	new Under());
 		this.register("xor",		false,	new Xor());
 		this.register("zero",		false,	new Zero());
+
+		this.register("Bit|#0",			false,	new BitCount0());
+		this.register("Bit|#1",			false,	new BitCount1());
+		this.register("Bit|reverse",	false,	new BitReverse());
+
+		this.register("Local|@",		false,	new LocalFetch());
+
+		
 	}
 
 }

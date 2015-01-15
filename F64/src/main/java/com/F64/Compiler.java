@@ -456,6 +456,33 @@ public class Compiler {
 		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 	}
 
+	public void generate(Ext3 opcode, int slot2, int slot3)
+	{
+		if (!doesFit(ISA.EXT3.ordinal(), opcode.ordinal(), slot2, slot3)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.EXT3.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot2);
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, slot3);
+		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
+	}
+
+	public void generate(Ext4 opcode)
+	{
+		if (!doesFit(ISA.EXT4.ordinal(), opcode.ordinal())) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.EXT4.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
+	}
+
+	public void generate(Ext4 opcode, int reg)
+	{
+		if (!doesFit(ISA.EXT4.ordinal(), opcode.ordinal(), reg)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.EXT4.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, reg);
+		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
+	}
+
 	public void generate(RegOp1 opcode, int dest)
 	{
 		if (!doesFit(ISA.REGOP1.ordinal(), opcode.ordinal(), dest)) {flush();}
