@@ -11,6 +11,7 @@ public class Secondary extends com.F64.Codepoint {
 		this.adr = adr;
 	}
 	
+	public long getAdr() {return adr;}
 	public void setUseJump(boolean value) {useJump = value;}
 	
 	@Override

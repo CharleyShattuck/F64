@@ -93,6 +93,8 @@ public class Dictionary {
 
 	public void createStandardWords()
 	{
+		this.register(":",			false,	new Colon());
+		this.register(";",			true,	new Semicolon());
 		this.register(".",			false,	new Dot());
 		this.register("+",			false,	new Add());
 		this.register("-",			false,	new Sub());

@@ -43,45 +43,46 @@ public class Literal extends com.F64.Codepoint {
 		return false;
 	}
 	
-	private boolean generateOptimized(Compiler c, long data)
-	{
-		if ((data >= 0) && (data < Processor.SLOT_SIZE)) {
-			// constant fits into a slot
-			c.generate(ISA.LIT, (int)data);
-			return true;
-		}
-		if ((data & (data-1)) == 0) {
-			// 1 bit set constant
-			c.generate(Ext1.BLIT, Processor.findFirstBit1(data));
-			return true;
-		}
-		data = ~data;
-		if ((data >= 0) && (data < Processor.SLOT_SIZE)) {
-			// inverted constant fits into a slot
-			c.generate(ISA.NLIT, (int)data);
-			return true;
-		}
-		return false;
-		
-	}
+//	private boolean generateOptimized(Compiler c, long data)
+//	{
+//		if ((data >= 0) && (data < Processor.SLOT_SIZE)) {
+//			// constant fits into a slot
+//			c.generate(ISA.LIT, (int)data);
+//			return true;
+//		}
+//		if ((data & (data-1)) == 0) {
+//			// 1 bit set constant
+//			c.generate(Ext1.BLIT, Processor.findFirstBit1(data));
+//			return true;
+//		}
+//		data = ~data;
+//		if ((data >= 0) && (data < Processor.SLOT_SIZE)) {
+//			// inverted constant fits into a slot
+//			c.generate(ISA.NLIT, (int)data);
+//			return true;
+//		}
+//		return false;
+//		
+//	}
 	
 	@Override
 	public void generate(Compiler c)
 	{
-		if (generateOptimized(c, value)) {return;}
-		if (value >= 0) {
-			// positive number
-			if (!c.doesFit(ISA.FETCHPINC.ordinal())) {c.flush();}
-			c.generate(ISA.FETCHPINC);
-			c.addAdditional(value);
-		}
-		else {
-			// negative number
-			if (!c.doesFit(ISA.FETCHPINC.ordinal())) {c.flush();}
-			c.generate(ISA.FETCHPINC);
-			c.addAdditional(value);
-		}
-		
+		c.generateLiteral(value);
+//		if (generateOptimized(c, value)) {return;}
+//		if (value >= 0) {
+//			// positive number
+//			if (!c.doesFit(ISA.FETCHPINC.ordinal())) {c.flush();}
+//			c.generate(ISA.FETCHPINC);
+//			c.addAdditional(value);
+//		}
+//		else {
+//			// negative number
+//			if (!c.doesFit(ISA.FETCHPINC.ordinal())) {c.flush();}
+//			c.generate(ISA.FETCHPINC);
+//			c.addAdditional(value);
+//		}
+//		
 	}
 
 

@@ -34,7 +34,7 @@ public class Inc extends com.F64.Codepoint {
 	@Override
 	public void generate(Compiler c)
 	{
-		c.generate(ISA.RINC, Register.T.ordinal());
+		c.generate(ISA.INC, Register.T.ordinal());
 	}
 
 

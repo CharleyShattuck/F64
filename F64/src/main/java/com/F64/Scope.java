@@ -76,6 +76,30 @@ public class Scope extends Codepoint {
 	@Override
 	public boolean optimize(Processor processor, Optimization opt)
 	{
+		if (opt == Optimization.ENTER_EXIT_ELIMINATION) {
+			if ((head != null) && (head instanceof com.F64.codepoint.Enter) && (tail instanceof com.F64.codepoint.Exit)) {
+				Codepoint curr = head.getNext();
+				if (curr == tail) {
+					// no code inside colon definition
+					head = tail = new com.F64.codepoint.Skip();
+					return true;
+				}
+				int slots = 0;
+				while (curr != tail) {
+					slots += curr.countSlots(slots);
+					if (slots > Processor.NO_OF_SLOTS) {
+						break;
+					}
+					curr = curr.getNext();
+				}
+				if (slots <= Processor.NO_OF_SLOTS) {
+					head.remove();
+					tail.remove();
+					return true;
+				}
+			}
+			return false;
+		}
 		boolean res = false;
 		boolean optimized = true;
 		while (optimized) {
@@ -99,6 +123,7 @@ public class Scope extends Codepoint {
 			cp.generate(c);
 			cp = cp.getNext();
 		}
+		c.flush();
 	}
 
 	

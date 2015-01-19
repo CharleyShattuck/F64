@@ -17,6 +17,11 @@ public class Codepoint {
 	{
 	}
 
+	public int countSlots(int slot)
+	{
+		return -1;
+	}
+	
 	public boolean hasPrecondition(Precondition pc)
 	{
 		if (owner != null) {

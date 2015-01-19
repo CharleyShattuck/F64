@@ -22,6 +22,13 @@ public class Exit extends com.F64.Codepoint {
 					this.remove();
 					return true;
 				}
+				if (p instanceof Execute) {
+					Execute exc = (Execute) p;
+					if (exc.optimizeExit()) {
+						this.remove();
+						return true;
+					}
+				}
 				break;
 
 			default:

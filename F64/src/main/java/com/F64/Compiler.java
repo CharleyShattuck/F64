@@ -17,6 +17,25 @@ public class Compiler {
 		return (Processor.FINAL_SLOT - 1 - slot) * Processor.SLOT_BITS + Processor.FINAL_SLOT_BITS;
 	}
 
+	public static int countLiteralSlots(int slot, long data)
+	{
+		int skew = slot % Processor.NO_OF_SLOTS;
+		if ((data >= 0) && (data < Processor.SLOT_SIZE)) {
+			if (fit(skew, ISA.LIT.ordinal(), (int)data)) {return ISA.LIT.size();}
+		}
+		if ((data & (data-1)) == 0) {
+			// 1 bit set constant
+			if (fit(ISA.EXT1.ordinal(), Ext1.BLIT.ordinal(), Processor.findFirstBit1(data))) {
+				return Ext1.BLIT.size();
+			}
+		}
+		data = ~data;
+		if ((data >= 0) && (data < Processor.SLOT_SIZE)) {
+			if (fit(skew, ISA.NLIT.ordinal(), (int)data)) {return ISA.NLIT.size();}
+		}
+		return 1 + Processor.NO_OF_SLOTS;
+	}
+
 	private System				system;
 	private Processor			processor;
 	private	long				current_cell;
@@ -74,6 +93,17 @@ public class Compiler {
 		this.main_scope = new Main();
 		this.current_scope = this.main_scope;
 	}
+	
+	public void stop()
+	{
+		if (current_scope != main_scope) {
+			this.processor.doThrow(Exception.INVALID_SCOPE);
+			return;
+		}
+		this.optimize();
+		this.generate();
+	}
+
 	
 	public static boolean fit(int no_slots, int slot0)
 	{
@@ -538,6 +568,44 @@ public class Compiler {
 		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 		
 	}
+	
+	public boolean generateOptimizedLiteral(long data)
+	{
+		if ((data >= 0) && (data < Processor.SLOT_SIZE)) {
+			// constant fits into a slot
+			generate(ISA.LIT, (int)data);
+			return true;
+		}
+		if ((data & (data-1)) == 0) {
+			// 1 bit set constant
+			generate(Ext1.BLIT, Processor.findFirstBit1(data));
+			return true;
+		}
+		data = ~data;
+		if ((data >= 0) && (data < Processor.SLOT_SIZE)) {
+			// inverted constant fits into a slot
+			generate(ISA.NLIT, (int)data);
+			return true;
+		}
+		return false;
+	}
+
+	public void generateLiteral(long value)
+	{
+		if (generateOptimizedLiteral(value)) {return;}
+		if (value >= 0) {
+			// positive number
+			if (!doesFit(ISA.FETCHPINC.ordinal())) {flush();}
+			generate(ISA.FETCHPINC);
+			addAdditional(value);
+		}
+		else {
+			// negative number
+			if (!doesFit(ISA.FETCHPINC.ordinal())) {flush();}
+			generate(ISA.FETCHPINC);
+			addAdditional(value);
+		}
+	}
 
 	public void generateCall(long adr, boolean useJumpInsteadOfCall)
 	{
@@ -552,7 +620,7 @@ public class Compiler {
 				compileExit = true;
 			}
 			else {
-				generate(ISA.LEAVE);
+				generate(ISA.EXIT);
 			}
 		}
 		here = this.current_cell + this.addtional_cnt; // that is the value of P
@@ -571,7 +639,7 @@ public class Compiler {
 		this.flush();
 		if (compileExit) {
 			generate(ISA.EXIT);
-			this.flush();
+//			this.flush();
 		}
 	}
 
@@ -624,6 +692,7 @@ public class Compiler {
 			cont |= allowLoopUnrolling			&& getMainScope().optimize(processor, Optimization.LOOP_UNROLLING);
 			cont |= allowPeepholeOptimization	&& getMainScope().optimize(processor, Optimization.PEEPHOLE);
 		};
+		getMainScope().optimize(processor, Optimization.ENTER_EXIT_ELIMINATION);
 	}
 	
 	public void generate()

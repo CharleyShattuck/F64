@@ -30,9 +30,13 @@ public class Interpreter {
 		this.context = dictionary;
 	}
 
+	
+	public void setCompiling(boolean value) {compiling = value;}
 	public void setProcessor(Processor p) {processor = p;}
 	public Processor getProcessor() {return processor;}
 	public Compiler getCompiler() {return compiler;}
+	public Dictionary getDictionary() {return dictionary;}
+	public System getSystem() {return system;}
 	
 	public boolean processNumber(int offset, int base)
 	{

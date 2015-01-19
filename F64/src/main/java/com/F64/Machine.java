@@ -1,5 +1,6 @@
 package com.F64;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import javax.swing.UIManager;
@@ -102,7 +103,24 @@ public class Machine {
 		systemLookAndFeel();
 		javax.swing.SwingUtilities.invokeLater(view);
 	}
-	
+
+	public void load(java.io.InputStream in)
+	{
+		java.util.Scanner scanner = new java.util.Scanner(in);
+		for (;;) {
+			try {
+				String line = scanner.nextLine();
+				interpreter.interpret(new java.io.ByteArrayInputStream(line.getBytes()));
+				view.update();
+			}
+			catch (java.lang.Exception ex) {
+				scanner.close();
+				break;
+			}
+		}
+		processor.powerOn();
+	}
+
 	public void interpret()
 	{
 		java.util.Scanner scanner = new java.util.Scanner(java.lang.System.in);
@@ -116,13 +134,25 @@ public class Machine {
 				java.lang.System.out.println(" ok");
 			}
 			catch (IOException ex) {
-//				scanner.close();
+				scanner.close();
+				break;
 			}
 		}
 	}
 	
 	public static void main(String[] args)
 	{
+//		String current;
+//		try {
+//			current = new java.io.File( "." ).getCanonicalPath();
+//	        java.lang.System.out.println("Current dir:"+current);
+//		} catch (IOException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		java.lang.System.setProperty( "user.dir", args[0] );
+//		String file_base = args[0];
+		
 		assert(Branch.values().length <= (1 << (Processor.SLOT_BITS-2)));
 		assert(ISA.values().length <= Processor.SLOT_SIZE);
 		assert(Ext1.values().length <= Processor.SLOT_SIZE);
@@ -133,6 +163,17 @@ public class Machine {
 		assert(SimdOp1.values().length <= Processor.SLOT_SIZE);
 		assert(Flag.values().length <= (Processor.BIT_PER_CELL - 3*Processor.SLOT_BITS));
 		Machine main = new Machine(8, 4, 10000, 100000, 32, 16, 10);
+		for (int i=0; i<args.length; ++i) {
+			java.io.FileInputStream reader;
+			try {
+				reader = new java.io.FileInputStream(args[i]);
+				main.load(reader);
+			}
+			catch (FileNotFoundException e) {
+//				e.printStackTrace();
+				break;
+			}
+		}
 		main.interpret();
 	}
 

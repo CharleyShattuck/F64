@@ -1516,13 +1516,6 @@ public class Processor implements Runnable {
 		this.register[reg] = incAddr(this.register[reg]);
 	}
 
-	public void doExit()
-	{
-		this.system_register[SystemRegister.P.ordinal()] = this.register[Register.R.ordinal()];
-		this.register[Register.R.ordinal()] = this.popReturnStack();
-		this.slot = NO_OF_SLOTS;
-	}
-
 	public void doUNext()
 	{
 		if (this.register[Register.R.ordinal()] == 0) {
@@ -1882,6 +1875,13 @@ public class Processor implements Runnable {
 		return true;
 	}
 
+	public void doExecute()
+	{
+		this.system_register[SystemRegister.I.ordinal()] = writeSlot(register[Register.T.ordinal()], 0, ISA.CALL.ordinal());
+		this.doDrop();
+		this.slot = 0; // start with first slot
+	}
+
 	/**
 	 * Call an address. Replace I with the content of the target address.
 	 */
@@ -1901,6 +1901,14 @@ public class Processor implements Runnable {
 		this.slot = 0; // start with first slot
 	}
 
+
+	public void doExit()
+	{
+		this.system_register[SystemRegister.P.ordinal()] = this.register[Register.R.ordinal()];
+		this.register[Register.R.ordinal()] = this.popReturnStack();
+		this.slot = NO_OF_SLOTS;
+	}
+
 	public void doEnter()
 	{
 		// push P on return stack
@@ -1910,11 +1918,11 @@ public class Processor implements Runnable {
 		
 	}
 
-	public void doLeave()
-	{
-		// pop P from return stack
-		this.doPopSystem(SystemRegister.P.ordinal());		
-	}
+//	public void doLeave()
+//	{
+//		// pop P from return stack
+//		this.doPopSystem(SystemRegister.P.ordinal());		
+//	}
 
 	public void doSave()
 	{
@@ -2032,15 +2040,15 @@ public class Processor implements Runnable {
 				case MOV:		this.doMove(this.nextSlot(), this.nextSlot()); break;
 				case OR:		this.doOr(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
 				case ENTER:		this.doEnter(); break;
-				case LEAVE:		this.doLeave(); break;
+//				case LEAVE:		this.doLeave(); break;
 				case LOADSELF:	this.doLoadSelf(); break;
 				case LOADMT:	this.doLoadMT(); break;
 				case RFETCH:	this.doRFetch(this.nextSlot()); break;
 				case RSTORE:	this.doRStore(this.nextSlot()); break;
 				case LFETCH:	this.doLFetch(this.nextSlot()); break;
 				case LSTORE:	this.doLStore(this.nextSlot()); break;
-				case RINC:		this.inc(this.nextSlot()); break;
-				case RDEC:		this.dec(this.nextSlot()); break;
+				case INC:		this.inc(this.nextSlot()); break;
+				case DEC:		this.dec(this.nextSlot()); break;
 				case FETCHPINC:	this.doFetchPInc(); break;
 				case STOREPINC:	this.doStorePInc(); break;
 				case ADD:		this.doAdd(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
@@ -2073,9 +2081,14 @@ public class Processor implements Runnable {
 				long adr = this.system_register[SystemRegister.P.ordinal()];
 				if (adr >= 0) {
 					// normal memory
-					this.setSystemRegister(SystemRegister.I.ordinal(), system.getMemory(adr));
-					// increment P
-					inc(SystemRegister.P);
+					if (adr >= system.getMemorySize()) {
+						this.running = false;
+					}
+					else {
+						this.setSystemRegister(SystemRegister.I.ordinal(), system.getMemory(adr));
+						// increment P
+						this.system_register[SystemRegister.P.ordinal()] = ++adr;
+					}
 				}
 				else {
 					// I/O memory
@@ -2561,10 +2574,11 @@ public class Processor implements Runnable {
 	{
 		switch (Ext1.values()[this.nextSlot()]) {
 		case RDROP:			this.doRDrop(); break;
+		case EXECUTE:		this.doExecute(); break;
 		case EXITI:			this.doExitInterrupt(this.nextSlot()); break;
+		case SWAP0:			this.doSwap(this.nextSlot(), this.nextSlot()); this.slot = 0; break;
 		case MIN:			this.doMin(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
 		case MAX:			this.doMax(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
-		case SWAP0:			this.doSwap(this.nextSlot(), this.nextSlot()); this.slot = 0; break;
 		case ADDC:			this.doAddWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
 		case SUBC:			this.doSubtractWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
 		case ROL:			this.doRol(Register.T.ordinal(), 1); break;
@@ -2958,4 +2972,24 @@ public class Processor implements Runnable {
 		}
 	}
 
+	public void execute(long instr)
+	{
+		this.doPushSystem(SystemRegister.P.ordinal());
+		system_register[SystemRegister.I.ordinal()] = instr;
+		system_register[SystemRegister.P.ordinal()] = 0x7fff_ffff_ffff_ffffL;
+		this.slot = 0;
+		this.running = true;
+		while (this.running) {
+			try {
+				this.step();
+			}
+			catch (java.lang.Exception e) {
+				this.failed = true;
+				break;
+			}
+		}
+		this.doPopSystem(SystemRegister.P.ordinal());
+	}
+
+	
 }
