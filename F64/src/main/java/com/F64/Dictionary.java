@@ -127,8 +127,11 @@ public class Dictionary {
 		this.register("and",		false,	new And());
 		this.register("drop",		false,	new Drop());
 		this.register("dup",		false,	new Dup());
+		this.register("else",		true,	new Else());
 		this.register("exit",		true,	new Exit());
-		this.register("if",			false,	new If());
+		this.register("if",			true,	new If());
+		this.register("max",		false,	new Max());
+		this.register("min",		false,	new Min());
 		this.register("mod",		false,	new Mod());
 		this.register("negate",		false,	new Negate());
 		this.register("nip",		false,	new Nip());
@@ -136,7 +139,9 @@ public class Dictionary {
 		this.register("ones",		false,	new Ones());
 		this.register("or",			false,	new Or());
 		this.register("over",		false,	new Over());
+		this.register("sign",		false,	new Sign());
 		this.register("swap",		false,	new Swap());
+		this.register("then",		true,	new Then());
 		this.register("tuck",		false,	new Tuck());
 		this.register("under",		false,	new Under());
 		this.register("xor",		false,	new Xor());
@@ -144,9 +149,11 @@ public class Dictionary {
 
 		this.register("Bit|#0",			false,	new BitCount0());
 		this.register("Bit|#1",			false,	new BitCount1());
+		this.register("Bit|parity",		false,	new BitParity());
 		this.register("Bit|reverse",	false,	new BitReverse());
 
 		this.register("Local|@",		false,	new LocalFetch());
+		this.register("Local|!",		false,	new LocalStore());
 
 		
 	}

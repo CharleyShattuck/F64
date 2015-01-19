@@ -12,6 +12,7 @@ public enum SystemRegister {
 	FLAG("flags register"),
 	I("current instruction cell"),
 	P("instruction pointer"),
+	W("temporary register"),
 	SELF("current object"),
 	S0("stack pointer start"),
 	SP("stack pointer"),

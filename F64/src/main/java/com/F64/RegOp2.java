@@ -1,12 +1,18 @@
 package com.F64;
 
 public enum RegOp2 {
+	MIN("signed minimum. dest = min(dest, src)"),
+	MAX("signed maximum. dest = max(dest, src)"),
 	ABS("Absolute. dest = abs(src)"),
 	NEGATE("Negate. dest = -src"),
 	NOT("Not. dest = ~src"),
+	SIGN("Signum return -1,0 or 1. dest = sign(src)"),
 	REVERSE("reverse bits. dest = reverse(src)"),
+	NEXTPOW2("round up to the next power of 2. dest = nextpow2(src)"),
+	PARITY("parity. dest = parity(src)"),
 	BITCNT1("count 1 bits. dest = bitcount1(src)"),
 	BITCNT0("count 0 bits. dest = bitcount0(src)"),
+	BYTECOUNT("Count bytes in a cell. dest = countbytes(dest, src)"),
 	ADD("Add. dest += src. If src is register S then a nip operation is appended"),
 	ADDI("Add immediate (value in next slot). dest += imm"),
 	ADDC("Add with carry. C,dest = src + C. If src is register S then a nip operation is appended"),

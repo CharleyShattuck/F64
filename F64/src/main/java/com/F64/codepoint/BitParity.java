@@ -7,18 +7,13 @@ import com.F64.RegOp1;
 import com.F64.RegOp2;
 import com.F64.Register;
 
-public class Not extends com.F64.Codepoint {
+public class BitParity extends com.F64.Codepoint {
 	private int src;
 	private int dest;
 
-	public Not()
+	public BitParity()
 	{
 		src = dest = -1;
-	}
-
-	public Not(int reg)
-	{
-		src = dest = reg;
 	}
 
 	@Override
@@ -33,16 +28,7 @@ public class Not extends com.F64.Codepoint {
 					// top of stack is multiplied with a constant
 					// this gives a lot of opportunities for optimization
 					Literal lit = (Literal) p;
-					lit.setValue(~lit.getValue());
-					this.remove();
-					return true;
-				}
-				break;
-
-			case PEEPHOLE:
-				if (p instanceof Not) {
-					// 2 not do nothing
-					p.remove();
+					lit.setValue(Processor.parityBits(lit.getValue()) ? Processor.TRUE : Processor.FALSE);
 					this.remove();
 					return true;
 				}
@@ -59,11 +45,12 @@ public class Not extends com.F64.Codepoint {
 	public void generate(Compiler c)
 	{
 		if (src == dest) {
-			c.generate(RegOp1.NOT, dest < 0 ? Register.T.ordinal() : dest);
+			c.generate(RegOp1.PARITY, dest < 0 ? Register.T.ordinal() : dest);
 		}
 		else {
-			c.generate(RegOp2.NOT, dest < 0 ? Register.T.ordinal() : dest, src < 0 ? Register.T.ordinal() : src);
+			c.generate(RegOp2.PARITY, dest < 0 ? Register.T.ordinal() : dest, src < 0 ? Register.T.ordinal() : src);
 		}
 	}
+
 
 }

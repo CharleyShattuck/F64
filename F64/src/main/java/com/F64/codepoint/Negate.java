@@ -4,19 +4,21 @@ import com.F64.Compiler;
 import com.F64.Optimization;
 import com.F64.Processor;
 import com.F64.RegOp1;
+import com.F64.RegOp2;
 import com.F64.Register;
 
 public class Negate extends com.F64.Codepoint {
-	private int reg;
+	private int src;
+	private int dest;
 
 	public Negate()
 	{
-		reg = -1;
+		src = dest = -1;
 	}
 
 	public Negate(int reg)
 	{
-		this.reg = reg;
+		src = dest = reg;
 	}
 
 	@Override
@@ -56,7 +58,12 @@ public class Negate extends com.F64.Codepoint {
 	@Override
 	public void generate(Compiler c)
 	{
-		c.generate(RegOp1.NEGATE, reg < 0 ? Register.T.ordinal() : reg);			
+		if (src == dest) {
+			c.generate(RegOp1.NEGATE, dest < 0 ? Register.T.ordinal() : dest);
+		}
+		else {
+			c.generate(RegOp2.NEGATE, dest < 0 ? Register.T.ordinal() : dest, src < 0 ? Register.T.ordinal() : src);
+		}
 	}
 
 }

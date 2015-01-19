@@ -5,7 +5,7 @@ import com.F64.Interpreter;
 import com.F64.Processor;
 import com.F64.Register;
 
-public class LocalFetch extends com.F64.Word {
+public class LocalStore extends com.F64.Word {
 
 	@Override
 	public void execute(Interpreter i)
@@ -13,15 +13,14 @@ public class LocalFetch extends com.F64.Word {
 		Processor p = i.getProcessor();
 		int reg = (int)p.getRegister(Register.T.ordinal());
 		p.doDrop();
-		p.doLFetch(reg);
-		
+		p.doLStore(reg);
 	}
 
 	@Override
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(new com.F64.codepoint.LocalFetch());
+		c.compile(new com.F64.codepoint.LocalStore());
 	}
 
 

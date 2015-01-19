@@ -1,23 +1,23 @@
 package com.F64.codepoint;
 
 import com.F64.Compiler;
-import com.F64.ISA;
+import com.F64.Ext1;
 import com.F64.Optimization;
 import com.F64.Processor;
 import com.F64.RegOp2;
 import com.F64.RegOp3;
 
-public class Or extends com.F64.Codepoint {
+public class Min extends com.F64.Codepoint {
 	private int src1;
 	private int src2;
 	private int dest;
 
-	public Or()
+	public Min()
 	{
 		src1 = src2 = dest = -1;
 	}
 
-	public Or(int d, int s1, int s2)
+	public Min(int d, int s1, int s2)
 	{
 		src1 = s1;
 		src2 = s2;
@@ -38,7 +38,7 @@ public class Or extends com.F64.Codepoint {
 						// constant
 						Literal lit1 = (Literal) pp;
 						Literal lit2 = (Literal) p;
-						lit1.setValue(lit1.getValue() | lit2.getValue());
+						lit1.setValue(Processor.min(lit1.getValue(), lit2.getValue()));
 						lit2.remove();
 						this.remove();
 						return true;
@@ -46,19 +46,6 @@ public class Or extends com.F64.Codepoint {
 				}
 				break;
 
-			case PEEPHOLE:
-				if (p instanceof Literal) {
-					// top of stack is multiplied with a constant
-					// this gives a lot of opportunities for optimization
-					Literal lit = (Literal) p;
-					long data = lit.getValue();
-					if (data == -1) {
-						lit.replaceWith(new Ones());
-						this.remove();
-						return true;
-					}
-				}
-				break;
 			default:
 				break;
 			}
@@ -71,15 +58,16 @@ public class Or extends com.F64.Codepoint {
 	{
 		if (dest == src1) {
 			if (dest == -1) {
-				c.generate(ISA.OR);
+				c.generate(Ext1.MIN);
 			}
 			else {
-				c.generate(RegOp2.OR, dest, src2);
+				c.generate(RegOp2.MIN, dest, src2);
 			}
 		}
 		else {
-			c.generate(RegOp3.OR, dest, src1, src2);
+			c.generate(RegOp3.MIN, dest, src1, src2);
 		}
 	}
+
 
 }

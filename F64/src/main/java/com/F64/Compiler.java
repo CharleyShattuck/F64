@@ -5,6 +5,18 @@ import com.F64.scope.Main;
 //import java.io.IOException;
 
 public class Compiler {
+	
+	public static int getRemainingBits(int slot)
+	{
+		if (slot > Processor.FINAL_SLOT) {
+			return 0;
+		}
+		if (slot == Processor.FINAL_SLOT) {
+			return Processor.FINAL_SLOT_BITS;
+		}
+		return (Processor.FINAL_SLOT - 1 - slot) * Processor.SLOT_BITS + Processor.FINAL_SLOT_BITS;
+	}
+
 	private System				system;
 	private Processor			processor;
 	private	long				current_cell;
@@ -29,16 +41,10 @@ public class Compiler {
 	public void setScope(Scope s) {current_scope = s;}
 	public int getRemainingSlots() {return Processor.NO_OF_SLOTS - current_slot;}
 	
-	public int getRemainingBits()
-	{
-		if (current_slot > Processor.FINAL_SLOT) {
-			return 0;
-		}
-		if (current_slot == Processor.FINAL_SLOT) {
-			return Processor.FINAL_SLOT_BITS;
-		}
-		return (Processor.FINAL_SLOT - 1 - current_slot) * Processor.SLOT_BITS + Processor.FINAL_SLOT_BITS;
-	}
+//	public int getRemainingBits()
+//	{
+//		return getRemainingBits(current_slot);
+//	}
 
 	public int getDifferentBits(long value1, long value2)
 	{
@@ -483,6 +489,23 @@ public class Compiler {
 		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
 	}
 
+	public void generate(Ext5 opcode)
+	{
+		if (!doesFit(ISA.EXT5.ordinal(), opcode.ordinal())) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.EXT5.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
+	}
+
+	public void generate(Ext5 opcode, int reg)
+	{
+		if (!doesFit(ISA.EXT5.ordinal(), opcode.ordinal(), reg)) {flush();}
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.EXT5.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, opcode.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, reg);
+		if (this.current_slot >= Processor.NO_OF_SLOTS) {flush();}
+	}
+
 	public void generate(RegOp1 opcode, int dest)
 	{
 		if (!doesFit(ISA.REGOP1.ordinal(), opcode.ordinal(), dest)) {flush();}
@@ -518,20 +541,38 @@ public class Compiler {
 
 	public void generateCall(long adr, boolean useJumpInsteadOfCall)
 	{
-		long here = this.current_cell + this.addtional_cnt; // that is the value of P
+		boolean compileExit = false;
+		long here;
+		int remaining_bits, different_bits;
+		if (useJumpInsteadOfCall) {
+			here = this.current_cell + this.addtional_cnt; // that is the value of P
+			remaining_bits = getRemainingBits(this.current_slot+2);
+			different_bits = this.getDifferentBits(adr, here);
+			if (different_bits > remaining_bits) {
+				compileExit = true;
+			}
+			else {
+				generate(ISA.LEAVE);
+			}
+		}
+		here = this.current_cell + this.addtional_cnt; // that is the value of P
 		// now we must replace the lower bits of P with some new value.
 		// first we check if we can fit it in the remaining slots of the current word
-		int remaining_bits = this.getRemainingBits();
-		int different_bits = this.getDifferentBits(adr, here);
-		if (different_bits > (remaining_bits - Processor.SLOT_BITS)) {
+		remaining_bits = getRemainingBits(this.current_slot+1);
+		different_bits = this.getDifferentBits(adr, here);
+		if (different_bits > remaining_bits) {
 			this.flush();
 		}
 		// address fits now
-		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, useJumpInsteadOfCall ? ISA.JMP.ordinal() : ISA.CALL.ordinal());
+		this.current_cell = Processor.writeSlot(this.current_cell, this.current_slot++, ISA.CALL.ordinal());
 		long mask = this.getAddressMask(this.current_slot);
 		this.current_cell |= adr & mask;
 		current_slot = Processor.FINAL_SLOT+1;
 		this.flush();
+		if (compileExit) {
+			generate(ISA.EXIT);
+			this.flush();
+		}
 	}
 
 	public void compile(Codepoint cp)

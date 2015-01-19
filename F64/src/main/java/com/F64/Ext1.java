@@ -3,8 +3,9 @@ package com.F64;
 public enum Ext1 {
 	RDROP(2,"drop R"),
 	EXITI(3,"return from interrupt (interrupt # in next slot)"),
+	MIN(2,"minimum"),
+	MAX(2,"maximum"),
 	SWAP0(4,"swap register and jump to slot 0 (register in next 2 slots)"),
-	OR(2,"bitwise or"),
 	ADDC(2,"add with carry"),
 	SUBC(2,"subtract with carry"),
 	ROL(2,"rotate S left by T and copy most significant bit into carry"),

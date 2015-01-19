@@ -2,21 +2,28 @@ package com.F64.codepoint;
 
 import com.F64.Compiler;
 import com.F64.Ext1;
+import com.F64.ISA;
 import com.F64.Optimization;
 import com.F64.Processor;
+import com.F64.RegOp2;
 import com.F64.RegOp3;
 import com.F64.Register;
 
 public class Rol extends com.F64.Codepoint {
-	private	int			cnt;
+	private int		src1;
+	private int 	src2;
+	private int 	dest;
+	private	int		cnt;
 
 	public Rol()
 	{
+		src1 = src2 = dest = -1;
 		cnt = -1;
 	}
 
 	public Rol(int value)
 	{
+		src1 = src2 = dest = -1;
 		cnt = value;
 	}
 
@@ -26,7 +33,7 @@ public class Rol extends com.F64.Codepoint {
 		if (this.getPrevious() == null) {return false;}
 		if (this.cnt >= 0) {return false;}
 		com.F64.Codepoint p = this.getPrevious();
-		if (p != null) {
+		if ((p != null) && (dest==-1)) {
 			switch (opt) {
 			case CONSTANT_FOLDING:
 				com.F64.Codepoint pp = p.getPrevious();
@@ -79,11 +86,28 @@ public class Rol extends com.F64.Codepoint {
 	@Override
 	public void generate(Compiler c)
 	{
-		if (cnt == -1) {
-			c.generate(Ext1.ROL);
+		if (dest == -1) {
+			if (cnt == -1) {
+				c.generate(RegOp3.ROL, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
+				c.generate(ISA.NIP);
+			}
+			else {
+				c.generate(RegOp3.ROLI, Register.T.ordinal(), Register.T.ordinal(), cnt);
+			}
+		}
+		else if (dest == src1) {
+			if (src2 >= 0) {
+				c.generate(RegOp2.ROL, dest, src2);
+			}
+			else {
+				c.generate(RegOp2.ROLI, dest, cnt);
+			}
+		}
+		else if (src2 >= 0) {
+			c.generate(RegOp3.ROL, dest, src1, src2);
 		}
 		else {
-			c.generate(RegOp3.ROLI, Register.T.ordinal(), Register.T.ordinal(), cnt);
+			c.generate(RegOp3.ROLI, dest, src1, cnt);
 		}
 	}
 

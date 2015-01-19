@@ -7,20 +7,21 @@ import com.F64.RegOp1;
 import com.F64.RegOp2;
 import com.F64.Register;
 
-public class Not extends com.F64.Codepoint {
+public class Sign extends com.F64.Codepoint {
 	private int src;
 	private int dest;
 
-	public Not()
+	public Sign()
 	{
 		src = dest = -1;
 	}
 
-	public Not(int reg)
+	public Sign(int reg)
 	{
 		src = dest = reg;
 	}
 
+	
 	@Override
 	public boolean optimize(Processor processor, Optimization opt)
 	{
@@ -30,19 +31,18 @@ public class Not extends com.F64.Codepoint {
 			switch (opt) {
 			case CONSTANT_FOLDING:
 				if (p instanceof Literal) {
-					// top of stack is multiplied with a constant
-					// this gives a lot of opportunities for optimization
 					Literal lit = (Literal) p;
-					lit.setValue(~lit.getValue());
+					long data = lit.getValue();
+					lit.setValue(Processor.sign(data));
 					this.remove();
 					return true;
 				}
 				break;
 
+
 			case PEEPHOLE:
-				if (p instanceof Not) {
-					// 2 not do nothing
-					p.remove();
+				if (p instanceof Abs) {
+					// 2 sign is one too much
 					this.remove();
 					return true;
 				}
@@ -59,11 +59,12 @@ public class Not extends com.F64.Codepoint {
 	public void generate(Compiler c)
 	{
 		if (src == dest) {
-			c.generate(RegOp1.NOT, dest < 0 ? Register.T.ordinal() : dest);
+			c.generate(RegOp1.SIGN, dest < 0 ? Register.T.ordinal() : dest);
 		}
 		else {
-			c.generate(RegOp2.NOT, dest < 0 ? Register.T.ordinal() : dest, src < 0 ? Register.T.ordinal() : src);
+			c.generate(RegOp2.SIGN, dest < 0 ? Register.T.ordinal() : dest, src < 0 ? Register.T.ordinal() : src);
 		}
 	}
+
 
 }

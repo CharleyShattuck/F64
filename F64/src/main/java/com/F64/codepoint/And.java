@@ -4,15 +4,32 @@ import com.F64.Compiler;
 import com.F64.ISA;
 import com.F64.Optimization;
 import com.F64.Processor;
+import com.F64.RegOp2;
+import com.F64.RegOp3;
 
 public class And extends com.F64.Codepoint {
+	private int src1;
+	private int src2;
+	private int dest;
+
+	public And()
+	{
+		src1 = src2 = dest = -1;
+	}
+
+	public And(int d, int s1, int s2)
+	{
+		src1 = s1;
+		src2 = s2;
+		dest = d;
+	}
 
 	@Override
 	public boolean optimize(Processor processor, Optimization opt)
 	{
 		if (this.getPrevious() == null) {return false;}
 		com.F64.Codepoint p = this.getPrevious();
-		if (p != null) {
+		if ((p != null) && (dest==-1)) {
 			switch (opt) {
 			case CONSTANT_FOLDING:
 				com.F64.Codepoint pp = p.getPrevious();
@@ -53,7 +70,17 @@ public class And extends com.F64.Codepoint {
 	@Override
 	public void generate(Compiler c)
 	{
-		c.generate(ISA.AND);
+		if (dest == src1) {
+			if (dest == -1) {
+				c.generate(ISA.AND);
+			}
+			else {
+				c.generate(RegOp2.AND, dest, src2);
+			}
+		}
+		else {
+			c.generate(RegOp3.AND, dest, src1, src2);
+		}
 	}
 
 }

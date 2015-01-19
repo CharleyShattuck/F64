@@ -1,6 +1,8 @@
 package com.F64;
 
 public enum RegOp3 {
+	MIN("signed minimum. dest = min(src1, src2)"),
+	MAX("signed maximum. dest = max(src1, src2)"),
 	ADD("Add. dest = src1 + src2. If either src1 or src2 is register S then a nip operation is appended"),
 	ADDI("Add immediate (src2). dest = src1 + src2"),
 	ADDC("Add with carry. C,dest = src1 + src2 + C. If either src1 or src2 is register S then a nip operation is appended"),
@@ -27,6 +29,7 @@ public enum RegOp3 {
 	RORI("Rotate right immediate with carry (src2). dest = src1 >>^ src2"),
 	RCLI("Rotate left immediate with carry (src2). dest = src1 ^.<< src2"),
 	RCRI("Rotate right immediate with carry (src2). dest = src1 >>.^ src2"),
+	BYTECOUNT("Count bytes in a cell. dest = countbytes(src1, src2)"),
 	MUL2ADD("*2 and add. dest = src1*2 + src2. If either src1 or src2 is register S then a nip operation is appended"),
 	DIV2SUB("/2 and subtract. dest = src1/2 - src2. If either src1 or src2 is register S then a nip operation is appended");
 

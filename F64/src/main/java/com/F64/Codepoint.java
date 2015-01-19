@@ -78,7 +78,7 @@ public class Codepoint {
 	
 	public void generate(Compiler c)
 	{
-		
+		c.getProcessor().doThrow(Exception.NOT_IMPLEMENTED);
 	}
 
 	/**
