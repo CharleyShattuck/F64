@@ -25,6 +25,18 @@ public class And extends com.F64.Codepoint {
 	}
 
 	@Override
+	public int countSlots(int slot)
+	{
+		if (dest == src1) {
+			if (dest == -1) {
+				return ISA.AND.size();
+			}
+			return ISA.REGOP2.size();
+		}
+		return ISA.REGOP3.size();
+	}
+
+	@Override
 	public boolean optimize(Processor processor, Optimization opt)
 	{
 		if (this.getPrevious() == null) {return false;}

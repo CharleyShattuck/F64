@@ -127,6 +127,7 @@ public class Dictionary {
 		this.register("2/",			false,	new Div2());
 		this.register("abs",		false,	new Abs());
 		this.register("and",		false,	new And());
+		this.register("constant",	false,	new Constant());
 		this.register("drop",		false,	new Drop());
 		this.register("dup",		false,	new Dup());
 		this.register("else",		true,	new Else());

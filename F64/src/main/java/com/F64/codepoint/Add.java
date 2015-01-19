@@ -141,6 +141,16 @@ public class Add extends com.F64.Codepoint {
 						return true;
 					}
 				}
+				if ((p instanceof Sub) && constant_valid) {
+					Sub op = (Sub) p;
+					if (op.isConstant()) {
+						data = op.getConstant() - constant;
+						if (data == 0) {p.remove();}
+						else {op.setConstant(data);}
+						this.remove();
+						return true;
+					}
+				}
 				break;
 			default:
 				break;

@@ -33,6 +33,23 @@ public class Ones extends com.F64.Codepoint {
 				}
 				break;
 
+			case PEEPHOLE:
+				if (p instanceof Add) {
+					Add op = (Add) p;
+					if (op.isConstant()) {
+						p.remove();
+						return true;					
+					}
+				}
+				if (p instanceof Sub) {
+					Sub op = (Sub) p;
+					if (op.isConstant()) {
+						p.remove();
+						return true;					
+					}
+				}
+				break;
+
 			default:
 				break;
 			}
