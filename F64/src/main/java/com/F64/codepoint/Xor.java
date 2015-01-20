@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.ISA;
 import com.F64.Optimization;
@@ -70,18 +71,18 @@ public class Xor extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 		if (dest == src1) {
 			if (dest == -1) {
-				c.generate(ISA.XOR);
+				b.add(ISA.XOR);
 			}
 			else {
-				c.generate(RegOp2.XOR, dest, src2);
+				b.add(RegOp2.XOR, dest, src2);
 			}
 		}
 		else {
-			c.generate(RegOp3.XOR, dest, src1, src2);
+			b.add(RegOp3.XOR, dest, src1, src2);
 		}
 	}
 

@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.Ext1;
 import com.F64.Optimization;
@@ -54,18 +55,18 @@ public class Max extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 		if (dest == src1) {
 			if (dest == -1) {
-				c.generate(Ext1.MAX);
+				b.add(Ext1.MAX);
 			}
 			else {
-				c.generate(RegOp2.MAX, dest, src2);
+				b.add(RegOp2.MAX, dest, src2);
 			}
 		}
 		else {
-			c.generate(RegOp3.MAX, dest, src1, src2);
+			b.add(RegOp3.MAX, dest, src1, src2);
 		}
 	}
 

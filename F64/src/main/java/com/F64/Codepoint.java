@@ -81,9 +81,9 @@ public class Codepoint {
 		return false;
 	}
 	
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
-		c.getProcessor().doThrow(Exception.NOT_IMPLEMENTED);
+//		c.getProcessor().doThrow(Exception.NOT_IMPLEMENTED);
 	}
 
 	/**

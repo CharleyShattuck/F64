@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.Ext3;
 import com.F64.Ext4;
@@ -47,13 +48,13 @@ public class LocalFetch extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 		if (reg < 0) {
-			c.generate(Ext4.LFETCHI, Register.T.ordinal());
+			b.add(Ext4.LFETCHI, Register.T.ordinal());
 		}
 		else {
-			c.generate(ISA.LFETCH, reg);
+			b.add(ISA.LFETCH, reg);
 		}
 	}
 

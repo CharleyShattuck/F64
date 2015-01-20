@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.Ext1;
 import com.F64.ISA;
@@ -84,30 +85,30 @@ public class Rcl extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 		if (dest == -1) {
 			if (cnt == -1) {
-				c.generate(RegOp3.RCL, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
-				c.generate(ISA.NIP);
+				b.add(RegOp3.RCL, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
+				b.add(ISA.NIP);
 			}
 			else {
-				c.generate(RegOp3.RCLI, Register.T.ordinal(), Register.T.ordinal(), cnt);
+				b.add(RegOp3.RCLI, Register.T.ordinal(), Register.T.ordinal(), cnt);
 			}
 		}
 		else if (dest == src1) {
 			if (src2 >= 0) {
-				c.generate(RegOp2.RCL, dest, src2);
+				b.add(RegOp2.RCL, dest, src2);
 			}
 			else {
-				c.generate(RegOp2.RCLI, dest, cnt);
+				b.add(RegOp2.RCLI, dest, cnt);
 			}
 		}
 		else if (src2 >= 0) {
-			c.generate(RegOp3.RCL, dest, src1, src2);
+			b.add(RegOp3.RCL, dest, src1, src2);
 		}
 		else {
-			c.generate(RegOp3.RCLI, dest, src1, cnt);
+			b.add(RegOp3.RCLI, dest, src1, cnt);
 		}
 	}
 

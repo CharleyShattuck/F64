@@ -10,7 +10,7 @@ public class Secondary extends com.F64.Word {
 
 	public Secondary(Interpreter i)
 	{
-		i.getCompiler().flush();
+		i.getCompiler().getBuilder().flush();
 		codepoint = new com.F64.codepoint.Secondary(i.getSystem().getCodePosition());
 	}
 	

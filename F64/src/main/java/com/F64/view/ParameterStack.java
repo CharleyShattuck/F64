@@ -20,7 +20,7 @@ public class ParameterStack extends JPanel implements ActionListener {
 	private boolean				updating;
 	private com.F64.Processor	processor;
 
-	public final int			INITIAL_OFFSET = 4;
+	public final int			INITIAL_OFFSET = 3;
 	public final int			RANGE = 32;
 	
 	public ParameterStack(com.F64.Processor processor)
@@ -39,7 +39,7 @@ public class ParameterStack extends JPanel implements ActionListener {
 
 		Font font = new Font(Font.MONOSPACED, Font.BOLD , 12);
 		for (int i=0; i<RANGE; ++i) {
-			int offset = INITIAL_OFFSET-1-i;
+			int offset = INITIAL_OFFSET-i;
 			label = new JLabel(( offset > 0 ? "+" : "")+offset);
 			label.setFont(font);
 			label.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -80,7 +80,7 @@ public class ParameterStack extends JPanel implements ActionListener {
 		this.add(
 			label,
 			new GridBagConstraints(
-				x+2, y+INITIAL_OFFSET-1,
+				x+2, y+INITIAL_OFFSET,
 				1, 1,
 				0.0, 1.0,
 				GridBagConstraints.WEST,
@@ -97,7 +97,7 @@ public class ParameterStack extends JPanel implements ActionListener {
 	public void update()
 	{
 		for (int i=0; i<RANGE; ++i) {
-			long value = processor.getStack(processor.getStackPosition(INITIAL_OFFSET-1-i));
+			long value = processor.getStack(processor.getStackPosition(i-INITIAL_OFFSET));
 			this.fields[i].setText(Processor.convertLongToString(value));
 		}
 	}
@@ -110,7 +110,7 @@ public class ParameterStack extends JPanel implements ActionListener {
 		Object source = ev.getSource();
 		for (int i=0; i<fields.length; ++i) {
 			if (fields[i] == source) {
-				int offset = INITIAL_OFFSET-1-i;
+				int offset = i-INITIAL_OFFSET;
 				long pos = processor.getStackPosition(offset);
 				if (i > 0) {// do not overwrite the Z register
 					try {

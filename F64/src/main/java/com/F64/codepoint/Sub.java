@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.ISA;
 import com.F64.Optimization;
@@ -31,43 +32,6 @@ public class Sub extends com.F64.Codepoint {
 	public boolean isConstant() {return constant_valid;}
 	public long getConstant() {return constant;}
 	public void setConstant(long value) {constant = value; constant_valid = true;}
-
-	@Override
-	public int countSlots(int slot)
-	{
-		if (dest == src1) {
-			if (dest == -1) {
-				if (isConstant()) {
-					if (constant > 0) {
-						if (constant == 1) {
-							return ISA.DEC.size();
-						}
-						if (constant < Processor.SLOT_SIZE) {
-							return ISA.REGOP3.size();
-						}
-						return Compiler.countLiteralSlots(slot, constant) + ISA.SUB.size();
-					}
-					if (constant < 0) {
-						if (constant == -1) {
-							return ISA.INC.size();
-						}
-						if (constant > -Processor.SLOT_SIZE) {
-							return ISA.REGOP3.size();
-						}
-						return Compiler.countLiteralSlots(slot, constant) + ISA.SUB.size();
-					}
-					return 0;
-				}
-				else {
-					return ISA.SUB.size();
-				}
-			}
-			else {
-				return ISA.REGOP2.size();
-			}
-		}
-		return ISA.REGOP3.size();
-	}
 
 	@Override
 	public boolean optimize(Processor processor, Optimization opt)
@@ -128,46 +92,46 @@ public class Sub extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 		if (dest == src1) {
 			if (dest == -1) {
 				if (isConstant()) {
 					if (constant > 0) {
 						if (constant == 1) {
-							c.generate(ISA.DEC, Register.T.ordinal());						
+							b.add(ISA.DEC, Register.T.ordinal());						
 						}
 						else if (constant < Processor.SLOT_SIZE) {
-							c.generate(RegOp3.SUBI, Register.T.ordinal(), Register.T.ordinal(), (int)constant);						
+							b.add(RegOp3.SUBI, Register.T.ordinal(), Register.T.ordinal(), (int)constant);						
 						}
 						else {
-							c.generateLiteral(constant);
-							c.generate(ISA.SUB);
+							b.addLiteral(constant);
+							b.add(ISA.SUB);
 						}
 					}
 					else if (constant < 0) {
 						if (constant == -1) {
-							c.generate(ISA.INC, Register.T.ordinal());						
+							b.add(ISA.INC, Register.T.ordinal());						
 						}
 						else if (constant > -Processor.SLOT_SIZE) {
-							c.generate(RegOp3.ADDI, Register.T.ordinal(), Register.T.ordinal(), -(int)constant);						
+							b.add(RegOp3.ADDI, Register.T.ordinal(), Register.T.ordinal(), -(int)constant);						
 						}
 						else {
-							c.generateLiteral(constant);
-							c.generate(ISA.SUB);
+							b.addLiteral(constant);
+							b.add(ISA.SUB);
 						}
 					}
 				}
 				else {
-					c.generate(ISA.SUB);
+					b.add(ISA.SUB);
 				}
 			}
 			else {
-				c.generate(RegOp2.SUB, dest, src2);
+				b.add(RegOp2.SUB, dest, src2);
 			}
 		}
 		else {
-			c.generate(RegOp3.SUB, dest, src1, src2);
+			b.add(RegOp3.SUB, dest, src1, src2);
 		}
 	}
 

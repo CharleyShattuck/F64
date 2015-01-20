@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Condition;
 import com.F64.Optimization;
 import com.F64.Processor;
@@ -95,17 +96,17 @@ public class If extends com.F64.Scope {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 		if (cond == Condition.ALWAYS) {
 			if (false_part != null) {
-				false_part.generate(c);
+				false_part.generate(b);
 			}
 			return;
 		}
 		if (cond == Condition.NEVER) {
 			if (true_part != null) {
-				true_part.generate(c);
+				true_part.generate(b);
 			}
 			return;
 		}

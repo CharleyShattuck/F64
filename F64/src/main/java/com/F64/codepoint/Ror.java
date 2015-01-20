@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.Ext1;
 import com.F64.ISA;
@@ -84,30 +85,30 @@ public class Ror extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 		if (dest == -1) {
 			if (cnt == -1) {
-				c.generate(RegOp3.ROR, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
-				c.generate(ISA.NIP);
+				b.add(RegOp3.ROR, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
+				b.add(ISA.NIP);
 			}
 			else {
-				c.generate(RegOp3.RORI, Register.T.ordinal(), Register.T.ordinal(), cnt);
+				b.add(RegOp3.RORI, Register.T.ordinal(), Register.T.ordinal(), cnt);
 			}
 		}
 		else if (dest == src1) {
 			if (src2 >= 0) {
-				c.generate(RegOp2.ROR, dest, src2);
+				b.add(RegOp2.ROR, dest, src2);
 			}
 			else {
-				c.generate(RegOp2.RORI, dest, cnt);
+				b.add(RegOp2.RORI, dest, cnt);
 			}
 		}
 		else if (src2 >= 0) {
-			c.generate(RegOp3.ROR, dest, src1, src2);
+			b.add(RegOp3.ROR, dest, src1, src2);
 		}
 		else {
-			c.generate(RegOp3.RORI, dest, src1, cnt);
+			b.add(RegOp3.RORI, dest, src1, cnt);
 		}
 	}
 

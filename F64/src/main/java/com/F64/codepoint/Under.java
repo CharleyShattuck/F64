@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.Ext2;
 import com.F64.Optimization;
@@ -14,9 +15,9 @@ public class Under extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
-		c.generate(Ext2.UNDER);
+		b.add(Ext2.UNDER);
 	}
 
 }

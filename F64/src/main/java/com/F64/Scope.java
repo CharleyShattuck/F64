@@ -116,14 +116,14 @@ public class Scope extends Codepoint {
 	}
 
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 		Codepoint cp = head;
 		while (cp != null) {
-			cp.generate(c);
+			cp.generate(b);
 			cp = cp.getNext();
 		}
-		c.flush();
+		b.flush();
 	}
 
 	

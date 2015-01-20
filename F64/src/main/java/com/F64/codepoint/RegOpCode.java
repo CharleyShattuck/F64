@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.ISA;
 import com.F64.Optimization;
@@ -48,11 +49,11 @@ public class RegOpCode extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
-		if (opcode1 >= 0) {c.generate(ISA.REGOP1, opcode1, dest);}
-		if (opcode2 >= 0) {c.generate(ISA.REGOP2, opcode2, dest, src1);}
-		if (opcode3 >= 0) {c.generate(ISA.REGOP3, opcode3, dest, src1, src2);}
+		if (opcode1 >= 0) {b.add(ISA.REGOP1, opcode1, dest);}
+		if (opcode2 >= 0) {b.add(ISA.REGOP2, opcode2, dest, src1);}
+		if (opcode3 >= 0) {b.add(ISA.REGOP3, opcode3, dest, src1, src2);}
 	}
 
 

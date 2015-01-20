@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.Ext1;
 import com.F64.Flag;
@@ -38,13 +39,13 @@ public class Carry extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 		if (set) {
-			c.generate(Ext1.SFLAG, Flag.CARRY.ordinal());
+			b.add(Ext1.SFLAG, Flag.CARRY.ordinal());
 		}
 		else {
-			c.generate(Ext1.CFLAG, Flag.CARRY.ordinal());
+			b.add(Ext1.CFLAG, Flag.CARRY.ordinal());
 		}
 	}
 

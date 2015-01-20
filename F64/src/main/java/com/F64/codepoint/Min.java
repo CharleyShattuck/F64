@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.Ext1;
 import com.F64.Optimization;
@@ -54,18 +55,18 @@ public class Min extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 		if (dest == src1) {
 			if (dest == -1) {
-				c.generate(Ext1.MIN);
+				b.add(Ext1.MIN);
 			}
 			else {
-				c.generate(RegOp2.MIN, dest, src2);
+				b.add(RegOp2.MIN, dest, src2);
 			}
 		}
 		else {
-			c.generate(RegOp3.MIN, dest, src1, src2);
+			b.add(RegOp3.MIN, dest, src1, src2);
 		}
 	}
 

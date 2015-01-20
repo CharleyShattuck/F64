@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.Condition;
 import com.F64.Optimization;
@@ -62,7 +63,7 @@ public class Begin extends com.F64.Scope {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 //		if (cond == Condition.ALWAYS) {
 //			if (false_part != null) {

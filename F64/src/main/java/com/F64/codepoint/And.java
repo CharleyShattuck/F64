@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.ISA;
 import com.F64.Optimization;
@@ -22,18 +23,6 @@ public class And extends com.F64.Codepoint {
 		src1 = s1;
 		src2 = s2;
 		dest = d;
-	}
-
-	@Override
-	public int countSlots(int slot)
-	{
-		if (dest == src1) {
-			if (dest == -1) {
-				return ISA.AND.size();
-			}
-			return ISA.REGOP2.size();
-		}
-		return ISA.REGOP3.size();
 	}
 
 	@Override
@@ -80,18 +69,18 @@ public class And extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 		if (dest == src1) {
 			if (dest == -1) {
-				c.generate(ISA.AND);
+				b.add(ISA.AND);
 			}
 			else {
-				c.generate(RegOp2.AND, dest, src2);
+				b.add(RegOp2.AND, dest, src2);
 			}
 		}
 		else {
-			c.generate(RegOp3.AND, dest, src1, src2);
+			b.add(RegOp3.AND, dest, src1, src2);
 		}
 	}
 

@@ -15,8 +15,8 @@ public enum ISA {
 	XOR(1,"bitwise exclusive or"),
 	DUP(1,"( n - n n)"),
 	DROP(1,"( n - )"),
-	OVER(1,"( n1 n2 - n1 n2 n1 )"),
-	NIP(1,"( n1 n2 - n2 )"),
+	FETCHPINC(1,"fetch via register P post-increment"),
+	STOREPINC(1,"store via register P post-increment"),
 	// 16
 	LIT(2,"literal 0..63 (value in next slot)"),
 	NLIT(2,"inverted literal. Push next slot on the stack and invert all bits"),
@@ -49,8 +49,8 @@ public enum ISA {
 	DEC(2,"decrement register (register in next slot)"),
 	OR(1,"bitwise or"),
 //	MIN(1,"minimum"),//	MAX(1,"maximum"),
-	FETCHPINC(1,"fetch via register P post-increment"),
-	STOREPINC(1,"store via register P post-increment"),
+	OVER(1,"( n1 n2 - n1 n2 n1 )"),
+	NIP(1,"( n1 n2 - n2 )"),
 	// 48
 	ADD(1,"+"),
 	SUB(1,"-"),

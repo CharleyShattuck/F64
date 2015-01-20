@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.Ext4;
 import com.F64.ISA;
@@ -46,13 +47,13 @@ public class LocalStore extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 		if (reg < 0) {
-			c.generate(Ext4.LSTOREI, Register.T.ordinal());
+			b.add(Ext4.LSTOREI, Register.T.ordinal());
 		}
 		else {
-			c.generate(ISA.LSTORE, reg);
+			b.add(ISA.LSTORE, reg);
 		}
 	}
 

@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.Optimization;
 import com.F64.Processor;
@@ -56,13 +57,13 @@ public class Negate extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 		if (src == dest) {
-			c.generate(RegOp1.NEGATE, dest < 0 ? Register.T.ordinal() : dest);
+			b.add(RegOp1.NEGATE, dest < 0 ? Register.T.ordinal() : dest);
 		}
 		else {
-			c.generate(RegOp2.NEGATE, dest < 0 ? Register.T.ordinal() : dest, src < 0 ? Register.T.ordinal() : src);
+			b.add(RegOp2.NEGATE, dest < 0 ? Register.T.ordinal() : dest, src < 0 ? Register.T.ordinal() : src);
 		}
 	}
 

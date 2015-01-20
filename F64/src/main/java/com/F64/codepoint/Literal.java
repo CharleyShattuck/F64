@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.Ext1;
 import com.F64.ISA;
@@ -47,18 +48,18 @@ public class Literal extends com.F64.Codepoint {
 //	{
 //		if ((data >= 0) && (data < Processor.SLOT_SIZE)) {
 //			// constant fits into a slot
-//			c.generate(ISA.LIT, (int)data);
+//			b.add(ISA.LIT, (int)data);
 //			return true;
 //		}
 //		if ((data & (data-1)) == 0) {
 //			// 1 bit set constant
-//			c.generate(Ext1.BLIT, Processor.findFirstBit1(data));
+//			b.add(Ext1.BLIT, Processor.findFirstBit1(data));
 //			return true;
 //		}
 //		data = ~data;
 //		if ((data >= 0) && (data < Processor.SLOT_SIZE)) {
 //			// inverted constant fits into a slot
-//			c.generate(ISA.NLIT, (int)data);
+//			b.add(ISA.NLIT, (int)data);
 //			return true;
 //		}
 //		return false;
@@ -66,20 +67,20 @@ public class Literal extends com.F64.Codepoint {
 //	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
-		c.generateLiteral(value);
+		b.addLiteral(value);
 //		if (generateOptimized(c, value)) {return;}
 //		if (value >= 0) {
 //			// positive number
 //			if (!c.doesFit(ISA.FETCHPINC.ordinal())) {c.flush();}
-//			c.generate(ISA.FETCHPINC);
+//			b.add(ISA.FETCHPINC);
 //			c.addAdditional(value);
 //		}
 //		else {
 //			// negative number
 //			if (!c.doesFit(ISA.FETCHPINC.ordinal())) {c.flush();}
-//			c.generate(ISA.FETCHPINC);
+//			b.add(ISA.FETCHPINC);
 //			c.addAdditional(value);
 //		}
 //		

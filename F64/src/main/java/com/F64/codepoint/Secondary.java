@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 
 public class Secondary extends com.F64.Codepoint {
@@ -15,9 +16,9 @@ public class Secondary extends com.F64.Codepoint {
 	public void setUseJump(boolean value) {useJump = value;}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
-		c.generateCall(adr, useJump);
+		b.addCall(adr, useJump);
 	}
 
 }

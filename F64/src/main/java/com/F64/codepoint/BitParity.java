@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.Optimization;
 import com.F64.Processor;
@@ -42,13 +43,13 @@ public class BitParity extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
 		if (src == dest) {
-			c.generate(RegOp1.PARITY, dest < 0 ? Register.T.ordinal() : dest);
+			b.add(RegOp1.PARITY, dest < 0 ? Register.T.ordinal() : dest);
 		}
 		else {
-			c.generate(RegOp2.PARITY, dest < 0 ? Register.T.ordinal() : dest, src < 0 ? Register.T.ordinal() : src);
+			b.add(RegOp2.PARITY, dest < 0 ? Register.T.ordinal() : dest, src < 0 ? Register.T.ordinal() : src);
 		}
 	}
 

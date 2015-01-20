@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.Ext3;
 import com.F64.Optimization;
@@ -33,9 +34,9 @@ public class BitCount1 extends com.F64.Codepoint {
 	}
 	
 	@Override
-	public void generate(Compiler c)
+	public void generate(Builder b)
 	{
-		c.generate(RegOp1.BITCNT1, Register.T.ordinal());
+		b.add(RegOp1.BITCNT1, Register.T.ordinal());
 	}
 
 
