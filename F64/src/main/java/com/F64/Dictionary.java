@@ -115,6 +115,7 @@ public class Dictionary {
 		this.register(">>>",		false,	new Lsr());
 		this.register(">?",			false,	new GtQ());
 		this.register(">0?",		false,	new Gt0Q());
+		this.register(">r",			true,	new Push());
 		this.register(">=?",		false,	new GeQ());
 		this.register(">=0?",		false,	new Ge0Q());
 		this.register(">>^",		false,	new Ror());
@@ -142,6 +143,7 @@ public class Dictionary {
 		this.register("ones",		false,	new Ones());
 		this.register("or",			false,	new Or());
 		this.register("over",		false,	new Over());
+		this.register("r>",			true,	new Pop());
 		this.register("sign",		false,	new Sign());
 		this.register("swap",		false,	new Swap());
 		this.register("then",		true,	new Then());
@@ -158,6 +160,105 @@ public class Dictionary {
 		this.register("Local|@",		false,	new LocalFetch());
 		this.register("Local|!",		false,	new LocalStore());
 
+		this.register("R|drop",			false,	new RDrop());
+		this.register("R|dup",			false,	new RDup());
+
+		this.register("System|@",		false,	new SystemFetch());
+		this.register("System|!",		false,	new SystemStore());
+		this.register("System|^CLI",	false,	new Const(SystemRegister.CLI.ordinal()));
+		this.register("System|^CLK",	false,	new Const(SystemRegister.CLK.ordinal()));
+		this.register("System|^EXC",	false,	new Const(SystemRegister.EXC.ordinal()));
+		this.register("System|^EXF",	false,	new Const(SystemRegister.EXF.ordinal()));
+		this.register("System|^FLAG",	false,	new Const(SystemRegister.FLAG.ordinal()));
+		this.register("System|^I",		false,	new Const(SystemRegister.I.ordinal()));
+		this.register("System|^INTE",	false,	new Const(SystemRegister.INTE.ordinal()));
+		this.register("System|^INTS",	false,	new Const(SystemRegister.INTS.ordinal()));
+		this.register("System|^INTV",	false,	new Const(SystemRegister.INTV.ordinal()));
+		this.register("System|^IT",		false,	new Const(SystemRegister.IT.ordinal()));
+		this.register("System|^MD",		false,	new Const(SystemRegister.MD.ordinal()));
+		this.register("System|^MDP",	false,	new Const(SystemRegister.MDP.ordinal()));
+		this.register("System|^MT",		false,	new Const(SystemRegister.MT.ordinal()));
+		this.register("System|^P",		false,	new Const(SystemRegister.P.ordinal()));
+		this.register("System|^R0",		false,	new Const(SystemRegister.R0.ordinal()));
+		this.register("System|^RES",	false,	new Const(SystemRegister.RES.ordinal()));
+		this.register("System|^RL",		false,	new Const(SystemRegister.RL.ordinal()));
+		this.register("System|^RP",		false,	new Const(SystemRegister.RP.ordinal()));
+		this.register("System|^S0",		false,	new Const(SystemRegister.S0.ordinal()));
+		this.register("System|^SELF",	false,	new Const(SystemRegister.SELF.ordinal()));
+		this.register("System|^SL",		false,	new Const(SystemRegister.SL.ordinal()));
+		this.register("System|^SP",		false,	new Const(SystemRegister.SP.ordinal()));
+		this.register("System|^W",		false,	new Const(SystemRegister.W.ordinal()));
+
+
+		this.register("Register|^Z",	false,	new Const(Register.Z.ordinal()));
+		this.register("Register|^T",	false,	new Const(Register.T.ordinal()));
+		this.register("Register|^S",	false,	new Const(Register.S.ordinal()));
+		this.register("Register|^R",	false,	new Const(Register.R.ordinal()));
+
+		this.register("ISA|^+",			false,	new Const(ISA.ADD.ordinal()));
+		this.register("ISA|^++",		false,	new Const(ISA.INC.ordinal()));
+		this.register("ISA|^-",			false,	new Const(ISA.SUB.ordinal()));
+		this.register("ISA|^--",		false,	new Const(ISA.DEC.ordinal()));
+		this.register("ISA|^~LIT",		false,	new Const(ISA.NLIT.ordinal()));
+		this.register("ISA|^@P+",		false,	new Const(ISA.FETCHPINC.ordinal()));
+		this.register("ISA|^!P+",		false,	new Const(ISA.STOREPINC.ordinal()));
+		this.register("ISA|^>R",		false,	new Const(ISA.PUSH.ordinal()));
+		this.register("ISA|^2*",		false,	new Const(ISA.MUL2.ordinal()));
+		this.register("ISA|^2/",		false,	new Const(ISA.DIV2.ordinal()));
+		this.register("ISA|^AND",		false,	new Const(ISA.AND.ordinal()));
+		this.register("ISA|^BRANCH",	false,	new Const(ISA.BRANCH.ordinal()));
+		this.register("ISA|^CALL",		false,	new Const(ISA.CALL.ordinal()));
+		this.register("ISA|^CALLM",		false,	new Const(ISA.CALLM.ordinal()));
+		this.register("ISA|^CONT",		false,	new Const(ISA.CONT.ordinal()));
+		this.register("ISA|^DROP",		false,	new Const(ISA.DROP.ordinal()));
+		this.register("ISA|^DUP",		false,	new Const(ISA.DUP.ordinal()));
+		this.register("ISA|^ENTER",		false,	new Const(ISA.ENTER.ordinal()));
+		this.register("ISA|^EXIT",		false,	new Const(ISA.EXIT.ordinal()));
+		this.register("ISA|^EXT",		false,	new Const(ISA.EXT.ordinal()));
+		this.register("ISA|^EXT1",		false,	new Const(ISA.EXT1.ordinal()));
+		this.register("ISA|^EXT2",		false,	new Const(ISA.EXT2.ordinal()));
+		this.register("ISA|^EXT3",		false,	new Const(ISA.EXT3.ordinal()));
+		this.register("ISA|^EXT4",		false,	new Const(ISA.EXT4.ordinal()));
+		this.register("ISA|^EXT5",		false,	new Const(ISA.EXT5.ordinal()));
+		this.register("ISA|^EXT6",		false,	new Const(ISA.EXT6.ordinal()));
+		this.register("ISA|^L@",		false,	new Const(ISA.LFETCH.ordinal()));
+		this.register("ISA|^L!",		false,	new Const(ISA.LSTORE.ordinal()));
+		this.register("ISA|^LIT",		false,	new Const(ISA.LIT.ordinal()));
+		this.register("ISA|^LOADMT",	false,	new Const(ISA.LOADMT.ordinal()));
+		this.register("ISA|^LOADSELF",	false,	new Const(ISA.LOADSELF.ordinal()));
+		this.register("ISA|^MOV",		false,	new Const(ISA.MOV.ordinal()));
+		this.register("ISA|^NEXT",		false,	new Const(ISA.NEXT.ordinal()));
+		this.register("ISA|^NIP",		false,	new Const(ISA.NIP.ordinal()));
+		this.register("ISA|^NOP",		false,	new Const(ISA.NOP.ordinal()));
+		this.register("ISA|^OR",		false,	new Const(ISA.OR.ordinal()));
+		this.register("ISA|^OVER",		false,	new Const(ISA.OVER.ordinal()));
+		this.register("ISA|^R@",		false,	new Const(ISA.RFETCH.ordinal()));
+		this.register("ISA|^R!",		false,	new Const(ISA.RSTORE.ordinal()));
+		this.register("ISA|^R>",		false,	new Const(ISA.POP.ordinal()));
+		this.register("ISA|^REGOP1",	false,	new Const(ISA.REGOP1.ordinal()));
+		this.register("ISA|^REGOP2",	false,	new Const(ISA.REGOP2.ordinal()));
+		this.register("ISA|^REGOP3",	false,	new Const(ISA.REGOP3.ordinal()));
+		this.register("ISA|^RESTORE",	false,	new Const(ISA.RESTORE.ordinal()));
+		this.register("ISA|^SAVE",		false,	new Const(ISA.SAVE.ordinal()));
+		this.register("ISA|^SIMD",		false,	new Const(ISA.SIMD.ordinal()));
+		this.register("ISA|^SJMP",		false,	new Const(ISA.SJMP.ordinal()));
+		this.register("ISA|^SWAP",		false,	new Const(ISA.SWAP.ordinal()));
+		this.register("ISA|^UJMP0",		false,	new Const(ISA.UJMP0.ordinal()));
+		this.register("ISA|^UJMP1",		false,	new Const(ISA.UJMP1.ordinal()));
+		this.register("ISA|^UJMP2",		false,	new Const(ISA.UJMP2.ordinal()));
+		this.register("ISA|^UJMP3",		false,	new Const(ISA.UJMP3.ordinal()));
+		this.register("ISA|^UJMP4",		false,	new Const(ISA.UJMP4.ordinal()));
+		this.register("ISA|^UJMP5",		false,	new Const(ISA.UJMP5.ordinal()));
+		this.register("ISA|^UJMP6",		false,	new Const(ISA.UJMP6.ordinal()));
+		this.register("ISA|^UJMP7",		false,	new Const(ISA.UJMP7.ordinal()));
+		this.register("ISA|^UJMP8",		false,	new Const(ISA.UJMP8.ordinal()));
+		this.register("ISA|^UJMP9",		false,	new Const(ISA.UJMP9.ordinal()));
+		this.register("ISA|^UJMP10",	false,	new Const(ISA.UJMP10.ordinal()));
+		this.register("ISA|^USKIP",		false,	new Const(ISA.USKIP.ordinal()));
+		this.register("ISA|^UNEXT",		false,	new Const(ISA.UNEXT.ordinal()));
+		this.register("ISA|^XOR",		false,	new Const(ISA.XOR.ordinal()));
+
+		
 		
 	}
 

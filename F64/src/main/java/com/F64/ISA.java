@@ -37,8 +37,8 @@ public enum ISA {
 	// 32
 	SWAP(3,"swap register (register in next 2 slots)"),
 	MOV(3,"move source register (next slot) to destination register (next slot+1)"),
+	OR(1,"bitwise or"),
 	ENTER(1,"Enter secondary. Push P on return stack and mov W to P."),
-//	LEAVE(1,"Leave secondary. Pop P from return stack."),
 	LOADSELF(1,"push SELF on return stack and load SELF with T"),
 	LOADMT(1,"load MT with the value designated by SELF"),
 	RFETCH(2,"fetch register (register in next slot)"),
@@ -47,8 +47,8 @@ public enum ISA {
 	LSTORE(2,"store local register (register in next slot)"),
 	INC(2,"increment register (register in next slot)"),
 	DEC(2,"decrement register (register in next slot)"),
-	OR(1,"bitwise or"),
-//	MIN(1,"minimum"),//	MAX(1,"maximum"),
+//	MIN(1,"minimum"),
+//	MAX(1,"maximum"),
 	OVER(1,"( n1 n2 - n1 n2 n1 )"),
 	NIP(1,"( n1 n2 - n2 )"),
 	// 48

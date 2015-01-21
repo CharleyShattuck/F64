@@ -163,7 +163,9 @@ public class Builder {
 	 */
 	public boolean stop()
 	{
-		boolean res = (current_pos == start_position) && (addtional_cnt == 0) && !call_generated;
+		boolean res = (
+				(current_pos == start_position) || ((current_pos == start_position+1) && (current_slot == 0))
+			) && (addtional_cnt == 0) && !call_generated;
 		flush();
 		return res;
 	}

@@ -1,14 +1,6 @@
 package com.F64;
 
 public enum SystemRegister {
-//	L0("local register 0"),
-//	L1("local register 1"),
-//	L2("local register 2"),
-//	L3("local register 3"),
-//	L4("local register 4"),
-//	L5("local register 5"),
-//	L6("local register 6"),
-//	L7("local register 7"),
 	FLAG("flags register"),
 	I("current instruction cell"),
 	P("instruction pointer"),

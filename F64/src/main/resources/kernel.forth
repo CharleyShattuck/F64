@@ -1,4 +1,4 @@
-1234 constant test
+: test 2 + ;
 
 
 

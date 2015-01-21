@@ -55,6 +55,12 @@ public class Drop extends com.F64.Codepoint {
 					this.remove();
 					return true;
 				}
+				if (p instanceof Pop) {
+					// r> drop -> rdrop
+					p.replaceWith(new RDrop());
+					this.remove();
+					return true;
+				}
 				break;
 
 			default:

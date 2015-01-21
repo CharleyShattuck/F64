@@ -2,6 +2,7 @@ package com.F64;
 
 public enum Ext1 {
 	RDROP(2,"drop R"),
+	RDUP(2,"dup R"),
 	EXECUTE(2,"Execute word. Move T to I"),
 	EXITI(3,"return from interrupt (interrupt # in next slot)"),
 	SWAP0(4,"swap register and jump to slot 0 (register in next 2 slots)"),
