@@ -135,6 +135,7 @@ public class Builder {
 	private int					current_slot;
 	private int					addtional_cnt;
 	private boolean				generate;
+	private boolean				call_generated;
 
 	public Builder(System value)
 	{
@@ -152,9 +153,21 @@ public class Builder {
 		current_pos = start_position = system.getCodePosition();
 		addtional_cnt = current_slot = start_slot = 0;
 		current_cell = 0;
+		call_generated = false;
 		this.generate = generate;
 	}
 	
+	/**
+	 * 
+	 * @return true if generated code fits into a single cell and can be inlined
+	 */
+	public boolean stop()
+	{
+		boolean res = (current_pos == start_position) && (addtional_cnt == 0) && !call_generated;
+		flush();
+		return res;
+	}
+
 	public void flush()
 	{
 		if (current_slot > 0) {
@@ -278,6 +291,7 @@ public class Builder {
 		current_cell |= dest_adr & mask;
 		current_slot = Processor.NO_OF_SLOTS;
 		flush();
+		call_generated = true;
 	}
 
 	public void addLiteral(long value)

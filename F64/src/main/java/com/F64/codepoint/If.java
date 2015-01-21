@@ -32,7 +32,7 @@ public class If extends com.F64.Scope {
 	}
 
 	@Override
-	public boolean optimize(Processor processor, Optimization opt)
+	public boolean optimize(Compiler c, Optimization opt)
 	{
 		boolean res = false;
 		if (opt == Optimization.DEAD_CODE_ELIMINATION) {
@@ -40,7 +40,7 @@ public class If extends com.F64.Scope {
 				if (true_part != null) {
 					true_part = null;
 					if (false_part != null) {
-						false_part.optimize(processor, opt);
+						false_part.optimize(c, opt);
 					}
 					res = true;
 				}
@@ -49,7 +49,7 @@ public class If extends com.F64.Scope {
 				if (false_part != null) {
 					false_part = null;
 					if (true_part != null) {
-						true_part.optimize(processor, opt);
+						true_part.optimize(c, opt);
 					}
 					res = true;
 				}
@@ -87,10 +87,10 @@ public class If extends com.F64.Scope {
 			}
 		}
 		if (false_part != null) {
-			if (false_part.optimize(processor, opt)) {res = true;}
+			if (false_part.optimize(c, opt)) {res = true;}
 		}
 		if (true_part != null) {
-			if (true_part.optimize(processor, opt)) {res = true;}
+			if (true_part.optimize(c, opt)) {res = true;}
 		}
 		return res;
 	}

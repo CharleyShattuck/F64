@@ -23,7 +23,7 @@ public class Negate extends com.F64.Codepoint {
 	}
 
 	@Override
-	public boolean optimize(Processor processor, Optimization opt)
+	public boolean optimize(Compiler c, Optimization opt)
 	{
 		if (this.getPrevious() == null) {return false;}
 		com.F64.Codepoint p = this.getPrevious();

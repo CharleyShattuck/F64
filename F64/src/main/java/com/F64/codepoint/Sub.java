@@ -34,7 +34,7 @@ public class Sub extends com.F64.Codepoint {
 	public void setConstant(long value) {constant = value; constant_valid = true;}
 
 	@Override
-	public boolean optimize(Processor processor, Optimization opt)
+	public boolean optimize(Compiler c, Optimization opt)
 	{
 		long data;
 		if (this.getPrevious() == null) {return false;}

@@ -16,11 +16,6 @@ public class Codepoint {
 	public Codepoint()
 	{
 	}
-
-	public int countSlots(int slot)
-	{
-		return -1;
-	}
 	
 	public boolean hasPrecondition(Precondition pc)
 	{
@@ -76,7 +71,7 @@ public class Codepoint {
 //	{
 //	}
 	
-	public boolean optimize(Processor processor, Optimization opt)
+	public boolean optimize(Compiler c, Optimization opt)
 	{
 		return false;
 	}

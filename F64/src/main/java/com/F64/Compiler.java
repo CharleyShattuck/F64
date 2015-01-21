@@ -41,6 +41,7 @@ public class Compiler {
 	private Builder				builder;
 	private Scope				main_scope;
 	private Scope				current_scope;
+	private boolean				can_be_inlined;
 	
 	public Compiler(System system, Processor processor)
 	{
@@ -735,18 +736,21 @@ public class Compiler {
 		boolean cont = true;
 		while (cont) {
 			cont = false;
-			cont |= allowConstantFolding		&& getMainScope().optimize(processor, Optimization.CONSTANT_FOLDING);
-			cont |= allowDeadCodeElimkination	&& getMainScope().optimize(processor, Optimization.DEAD_CODE_ELIMINATION);
-			cont |= allowLoopUnrolling			&& getMainScope().optimize(processor, Optimization.LOOP_UNROLLING);
-			cont |= allowPeepholeOptimization	&& getMainScope().optimize(processor, Optimization.PEEPHOLE);
+			cont |= allowConstantFolding		&& getMainScope().optimize(this, Optimization.CONSTANT_FOLDING);
+			cont |= allowDeadCodeElimkination	&& getMainScope().optimize(this, Optimization.DEAD_CODE_ELIMINATION);
+			cont |= allowLoopUnrolling			&& getMainScope().optimize(this, Optimization.LOOP_UNROLLING);
+			cont |= allowPeepholeOptimization	&& getMainScope().optimize(this, Optimization.PEEPHOLE);
 		};
-		getMainScope().optimize(processor, Optimization.ENTER_EXIT_ELIMINATION);
+		getMainScope().optimize(this, Optimization.ENTER_EXIT_ELIMINATION);
 	}
 	
 	public void generate()
 	{
-		getMainScope().generate(builder);		
+		builder.start(true);
+		getMainScope().generate(builder);
+		can_be_inlined = builder.stop();
 	}
 
+	public boolean canBeInlined() {return can_be_inlined;}
 	
 }

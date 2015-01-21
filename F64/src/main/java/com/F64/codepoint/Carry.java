@@ -18,7 +18,7 @@ public class Carry extends com.F64.Codepoint {
 	public boolean getValue() {return set;}
 	
 	@Override
-	public boolean optimize(Processor processor, Optimization opt)
+	public boolean optimize(Compiler c, Optimization opt)
 	{
 		if (this.getPrevious() == null) {return false;}
 		com.F64.Codepoint p = this.getPrevious();

@@ -18,7 +18,7 @@ public class Begin extends com.F64.Scope {
 	}
 
 	@Override
-	public boolean optimize(Processor processor, Optimization opt)
+	public boolean optimize(Compiler c, Optimization opt)
 	{
 		boolean res = false;
 		if (opt == Optimization.DEAD_CODE_ELIMINATION) {
@@ -58,7 +58,7 @@ public class Begin extends com.F64.Scope {
 				}
 			}
 		}
-		if (super.optimize(processor, opt)) {res = true;}
+		if (super.optimize(c, opt)) {res = true;}
 		return res;
 	}
 	

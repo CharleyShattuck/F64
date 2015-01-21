@@ -20,27 +20,27 @@ public class Literal extends com.F64.Codepoint {
 	public void setValue(long value) {this.value = value;}
 
 	@Override
-	public boolean optimize(Processor processor, Optimization opt)
+	public boolean optimize(Compiler c, Optimization opt)
 	{
-		if (this.getPrevious() == null) {return false;}
-		com.F64.Codepoint p = this.getPrevious();
-		if (p != null) {
-			switch (opt) {
-			case CONSTANT_FOLDING:
-				if (p instanceof Literal) {
-					// constant
-					Literal lit = (Literal) p;
-					if (lit.getValue() == this.value) {
-						this.replaceWith(new Dup());
-						return true;
-					}
-				}
-				break;
-
-			default:
-				break;
-			}
-		}
+//		if (this.getPrevious() == null) {return false;}
+//		com.F64.Codepoint p = this.getPrevious();
+//		if (p != null) {
+//			switch (opt) {
+//			case CONSTANT_FOLDING:
+//				if (p instanceof Literal) {
+//					// constant
+//					Literal lit = (Literal) p;
+//					if (lit.getValue() == this.value) {
+//						this.replaceWith(new Dup());
+//						return true;
+//					}
+//				}
+//				break;
+//
+//			default:
+//				break;
+//			}
+//		}
 		return false;
 	}
 	

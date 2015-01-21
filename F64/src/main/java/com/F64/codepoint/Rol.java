@@ -29,7 +29,7 @@ public class Rol extends com.F64.Codepoint {
 	}
 
 	@Override
-	public boolean optimize(Processor processor, Optimization opt)
+	public boolean optimize(Compiler c, Optimization opt)
 	{
 		if (this.getPrevious() == null) {return false;}
 		if (this.cnt >= 0) {return false;}
@@ -45,8 +45,8 @@ public class Rol extends com.F64.Codepoint {
 						Literal lit2 = (Literal) p;
 						long data = lit1.getValue();
 						int shift = (int)(lit2.getValue() & (Processor.BIT_PER_CELL-1));
-						lit1.setValue(processor.rol(data, shift));
-						lit2.replaceWith(new Carry(processor.getInternalCarry()));
+						lit1.setValue(c.getProcessor().rol(data, shift));
+						lit2.replaceWith(new Carry(c.getProcessor().getInternalCarry()));
 						this.remove();
 						return true;
 					}

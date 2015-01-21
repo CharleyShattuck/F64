@@ -1,5 +1,6 @@
 package com.F64.codepoint;
 
+import com.F64.Compiler;
 import com.F64.Optimization;
 import com.F64.Processor;
 
@@ -15,7 +16,7 @@ public class Div extends Secondary {
 	}
 
 	@Override
-	public boolean optimize(Processor processor, Optimization opt)
+	public boolean optimize(Compiler c, Optimization opt)
 	{
 		if (this.getPrevious() == null) {return false;}
 		com.F64.Codepoint p = this.getPrevious();
