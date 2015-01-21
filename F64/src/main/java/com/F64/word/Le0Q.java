@@ -11,7 +11,7 @@ public class Le0Q extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doLE0Q(Register.T.ordinal());
+		p.doLE0Q(Register.T.ordinal(), Register.T.ordinal(), false);
 	}
 
 	@Override

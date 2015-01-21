@@ -143,9 +143,43 @@ public class Builder {
 		additional_cells = new long[Processor.NO_OF_SLOTS];
 	}
 
+	public int getCurrentSlot() {return current_slot;}
+	
+	public Builder fork(boolean flush)
+	{
+		Builder res = new Builder(system);
+		res.current_pos = current_pos;
+		res.current_cell = current_cell;
+		res.current_slot = current_slot;
+		res.addtional_cnt = addtional_cnt;
+		res.generate = false;
+		res.call_generated = false;
+		if (flush) {res.flush();}
+		res.start_position = res.current_pos;
+		res.start_slot = res.current_slot;
+		return res;
+	}
+
+	public void refork(boolean flush, Builder origin)
+	{
+		current_pos = origin.current_pos;
+		current_cell = origin.current_cell;
+		current_slot = origin.current_slot;
+		addtional_cnt = origin.addtional_cnt;
+		generate = false;
+		call_generated = false;
+		if (flush) {flush();}
+		start_position = current_pos;
+		start_slot = current_slot;
+	}
+	
+
 	public boolean exceed1Cell()
 	{
-		return (addtional_cnt > 0) || (start_position != current_pos);
+		if (addtional_cnt > 0) {return true;}
+		if (start_position == current_pos) {return false;}
+		if ((current_pos == start_position+1) && (current_slot == 0)) {return false;}
+		return true;
 	}
 	
 	public void start(boolean generate)
@@ -276,13 +310,13 @@ public class Builder {
 	public void addCall(long dest_adr, boolean is_jump)
 	{
 		int instr_slots = is_jump ? 2 : 1;
-		long curr_adr = current_pos + addtional_cnt + instr_slots;
-		int different_bits = getNoOfDifferentBits(dest_adr, curr_adr);
+//		long curr_adr = current_pos + addtional_cnt + instr_slots;
+		int different_bits = getNoOfDifferentBits(dest_adr, 0);
 		int remaining_bits = getRemainingBits(current_slot+instr_slots);
 		if (different_bits > remaining_bits) {
 			flush();
-			curr_adr = current_pos + instr_slots;
-			different_bits = getNoOfDifferentBits(dest_adr, curr_adr);
+//			curr_adr = current_pos + instr_slots;
+			different_bits = getNoOfDifferentBits(dest_adr, 0);
 			remaining_bits = getRemainingBits(current_slot+instr_slots);
 		}
 		long mask = getAddressMask(current_slot+instr_slots);

@@ -1,10 +1,6 @@
 package com.F64;
 
 public enum Ext4 {
-	ROL(3,"rotate left and copy most significant bit into carry (register in next slot, shift in next slot+1)"),
-	ROR(3,"rotate right and copy least significant bit into carry (register in next slot, shift in next slot+1)"),
-	RCL(3,"rotate left with carry (register in next slot, shift in next slot+1)"),
-	RCR(3,"rotate right with carry (register in next slot, shift in next slot+1)"),
 	RFETCHI(3,"fetch register indirect (register in next slot)"),
 	RSTOREI(3,"store register indirect (register in next slot)"),
 	LFETCHI(3,"fetch local register indirect (register in next slot)"),

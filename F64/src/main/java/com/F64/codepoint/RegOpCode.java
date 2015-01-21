@@ -4,7 +4,6 @@ import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.ISA;
 import com.F64.Optimization;
-import com.F64.Processor;
 import com.F64.RegOp1;
 import com.F64.RegOp2;
 import com.F64.RegOp3;

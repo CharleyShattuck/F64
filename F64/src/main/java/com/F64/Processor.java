@@ -1273,7 +1273,8 @@ public class Processor implements Runnable {
 
 	public boolean doConditionalJump(int condition)
 	{
-		switch (Condition.values()[(condition >> 4) & 3]) {
+		Condition cond = Condition.values()[(condition >> 4) & 3];
+		switch (cond) {
 		case EQ0:		if (this.register[Register.T.ordinal()] != 0) {this.doDrop(); return false;} this.doDrop(); break;
 		case GE0:		if (this.register[Register.T.ordinal()] < 0) {this.doDrop(); return false;} this.doDrop(); break;
 		case CARRY:		if (!this.getFlag(Flag.CARRY)) {return false;} break;
@@ -1916,11 +1917,8 @@ public class Processor implements Runnable {
 	{
 		// replace to lowest bits of P with the bits in the remaining slots
 		long mask = REMAINING_MASKS[this.slot];
-		long data = this.getSystemRegister(SystemRegister.I) & mask;
+		long adr = this.getSystemRegister(SystemRegister.I) & mask;
 		// P contains return address
-		long pc = this.system_register[SystemRegister.P.ordinal()];
-		// replace lower bits of pc with the bits from the remaining slots
-		long adr = pc ^ ((pc ^ data) & mask);
 		// save next address to register W
 		this.system_register[SystemRegister.W.ordinal()] = incAdr(adr);
 		// load I with content of adr
@@ -2514,63 +2512,93 @@ public class Processor implements Runnable {
 		this.doDrop();
 	}
 
-	public void doEQ0Q(int reg)
+	public void doEQ0Q(int dest, int src, boolean pushStack)
 	{
-		if (this.register[reg] == 0) {
-			this.register[reg] = TRUE;
+		long data = this.register[src];
+		if (pushStack) {
+			if (dest == Register.T.ordinal()) {this.doDup();}
+			else if (dest == Register.S.ordinal()) {this.doUnder();}
+		}
+		if (data == 0) {
+			this.register[dest] = TRUE;
 		}
 		else {
-			this.register[reg] = FALSE;
+			this.register[dest] = FALSE;
 		}
 	}
 
-	public void doNE0Q(int reg)
+	public void doNE0Q(int dest, int src, boolean pushStack)
 	{
-		if (this.register[reg] != 0) {
-			this.register[reg] = TRUE;
+		long data = this.register[src];
+		if (pushStack) {
+			if (dest == Register.T.ordinal()) {this.doDup();}
+			else if (dest == Register.S.ordinal()) {this.doUnder();}
+		}
+		if (data != 0) {
+			this.register[dest] = TRUE;
 		}
 		else {
-			this.register[reg] = FALSE;
+			this.register[dest] = FALSE;
 		}
 	}
 
-	public void doGT0Q(int reg)
+	public void doGT0Q(int dest, int src, boolean pushStack)
 	{
-		if (this.register[reg] > 0) {
-			this.register[reg] = TRUE;
+		long data = this.register[src];
+		if (pushStack) {
+			if (dest == Register.T.ordinal()) {this.doDup();}
+			else if (dest == Register.S.ordinal()) {this.doUnder();}
+		}
+		if (data > 0) {
+			this.register[dest] = TRUE;
 		}
 		else {
-			this.register[reg] = FALSE;
+			this.register[dest] = FALSE;
 		}
 	}
 
-	public void doGE0Q(int reg)
+	public void doGE0Q(int dest, int src, boolean pushStack)
 	{
-		if (this.register[reg] >= 0) {
-			this.register[reg] = TRUE;
+		long data = this.register[src];
+		if (pushStack) {
+			if (dest == Register.T.ordinal()) {this.doDup();}
+			else if (dest == Register.S.ordinal()) {this.doUnder();}
+		}
+		if (data >= 0) {
+			this.register[dest] = TRUE;
 		}
 		else {
-			this.register[reg] = FALSE;
+			this.register[dest] = FALSE;
 		}
 	}
 
-	public void doLT0Q(int reg)
+	public void doLT0Q(int dest, int src, boolean pushStack)
 	{
-		if (this.register[reg] < 0) {
-			this.register[reg] = TRUE;
+		long data = this.register[src];
+		if (pushStack) {
+			if (dest == Register.T.ordinal()) {this.doDup();}
+			else if (dest == Register.S.ordinal()) {this.doUnder();}
+		}
+		if (data < 0) {
+			this.register[dest] = TRUE;
 		}
 		else {
-			this.register[reg] = FALSE;
+			this.register[dest] = FALSE;
 		}
 	}
 
-	public void doLE0Q(int reg)
+	public void doLE0Q(int dest, int src, boolean pushStack)
 	{
-		if (this.register[reg] <= 0) {
-			this.register[reg] = TRUE;
+		long data = this.register[src];
+		if (pushStack) {
+			if (dest == Register.T.ordinal()) {this.doDup();}
+			else if (dest == Register.S.ordinal()) {this.doUnder();}
+		}
+		if (data <= 0) {
+			this.register[dest] = TRUE;
 		}
 		else {
-			this.register[reg] = FALSE;
+			this.register[dest] = FALSE;
 		}
 	}
 
@@ -2618,13 +2646,6 @@ public class Processor implements Runnable {
 		case ROR:			this.doRor(Register.T.ordinal(), 1); break;
 		case RCL:			this.doRcl(Register.T.ordinal(), 1); break;
 		case RCR:			this.doRcr(Register.T.ordinal(), 1); break;
-		case SFLAG:			this.doSetFlags(this.nextSlot()); break;
-		case CFLAG:			this.doClearFlags(this.nextSlot()); break;
-		case SBIT:			this.doSetBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
-		case CBIT:			this.doClearBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
-		case TBIT:			this.doToggleBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
-		case RBIT:			this.doReadBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
-		case WBIT:			this.doWriteBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
 		case SBITS:			this.doSetBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
 		case CBITS:			this.doClearBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
 		case TBITS:			this.doToggleBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
@@ -2633,8 +2654,93 @@ public class Processor implements Runnable {
 		case ENTERM:		this.doEnterM(); break;
 		case LCALLM:		this.doCallMethod(this.drop()); break;
 //		case LJMPM:			this.doJumpMethod(this.drop()); break;
+		case TUCK:			this.doTuck(); break;
+		case UNDER:			this.doUnder(); break;
+		case MULS:			this.doMultiplyStep(); break;
+		case DIVS:			this.doDivideStep(); break;
+		case MDP:			this.doMultiplyDividePrepare(); break;
+		case MULF:			this.doMultiplyFinished(); break;
+		case DIVMODF:		this.doDivideModFinished(); break;
+		case EQ0Q:			this.doEQ0Q(Register.T.ordinal(), Register.T.ordinal(), false); break;
+		case NE0Q:			this.doNE0Q(Register.T.ordinal(), Register.T.ordinal(), false); break;
+		case GT0Q:			this.doGT0Q(Register.T.ordinal(), Register.T.ordinal(), false); break;
+		case GE0Q:			this.doGE0Q(Register.T.ordinal(), Register.T.ordinal(), false); break;
+		case LT0Q:			this.doLT0Q(Register.T.ordinal(), Register.T.ordinal(), false); break;
+		case LE0Q:			this.doLE0Q(Register.T.ordinal(), Register.T.ordinal(), false); break;
+		case FETCHRES:		this.doFetchReserved(); break;
+		case STORECOND:		this.doStoreConditional(); break;
+		default: this.interrupt(Flag.ILLEGAL);
+		}
+	}
+
+	public void doExt2()
+	{
+		switch (Ext2.values()[this.nextSlot()]) {
+		case ROL:			this.doRol(this.nextSlot(), 1); break;
+		case ROR:			this.doRor(this.nextSlot(), 1); break;
+		case RCL:			this.doRcl(this.nextSlot(), 1); break;
+		case RCR:			this.doRcr(this.nextSlot(), 1); break;
+		case ROLI:			this.doRol(Register.T.ordinal(), this.nextSlot()); break;
+		case RORI:			this.doRor(Register.T.ordinal(), this.nextSlot()); break;
+		case RCLI:			this.doRcl(Register.T.ordinal(), this.nextSlot()); break;
+		case RCRI:			this.doRcr(Register.T.ordinal(), this.nextSlot()); break;
+		case EQ0Q:			this.doEQ0Q(Register.T.ordinal(), this.nextSlot(), true); break;
+		case NE0Q:			this.doNE0Q(Register.T.ordinal(), this.nextSlot(), true); break;
+		case GT0Q:			this.doGT0Q(Register.T.ordinal(), this.nextSlot(), true); break;
+		case GE0Q:			this.doGE0Q(Register.T.ordinal(), this.nextSlot(), true); break;
+		case LT0Q:			this.doLT0Q(Register.T.ordinal(), this.nextSlot(), true); break;
+		case LE0Q:			this.doLE0Q(Register.T.ordinal(), this.nextSlot(), true); break;
+		case SFLAG:			this.doSetFlags(this.nextSlot()); break;
+		case CFLAG:			this.doClearFlags(this.nextSlot()); break;
+		case SBIT:			this.doSetBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
+		case CBIT:			this.doClearBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
+		case TBIT:			this.doToggleBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
+		case RBIT:			this.doReadBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
+		case WBIT:			this.doWriteBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
 		case FETCHINC:		this.doFetchRegisterInc(this.nextSlot()); break;
 		case STOREINC:		this.doStoreRegisterInc(this.nextSlot()); break;
+		case FETCHR:		this.doFetchR(this.nextSlot()); break;
+		case STORER:		this.doStoreR(this.nextSlot()); break;
+		case FETCHL:		this.doFetchL(this.nextSlot()); break;
+		case STOREL:		this.doStoreL(this.nextSlot()); break;
+		case FETCHS:		this.doFetchS(this.nextSlot()); break;
+		case STORES:		this.doStoreS(this.nextSlot()); break;
+		case SFETCH:		this.doFetchSystem(this.nextSlot()); break;
+		case SSTORE:		this.doStoreSystem(this.nextSlot()); break;
+		case SFETCHI:		this.doSFetch(this.nextSlot()); break;
+		case SSTOREI:		this.doSStore(this.nextSlot()); break;
+		case FETCHPORT:		this.doFetchPort(this.nextSlot(), false); break;
+		case STOREPORT:		this.doStorePort(this.nextSlot(), false); break;
+		case FETCHPORTWAIT:	this.doFetchPort(this.nextSlot(), true); break;
+		case STOREPORTWAIT:	this.doStorePort(this.nextSlot(), true); break;
+		case PUSHR:			this.doPush(this.nextSlot()); break;
+		case POPR:			this.doPop(this.nextSlot()); break;
+		case PUSHL:			this.doPushLocal(this.nextSlot()); break;
+		case POPL:			this.doPopLocal(this.nextSlot()); break;
+		case PUSHS:			this.doPushSystem(this.nextSlot()); break;
+		case POPS:			this.doPopSystem(this.nextSlot()); break;
+		case BLIT:			this.doBLit(this.nextSlot()); break;
+		case JMPIO:			this.doJumpIO(this.nextSlot()); break;
+		case CONFIGFETCH:	this.doConfigFetch(this.nextSlot()); break;
+		default: this.interrupt(Flag.ILLEGAL);
+		}
+	}
+
+	public void doExt3()
+	{
+		switch (Ext3.values()[this.nextSlot()]) {
+		case ROL:			this.doRol(this.nextSlot(), this.nextSlot()); break;
+		case ROR:			this.doRor(this.nextSlot(), this.nextSlot()); break;
+		case RCL:			this.doRcl(this.nextSlot(), this.nextSlot()); break;
+		case RCR:			this.doRcr(this.nextSlot(), this.nextSlot()); break;
+		case EQ0Q:			this.doEQ0Q(this.nextSlot(), this.nextSlot(), true); break;
+		case NE0Q:			this.doNE0Q(this.nextSlot(), this.nextSlot(), true); break;
+		case GT0Q:			this.doGT0Q(this.nextSlot(), this.nextSlot(), true); break;
+		case GE0Q:			this.doGE0Q(this.nextSlot(), this.nextSlot(), true); break;
+		case LT0Q:			this.doLT0Q(this.nextSlot(), this.nextSlot(), true); break;
+		case LE0Q:			this.doLE0Q(this.nextSlot(), this.nextSlot(), true); break;
+		case BITFF1:		this.doBitFindFirst1(this.nextSlot(), this.nextSlot()); break;
+		case BITFL1:		this.doBitFindLast1(this.nextSlot(), this.nextSlot()); break;
 		case RSBIT:			this.doSetBit(this.nextSlot(), this.nextSlot(), false, false); break;
 		case RCBIT:			this.doClearBit(this.nextSlot(), this.nextSlot(), false, false); break;
 		case RTBIT:			this.doToggleBit(this.nextSlot(), this.nextSlot(), false, false); break;
@@ -2645,62 +2751,6 @@ public class Processor implements Runnable {
 		case RRTBIT:		this.doToggleBit(this.nextSlot(), this.nextSlot(), true, false); break;
 		case RRRBIT:		this.doReadBit(this.nextSlot(), this.nextSlot(), true, false); break;
 		case RRWBIT:		this.doWriteBit(this.nextSlot(), this.nextSlot(), true, false); break;
-		case BLIT:			this.doBLit(this.nextSlot()); break;
-		case JMPIO:			this.doJumpIO(this.nextSlot()); break;
-		case CONFIGFETCH:	this.doConfigFetch(this.nextSlot()); break;
-		default: this.interrupt(Flag.ILLEGAL);
-		}
-	}
-
-	public void doExt2()
-	{
-		switch (Ext2.values()[this.nextSlot()]) {
-		case TUCK:			this.doTuck(); break;
-		case UNDER:			this.doUnder(); break;
-		case MULS:			this.doMultiplyStep(); break;
-		case DIVS:			this.doDivideStep(); break;
-		case MDP:			this.doMultiplyDividePrepare(); break;
-		case MULF:			this.doMultiplyFinished(); break;
-		case DIVMODF:		this.doDivideModFinished(); break;
-		case ROL:			this.doRol(Register.T.ordinal(), this.nextSlot()); break;
-		case ROR:			this.doRor(Register.T.ordinal(), this.nextSlot()); break;
-		case RCL:			this.doRcl(Register.T.ordinal(), this.nextSlot()); break;
-		case RCR:			this.doRcr(Register.T.ordinal(), this.nextSlot()); break;
-		case EQ0Q:			this.doEQ0Q(Register.T.ordinal()); break;
-		case NE0Q:			this.doNE0Q(Register.T.ordinal()); break;
-		case GT0Q:			this.doGT0Q(Register.T.ordinal()); break;
-		case GE0Q:			this.doGE0Q(Register.T.ordinal()); break;
-		case LT0Q:			this.doLT0Q(Register.T.ordinal()); break;
-		case LE0Q:			this.doLE0Q(Register.T.ordinal()); break;
-		case FETCHR:		this.doFetchR(this.nextSlot()); break;
-		case STORER:		this.doStoreR(this.nextSlot()); break;
-		case FETCHL:		this.doFetchL(this.nextSlot()); break;
-		case STOREL:		this.doStoreL(this.nextSlot()); break;
-		case FETCHS:		this.doFetchS(this.nextSlot()); break;
-		case STORES:		this.doStoreS(this.nextSlot()); break;
-		case SFETCH:		this.doFetchSystem(this.nextSlot()); break;
-		case SSTORE:		this.doStoreSystem(this.nextSlot()); break;
-		case FETCHRES:		this.doFetchReserved(); break;
-		case STORECOND:		this.doStoreConditional(); break;
-		case FETCHPORT:		this.doFetchPort(this.nextSlot(), false); break;
-		case STOREPORT:		this.doStorePort(this.nextSlot(), false); break;
-		case FETCHPORTWAIT:	this.doFetchPort(this.nextSlot(), true); break;
-		case STOREPORTWAIT:	this.doStorePort(this.nextSlot(), true); break;
-		default: this.interrupt(Flag.ILLEGAL);
-		}
-	}
-
-	public void doExt3()
-	{
-		switch (Ext3.values()[this.nextSlot()]) {
-		case ROL:			this.doRol(this.nextSlot(), 1); break;
-		case ROR:			this.doRor(this.nextSlot(), 1); break;
-		case RCL:			this.doRcl(this.nextSlot(), 1); break;
-		case RCR:			this.doRcr(this.nextSlot(), 1); break;
-		case SFETCH:		this.doSFetch(this.nextSlot()); break;
-		case SSTORE:		this.doSStore(this.nextSlot()); break;
-		case BITFF1:		this.doBitFindFirst1(this.nextSlot(), this.nextSlot()); break;
-		case BITFL1:		this.doBitFindLast1(this.nextSlot(), this.nextSlot()); break;
 		default: this.interrupt(Flag.ILLEGAL);
 		}
 	}
@@ -2708,10 +2758,6 @@ public class Processor implements Runnable {
 	public void doExt4()
 	{
 		switch (Ext4.values()[this.nextSlot()]) {
-		case ROL:			this.doRol(this.nextSlot(), this.nextSlot()); break;
-		case ROR:			this.doRor(this.nextSlot(), this.nextSlot()); break;
-		case RCL:			this.doRcl(this.nextSlot(), this.nextSlot()); break;
-		case RCR:			this.doRcr(this.nextSlot(), this.nextSlot()); break;
 		case RFETCHI:		this.doRFetchIndirect(this.nextSlot()); break;
 		case RSTOREI:		this.doRStoreIndirect(this.nextSlot()); break;
 		case LFETCHI:		this.doLFetchIndirect(this.nextSlot()); break;
@@ -2725,18 +2771,15 @@ public class Processor implements Runnable {
 	public void doExt5()
 	{
 		switch (Ext5.values()[this.nextSlot()]) {
-		case PUSHR:			this.doPush(this.nextSlot()); break;
-		case POPR:			this.doPop(this.nextSlot()); break;
-		case PUSHL:			this.doPushLocal(this.nextSlot()); break;
-		case POPL:			this.doPopLocal(this.nextSlot()); break;
-		case PUSHS:			this.doPushSystem(this.nextSlot()); break;
-		case POPS:			this.doPopSystem(this.nextSlot()); break;
 		default: this.interrupt(Flag.ILLEGAL);
 		}
 	}
 
 	public void doExt6()
 	{
+		switch (Ext6.values()[this.nextSlot()]) {
+		default: this.interrupt(Flag.ILLEGAL);
+		}
 	}
 
 	public void doRegisterOperation(int op, int d)

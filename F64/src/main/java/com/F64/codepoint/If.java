@@ -1,23 +1,21 @@
 package com.F64.codepoint;
 
+import com.F64.Branch;
 import com.F64.Builder;
 import com.F64.Condition;
+import com.F64.ISA;
 import com.F64.Optimization;
-import com.F64.Processor;
 import com.F64.Scope;
 import com.F64.Compiler;
 
 public class If extends com.F64.Scope {
 	private Condition	cond;		// for branching
-	private	Scope		true_part;
 	private Scope		false_part;
 
 	public If(Compiler c, Condition cond)
 	{
 		super(c.getScope());
 		this.cond = cond;
-		true_part = new Scope(this);
-		c.setScope(true_part);
 	}
 
 	public void doElse(Compiler c)
@@ -30,15 +28,15 @@ public class If extends com.F64.Scope {
 	{
 		c.setScope(this.getOwner());	
 	}
-
+	
 	@Override
 	public boolean optimize(Compiler c, Optimization opt)
 	{
 		boolean res = false;
 		if (opt == Optimization.DEAD_CODE_ELIMINATION) {
 			if (cond == Condition.ALWAYS) {
-				if (true_part != null) {
-					true_part = null;
+				if (!isEmpty()) {
+					this.clear();
 					if (false_part != null) {
 						false_part.optimize(c, opt);
 					}
@@ -48,9 +46,6 @@ public class If extends com.F64.Scope {
 			else if (cond == Condition.NEVER) {
 				if (false_part != null) {
 					false_part = null;
-					if (true_part != null) {
-						true_part.optimize(c, opt);
-					}
 					res = true;
 				}
 			}
@@ -89,15 +84,14 @@ public class If extends com.F64.Scope {
 		if (false_part != null) {
 			if (false_part.optimize(c, opt)) {res = true;}
 		}
-		if (true_part != null) {
-			if (true_part.optimize(c, opt)) {res = true;}
-		}
+		if (super.optimize(c, opt)) {res = true;}
 		return res;
 	}
 	
 	@Override
 	public void generate(Builder b)
 	{
+		int slot;
 		if (cond == Condition.ALWAYS) {
 			if (false_part != null) {
 				false_part.generate(b);
@@ -105,12 +99,27 @@ public class If extends com.F64.Scope {
 			return;
 		}
 		if (cond == Condition.NEVER) {
-			if (true_part != null) {
-				true_part.generate(b);
-			}
+			super.generate(b);
 			return;
 		}
-		
+		if (this.isEmpty()) {
+			if (false_part == null) {return;}
+		}
+		else {
+			if (false_part == null) {
+				// only if part
+				// first we test if the if statement fits into current cell
+				Builder probe = b.fork(false);
+				probe.add(ISA.BRANCH, cond.encode(Branch.NEXT));
+				super.generate(probe);
+				if (!probe.exceed1Cell()) {
+					slot = probe.getCurrentSlot();
+					b.add(ISA.BRANCH, cond.encode(slot == 0 ? Branch.NEXT.ordinal() : slot));
+					super.generate(b);
+					return;
+				}
+			}
+		}
 	}
 
 }

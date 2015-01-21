@@ -54,9 +54,9 @@ public class Machine {
 		builder.add(ISA.LIT, Processor.BIT_PER_CELL-1);
 		builder.add(ISA.PUSH);
 		builder.flush();
-		builder.add(Ext2.MULS);
+		builder.add(Ext1.MULS);
 		builder.add(ISA.UNEXT);
-		builder.add(Ext2.MULF);
+		builder.add(Ext1.MULF);
 		builder.add(ISA.EXIT);
 		builder.flush();
 		// / secondary
@@ -66,9 +66,9 @@ public class Machine {
 		builder.add(ISA.LIT, Processor.BIT_PER_CELL-1);
 		builder.add(ISA.PUSH);
 		builder.flush();
-		builder.add(Ext2.DIVS);
+		builder.add(Ext1.DIVS);
 		builder.add(ISA.UNEXT);
-		builder.add(Ext2.DIVMODF);
+		builder.add(Ext1.DIVMODF);
 		builder.add(ISA.DROP);
 		builder.add(ISA.EXIT);
 		builder.flush();
@@ -79,9 +79,9 @@ public class Machine {
 		builder.add(ISA.LIT, Processor.BIT_PER_CELL-1);
 		builder.add(ISA.PUSH);
 		builder.flush();
-		builder.add(Ext2.DIVS);
+		builder.add(Ext1.DIVS);
 		builder.add(ISA.UNEXT);
-		builder.add(Ext2.DIVMODF);
+		builder.add(Ext1.DIVMODF);
 		builder.add(ISA.EXIT);
 		builder.flush();
 		// mod secondary
@@ -91,9 +91,9 @@ public class Machine {
 		builder.add(ISA.LIT, Processor.BIT_PER_CELL-1);
 		builder.add(ISA.PUSH);
 		builder.flush();
-		builder.add(Ext2.DIVS);
+		builder.add(Ext1.DIVS);
 		builder.add(ISA.UNEXT);
-		builder.add(Ext2.DIVMODF);
+		builder.add(Ext1.DIVMODF);
 		builder.add(ISA.NIP);
 		builder.add(ISA.EXIT);
 		builder.flush();
@@ -159,10 +159,15 @@ public class Machine {
 		assert(Ext1.values().length <= Processor.SLOT_SIZE);
 		assert(Ext2.values().length <= Processor.SLOT_SIZE);
 		assert(Ext3.values().length <= Processor.SLOT_SIZE);
+		assert(Ext4.values().length <= Processor.SLOT_SIZE);
+		assert(Ext5.values().length <= Processor.SLOT_SIZE);
+		assert(Ext6.values().length <= Processor.SLOT_SIZE);
 		assert(RegOp3.values().length <= Processor.SLOT_SIZE);
 		assert(RegOp3.values().length <= Processor.SLOT_SIZE);
 		assert(SimdOp1.values().length <= Processor.SLOT_SIZE);
 		assert(Flag.values().length <= (Processor.BIT_PER_CELL - 3*Processor.SLOT_BITS));
+		assert(SystemRegister.values().length <= Processor.SLOT_SIZE);
+		assert(Register.values().length <= Processor.SLOT_SIZE);
 		Machine main = new Machine(8, 4, 10000, 100000, 32, 16, 10);
 		for (int i=0; i<args.length; ++i) {
 			java.io.FileInputStream reader;

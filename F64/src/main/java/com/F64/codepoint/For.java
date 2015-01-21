@@ -2,14 +2,11 @@ package com.F64.codepoint;
 
 import com.F64.Builder;
 import com.F64.Compiler;
-import com.F64.Condition;
 import com.F64.Optimization;
-import com.F64.Processor;
-import com.F64.Scope;
 
-public class Begin extends com.F64.Scope {
+public class For extends com.F64.Scope {
 
-	public Begin(Compiler c)
+	public For(Compiler c)
 	{
 		super(c.getScope());
 		c.setScope(this);

@@ -2,10 +2,9 @@ package com.F64.codepoint;
 
 import com.F64.Builder;
 import com.F64.Compiler;
-import com.F64.Ext1;
+import com.F64.Ext2;
 import com.F64.Flag;
 import com.F64.Optimization;
-import com.F64.Processor;
 
 public class Carry extends com.F64.Codepoint {
 	private	boolean			set;
@@ -42,10 +41,10 @@ public class Carry extends com.F64.Codepoint {
 	public void generate(Builder b)
 	{
 		if (set) {
-			b.add(Ext1.SFLAG, Flag.CARRY.ordinal());
+			b.add(Ext2.SFLAG, Flag.CARRY.ordinal());
 		}
 		else {
-			b.add(Ext1.CFLAG, Flag.CARRY.ordinal());
+			b.add(Ext2.CFLAG, Flag.CARRY.ordinal());
 		}
 	}
 

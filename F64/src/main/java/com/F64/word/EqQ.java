@@ -13,7 +13,7 @@ public class EqQ extends com.F64.Word {
 		Processor p = i.getProcessor();
 		p.setRegister(Register.T, p.getRegister(Register.S) - p.getRegister(Register.T));
 		p.doNip();
-		p.doEQ0Q(Register.T.ordinal());
+		p.doEQ0Q(Register.T.ordinal(), Register.T.ordinal(), false);
 	}
 
 	@Override

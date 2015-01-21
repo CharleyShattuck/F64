@@ -1,7 +1,6 @@
 package com.F64.codepoint;
 
 import com.F64.Builder;
-import com.F64.Compiler;
 
 public class Secondary extends com.F64.Codepoint {
 	private long 		adr;	// address of secondary word

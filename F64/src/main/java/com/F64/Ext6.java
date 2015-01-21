@@ -1,6 +1,6 @@
 package com.F64;
 
-public enum Ext5 {
+public enum Ext6 {
 	UNDEFINED(4,"-");
 
 	
@@ -8,7 +8,7 @@ public enum Ext5 {
 	private int size;
 	private String tooltip;
 
-	private Ext5(int size, String tooltip)
+	private Ext6(int size, String tooltip)
 	{
 		this.size = size;
 		this.tooltip = tooltip;
@@ -16,5 +16,6 @@ public enum Ext5 {
 	
 	public int size() {return size;}
 	public String getTooltip() {return tooltip;}
+
 
 }

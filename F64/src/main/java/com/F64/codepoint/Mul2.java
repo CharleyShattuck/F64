@@ -4,7 +4,6 @@ import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.ISA;
 import com.F64.Optimization;
-import com.F64.Processor;
 
 public class Mul2 extends com.F64.Codepoint {
 

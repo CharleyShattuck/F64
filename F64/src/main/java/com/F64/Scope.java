@@ -4,15 +4,21 @@ public class Scope extends Codepoint {
 	private Codepoint							head;
 	private Codepoint							tail;
 	private java.util.ArrayList<Precondition>	preconditions;
-	
-	public Codepoint getHead() {return head;}
-	public Codepoint getTail() {return tail;}
 
 	public Scope(Scope parent)
 	{
 		this.setOwner(parent);
 	}
+	
+	public Codepoint getHead() {return head;}
+	public Codepoint getTail() {return tail;}
+	public boolean isEmpty() {return head == null;}
 
+	public void clear()
+	{
+		head = tail = null;
+	}
+	
 	public void addPrecondition(Precondition pc)
 	{
 		if (preconditions == null) {
@@ -124,7 +130,7 @@ public class Scope extends Codepoint {
 			cp.generate(b);
 			cp = cp.getNext();
 		}
-		b.flush();
+//		b.flush();
 	}
 
 	
