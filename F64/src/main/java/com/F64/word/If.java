@@ -19,7 +19,7 @@ public class If extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		com.F64.codepoint.If op = new com.F64.codepoint.If(c, Condition.EQ0);
+		com.F64.scope.If op = new com.F64.scope.If(c, Condition.EQ0);
 		c.compile(op);
 		c.setScope(op);
 	}

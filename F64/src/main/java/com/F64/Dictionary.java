@@ -93,7 +93,7 @@ public class Dictionary {
 
 	public void createStandardWords()
 	{
-		this.register(":",				false,	new Colon());
+		this.register(":",				false,	new Colon(false));
 		this.register(";",				true,	new Semicolon());
 		this.register(".",				false,	new Dot());
 		this.register("+",				false,	new Add());
@@ -134,6 +134,7 @@ public class Dictionary {
 		this.register("else",			true,	new Else());
 		this.register("exit",			true,	new Exit());
 		this.register("if",				true,	new If());
+		this.register("inline:",		false,	new Colon(true));
 		this.register("max",			false,	new Max());
 		this.register("min",			false,	new Min());
 		this.register("mod",			false,	new Mod());

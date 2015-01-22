@@ -1,6 +1,6 @@
 package com.F64;
 
-public class Codepoint {
+public class Codepoint implements java.lang.Cloneable {
 	private Scope			owner;			// scope of this code-point
 	private Codepoint		next;			// next instruction
 	private Codepoint		prev;			// previous instruction
@@ -25,6 +25,15 @@ public class Codepoint {
 		return false;
 	}
 
+	
+	public Codepoint clone() throws CloneNotSupportedException
+	{
+		Codepoint res = (Codepoint)super.clone();
+		res.owner = null;
+		res.next = res.prev = null;
+		return res;
+	}
+	
 //	public void addReference(Codepoint p)
 //	{
 //		if (references == null) {
@@ -88,6 +97,25 @@ public class Codepoint {
 	public void replaceWith(Codepoint new_cp)
 	{
 		getOwner().replace(this, new_cp);
+	}
+
+	public void replaceWithScope(Scope sc)
+	{
+		if (sc == null) {remove(); return;}
+		Codepoint h = sc.getHead();
+		if (h == null) {remove(); return;}
+		Codepoint c = h;
+		while (c != null) {
+			c.setOwner(owner);
+			c = c.next;
+		}
+		Codepoint t = sc.getTail();
+		h.setPrevious(prev);
+		t.setNext(next);
+		if (prev == null) {owner.setHead(h);}
+		else {prev.setNext(h);}
+		if (next == null) {owner.setTail(t);}
+		else {next.setPrevious(t);}
 	}
 
 	public void remove()

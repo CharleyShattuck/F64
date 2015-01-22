@@ -17,6 +17,7 @@ public class Interpreter {
 	private	Compiler				compiler;
 	private	Dictionary				dictionary;
 	private	Dictionary				context;
+//	private Block					current_block;
 	
 	public final int BUFFER_SIZE = 1024;
 	
@@ -30,6 +31,8 @@ public class Interpreter {
 		this.context = dictionary;
 	}
 
+//	public Block setCurrentBlock(Block value) {Block old = current_block; current_block = value; return old;}
+//	public Block getCurrentBlock() {return current_block;}
 	
 	public void setCompiling(boolean value) {compiling = value;}
 	public void setProcessor(Processor p) {processor = p;}

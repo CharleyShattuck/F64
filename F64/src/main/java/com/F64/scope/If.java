@@ -1,16 +1,16 @@
-package com.F64.codepoint;
+package com.F64.scope;
 
 import com.F64.Branch;
 import com.F64.Builder;
+import com.F64.Compiler;
 import com.F64.Condition;
 import com.F64.ISA;
 import com.F64.Optimization;
-import com.F64.Scope;
-import com.F64.Compiler;
+import com.F64.codepoint.Literal;
 
-public class If extends com.F64.Scope {
-	private Condition	cond;		// for branching
-	private Scope		false_part;
+public class If extends com.F64.Block implements java.lang.Cloneable {
+	private Condition		cond;		// for branching
+	private com.F64.Block	false_part;
 
 	public If(Compiler c, Condition cond)
 	{
@@ -18,9 +18,19 @@ public class If extends com.F64.Scope {
 		this.cond = cond;
 	}
 
+	public If clone() throws CloneNotSupportedException
+	{
+		If res = (If)super.clone();
+		if (false_part != null) {
+			false_part = false_part.clone();
+			false_part.setOwner(this);
+		}
+		return res;
+	}
+
 	public void doElse(Compiler c)
 	{
-		false_part = new Scope(this);
+		false_part = new com.F64.Block(this);
 		c.setScope(false_part);	
 	}
 
@@ -35,19 +45,16 @@ public class If extends com.F64.Scope {
 		boolean res = false;
 		if (opt == Optimization.DEAD_CODE_ELIMINATION) {
 			if (cond == Condition.ALWAYS) {
-				if (!isEmpty()) {
-					this.clear();
-					if (false_part != null) {
-						false_part.optimize(c, opt);
-					}
-					res = true;
+				if (false_part != null) {
+					false_part.optimize(c, opt);
 				}
+				this.replaceWithScope(false_part);
+				res = true;
 			}
 			else if (cond == Condition.NEVER) {
-				if (false_part != null) {
-					false_part = null;
-					res = true;
-				}
+				super.optimize(c, opt);
+				this.replaceWithScope(this);
+				res = true;
 			}
 		}
 		else if (opt == Optimization.CONSTANT_FOLDING) {

@@ -5,6 +5,12 @@ import com.F64.Interpreter;
 import com.F64.Processor;
 
 public class Colon extends com.F64.Word {
+	private boolean		inline;
+	
+	public Colon (boolean inline)
+	{
+		this.inline = inline;
+	}
 	
 	@Override
 	public void execute(Interpreter i)
@@ -12,7 +18,10 @@ public class Colon extends com.F64.Word {
 		String name = i.getNextWord();
 		com.F64.word.Secondary sec = new com.F64.word.Secondary(i);
 		i.getDictionary().register(name, false, sec);
-		i.getCompiler().start();
+		i.getCompiler().start(sec);
+		if (inline) {
+			sec.setInline(i.getCompiler().getBlock());
+		}
 		i.setCompiling(true);
 		i.getCompiler().compile(new com.F64.codepoint.Enter());
 	}

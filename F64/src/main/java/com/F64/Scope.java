@@ -1,6 +1,10 @@
 package com.F64;
 
-public class Scope extends Codepoint {
+import com.F64.codepoint.Enter;
+import com.F64.codepoint.Exit;
+import com.F64.codepoint.Skip;
+
+public class Scope extends Codepoint implements java.lang.Cloneable {
 	private Codepoint							head;
 	private Codepoint							tail;
 	private java.util.ArrayList<Precondition>	preconditions;
@@ -12,11 +16,49 @@ public class Scope extends Codepoint {
 	
 	public Codepoint getHead() {return head;}
 	public Codepoint getTail() {return tail;}
+	public void setHead(Codepoint value) {head = value;}
+	public void setTail(Codepoint value) {tail = value;}
 	public boolean isEmpty() {return head == null;}
+	
+	public Scope clone() throws CloneNotSupportedException
+	{
+		Scope res = (Scope)super.clone();
+		res.head = res.tail = null;
+		res.preconditions = null;
+		if (head != null) {
+			Codepoint curr = head;
+			Codepoint prevcl = null;
+			while (curr != null) {
+				Codepoint currcl = curr.clone();
+				currcl.setOwner(this);
+				currcl.setPrevious(prevcl);
+				if (prevcl != null) {prevcl.setNext(currcl);}
+				tail = currcl;
+				if (head == null) {head = currcl;}
+			}
+		}
+		return res;
+	}
 
 	public void clear()
 	{
 		head = tail = null;
+	}
+	
+	/**
+	 * Remove a beginning enter and trailing exit.
+	 */
+	public void strip()
+	{
+		if ((head != null) && (head instanceof Enter)) {
+			head.remove();
+		}
+		if ((tail != null) && (tail instanceof Exit)) {
+			tail.remove();
+		}
+		if ((tail != null) && (tail instanceof Skip)) {
+			tail.remove();
+		}
 	}
 	
 	public void addPrecondition(Precondition pc)
@@ -38,6 +80,27 @@ public class Scope extends Codepoint {
 			}
 		}
 		return false;
+	}
+
+	public void append(Scope sc)
+	{
+		if (sc != null) {
+			Codepoint curr = sc.getHead();
+			if (curr != null) {
+				if (head == null) {
+					head = curr;
+				}
+				else {
+					curr.setPrevious(tail);
+					tail.setNext(curr);
+				}
+				while (curr != null) {
+					curr.setOwner(this);
+					tail = curr;
+					curr = curr.getNext();
+				}
+			}
+		}
 	}
 
 	public void add(Codepoint cp)

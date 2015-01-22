@@ -7,14 +7,22 @@ import com.F64.Processor;
 
 public class Secondary extends com.F64.Word {
 	private com.F64.codepoint.Secondary	codepoint;
+	private com.F64.Block				inline;
 
 	public Secondary(Interpreter i)
 	{
 		i.getCompiler().getBuilder().flush();
 		codepoint = new com.F64.codepoint.Secondary(i.getSystem().getCodePosition());
 	}
+
+	public void setInline(com.F64.Block b)
+	{
+		inline = b;
+	}
 	
-	
+	@Override
+	public boolean isInline() {return inline != null;}
+
 	@Override
 	public void execute(Interpreter i)
 	{
@@ -27,7 +35,12 @@ public class Secondary extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(new com.F64.codepoint.Secondary(codepoint.getAdr()));
+		if (inline != null) {
+			c.append(inline);
+		}
+		else {
+			c.compile(new com.F64.codepoint.Secondary(codepoint.getAdr()));
+		}
 	}
 
 

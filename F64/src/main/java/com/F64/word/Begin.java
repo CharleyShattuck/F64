@@ -19,7 +19,7 @@ public class Begin extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(new com.F64.codepoint.Begin(c));
+		c.compile(new com.F64.scope.Begin(c));
 	}
 
 

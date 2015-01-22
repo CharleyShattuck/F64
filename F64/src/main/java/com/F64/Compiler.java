@@ -41,6 +41,8 @@ public class Compiler {
 	private Builder				builder;
 	private Scope				main_scope;
 	private Scope				current_scope;
+	private Block				current_block;
+	private Word				current_word;
 	private boolean				can_be_inlined;
 	
 	public Compiler(System system, Processor processor)
@@ -54,8 +56,12 @@ public class Compiler {
 	public Processor getProcessor() {return processor;}
 	public Builder getBuilder() {return builder;}
 //	public boolean hasAdditionalCells() {return addtional_cnt > 0;}
+	public Word getWord() {return current_word;}
+	public Block getBlock() {return current_block;}
 	public Scope getScope() {return current_scope;}
 	public Scope getMainScope() {return main_scope;}
+	public void setWord(Word s) {current_word = s;}
+	public void setBlock(Block s) {current_block = s;}
 	public void setScope(Scope s) {current_scope = s;}
 //	public int getRemainingSlots() {return Processor.NO_OF_SLOTS - current_slot;}
 	
@@ -87,10 +93,13 @@ public class Compiler {
 //		return mask;
 //	}
 	
-	public void start()
+	public void start(Word w)
 	{
-		this.main_scope = new Main();
-		this.current_scope = this.main_scope;
+		Main blk = new Main(w);
+		this.current_scope = blk;
+		this.main_scope = blk;
+		this.current_block = blk;
+		this.current_word = w;
 	}
 	
 	public void stop()
@@ -101,6 +110,19 @@ public class Compiler {
 		}
 		this.optimize();
 		this.generate();
+		if (current_word.isInline()) {
+			// get rid of any entry or exit code.
+			this.current_block.strip();
+		}
+	}
+
+	public Scope stopInline()
+	{
+		if (current_scope != main_scope) {
+			this.processor.doThrow(Exception.INVALID_SCOPE);
+			return null;
+		}
+		return main_scope;
 	}
 
 //	public static int countSlot(int no_slots)
@@ -694,7 +716,13 @@ public class Compiler {
 
 	public void compile(Codepoint cp)
 	{
-		getScope().add(cp);		
+		getScope().add(cp);
+	}
+
+
+	public void append(Scope sc)
+	{
+		getScope().append(sc);
 	}
 
 //	public void compile(ISA opcode)

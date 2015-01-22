@@ -20,14 +20,14 @@ public class Else extends com.F64.Word {
 	{
 		Compiler c = i.getCompiler();
 		Scope s = c.getScope();
-		while (!(s instanceof com.F64.codepoint.If)) {
+		while (!(s instanceof com.F64.scope.If)) {
 			s = s.getOwner();
 			if (s == null) {
 				i.getProcessor().doThrow(Exception.INVALID_SCOPE);
 				return;
 			}
 		}
-		com.F64.codepoint.If if_scope = (com.F64.codepoint.If)s;
+		com.F64.scope.If if_scope = (com.F64.scope.If)s;
 		if_scope.doElse(c);
 	}
 
