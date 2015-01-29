@@ -9,7 +9,7 @@ public class Variable extends com.F64.Word {
 	@Override
 	public void execute(Interpreter i)
 	{
-		Processor p = i.getProcessor();
+//		Processor p = i.getProcessor();
 		String name = i.getNextWord();
 		com.F64.word.Var w = new com.F64.word.Var(i.getSystem(), 1);
 		i.getDictionary().register(name, false, w);

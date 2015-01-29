@@ -1,6 +1,5 @@
 package com.F64.word;
 
-import com.F64.Compiler;
 import com.F64.Exception;
 import com.F64.Interpreter;
 import com.F64.Processor;

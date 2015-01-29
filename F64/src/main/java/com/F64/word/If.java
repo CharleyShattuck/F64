@@ -7,7 +7,13 @@ import com.F64.Interpreter;
 import com.F64.Processor;
 
 public class If extends com.F64.Word {
+	private Condition	cond;
 
+	public If(Condition c)
+	{
+		cond = c;
+	}
+	
 	@Override
 	public void execute(Interpreter i)
 	{
@@ -19,7 +25,7 @@ public class If extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		com.F64.scope.If op = new com.F64.scope.If(c, Condition.EQ0);
+		com.F64.scope.If op = new com.F64.scope.If(c, cond);
 		op.getOwner().add(op);
 //		c.compile(op);
 //		c.setScope(op);

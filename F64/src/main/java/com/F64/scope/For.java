@@ -4,6 +4,7 @@ import com.F64.Branch;
 import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.Condition;
+import com.F64.Ext1;
 import com.F64.ISA;
 import com.F64.Optimization;
 import com.F64.Processor;
@@ -11,19 +12,16 @@ import com.F64.codepoint.Literal;
 
 public class For extends com.F64.Block implements java.lang.Cloneable {
 	private int							unroll_limit;
-	private int							unroll_cnt;
 	private long						count;
 	private boolean						count_valid;
-	private com.F64.ConditionalBranch	branch_to_end;
-	private com.F64.ConditionalBranch	branch_to_loop;
 	private com.F64.Block				body;
 
 	public For(Compiler c)
 	{
 		super(c.getScope());
-		c.setScope(this);
 		unroll_limit = 20;
-		unroll_cnt = -1;
+		body = new com.F64.Block(this);
+		c.setScope(body);	
 	}
 
 	public void doNext(Compiler c)
@@ -65,7 +63,12 @@ public class For extends com.F64.Block implements java.lang.Cloneable {
 		}
 		if (opt == Optimization.DEAD_CODE_ELIMINATION) {
 			if (this.isEmpty()) {
-				replaceWith(new com.F64.codepoint.Drop());
+				if (count_valid) {
+					this.remove();
+				}
+				else {
+					this.replaceWith(new com.F64.codepoint.Drop());
+				}
 				return true;
 			}
 		}
@@ -75,36 +78,50 @@ public class For extends com.F64.Block implements java.lang.Cloneable {
 	@Override
 	public void generate(Builder b)
 	{
+		long data;
+		int t_cnt = body.countInstructions();
 		if (count_valid) {
+			if (t_cnt == 0) {return;}
 			b.addLiteral(count);
+		}
+		if (t_cnt == 0) {
+			b.add(ISA.DROP);
+			return;
 		}
 		b.add(ISA.PUSH);
 		b.flush();
 		long target = b.getCurrentPosition();
-		super.generate(b);
-		long cp = b.getCurrentP();
-		int cs = b.getCurrentSlot();
-		if ((cp == target) && (cs <= Processor.FINAL_SLOT)) {
-			// same cell and there is room for micro-next instruction
+		body.generate(b);
+		if ((target == b.getCurrentP()) && (b.getCurrentSlot() <= Processor.FINAL_SLOT))  {
 			b.add(ISA.UNEXT);
+			return;
 		}
-		else {
-			int diff1 = Builder.getHighestDifferentBit1(target, cp);
-			if (diff1 <= Processor.getSlotBits(cs+2)) {
-				// we can take the short jump
-				b.add(ISA.NEXT, Condition.ALWAYS.encode(Branch.SHORT), (int)(target & Processor.SLOT_MASK));
-			}
-			else if (diff1 <= Builder.getRemainingBits(cs+1)) {
-				// we can use the remaining bits for a short
-				b.add(ISA.NEXT, Condition.ALWAYS.encode(Branch.REM));
-				b.finishCell(target & Builder.getAddressMask(cs+1));
-			}
-			else {
-				// we must use the long variant
-				b.add(ISA.NEXT, Condition.ALWAYS.encode(Branch.LONG));
-				b.addAdditionalCell(target);
-			}
+		if (b.getCurrentSlot() == Processor.FINAL_SLOT)  {
+			b.flush();
 		}
+		int diff = Builder.getHighestDifferentBit1(b.getCurrentP(), target);
+		int bits = Processor.getSlotBits(b.getCurrentSlot()+1);
+
+		if (diff <= bits) {
+			// short next
+			b.add(ISA.SNEXT, (int)(Processor.getSlotMask(b.getCurrentSlot()+1) & target));
+			return;
+		}
+		bits = Builder.getRemainingBits(b.getCurrentSlot()+2);
+		if (diff <= bits) {
+			// remaining next
+			b.add(Ext1.RNEXT);
+			long mask = Builder.getAddressMask(b.getCurrentSlot());
+			if (b.doesGenerate()) {
+				data = b.getCurrentCell();
+				data = data ^ ((data ^ target) & mask);
+				b.setCurrentCell(data);
+			}
+			b.flush();
+			return;
+		}
+		b.add(Ext1.LNEXT);
+		b.addAdditionalCell(target);
 	}
 
 }

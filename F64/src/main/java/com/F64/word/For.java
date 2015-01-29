@@ -5,8 +5,8 @@ import com.F64.Exception;
 import com.F64.Interpreter;
 import com.F64.Processor;
 
-public class Begin extends com.F64.Word {
-
+public class For extends com.F64.Word {
+	
 	@Override
 	public void execute(Interpreter i)
 	{
@@ -18,7 +18,8 @@ public class Begin extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(new com.F64.scope.Begin(c));
+		com.F64.scope.For op = new com.F64.scope.For(c);
+		op.getOwner().add(op);
 	}
 
 

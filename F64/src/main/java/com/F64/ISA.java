@@ -23,7 +23,7 @@ public enum ISA {
 	LIT(2,		"lit",		"literal 0..63 (value in next slot)"),
 	NLIT(2,		"~lit",		"inverted literal. Push next slot on the stack and invert all bits"),
 //	EXT(2,		"shift T by 6 bits to the left and fill the lower 6 bits with the value from the next slot"),
-	NEXT(2,		"next",		"decrement R and branch if R is not 0 (lowest 6 bits of address in next slot)"),
+	SNEXT(2,	"snext",		"decrement R and branch if R is not 0 (lowest 6 bits of address in next slot)"),
 	BRANCH(-2,	"branch",	"branch (next slot contains the conditional slot specifier)"),
 	CALL(-1,	"call",		"call (address replacement in remaining slots)"),
 	CALLM(-1,	"call",		"call a method in current MT (method # in remaining slots)"),

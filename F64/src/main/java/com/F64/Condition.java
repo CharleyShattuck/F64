@@ -2,8 +2,9 @@ package com.F64;
 
 public enum Condition {
 	EQ0("=0"),			// T == 0. T is consumed
-	NE0("!=0"),			// T != 0. T is consumed
-	GE0(">=0"),			// T >= 0. T is consumed
+	QEQ0("?=0"),		// T == 0. T is consumed if == 0
+//	NE0("!=0"),			// T != 0. T is consumed
+//	GE0(">=0"),			// T >= 0. T is consumed
 	CARRY("y=1"),		// carry flag set
 	ALWAYS("true"),
 	NEVER("false");		// cannot be encoded. This condition is only used during compilation.

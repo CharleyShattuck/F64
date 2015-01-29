@@ -4,8 +4,9 @@ import com.F64.Compiler;
 import com.F64.Exception;
 import com.F64.Interpreter;
 import com.F64.Processor;
+import com.F64.Scope;
 
-public class Begin extends com.F64.Word {
+public class Next extends com.F64.Word {
 
 	@Override
 	public void execute(Interpreter i)
@@ -18,7 +19,16 @@ public class Begin extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(new com.F64.scope.Begin(c));
+		Scope s = c.getScope();
+		while (!(s instanceof com.F64.scope.For)) {
+			s = s.getOwner();
+			if (s == null) {
+				i.getProcessor().doThrow(Exception.INVALID_SCOPE);
+				return;
+			}
+		}
+		com.F64.scope.For for_scope = (com.F64.scope.For)s;
+		for_scope.doNext(c);
 	}
 
 

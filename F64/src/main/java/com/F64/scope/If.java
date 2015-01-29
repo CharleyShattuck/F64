@@ -74,7 +74,7 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		}
 		else if (opt == Optimization.CONSTANT_FOLDING) {
 			Condition cond = branch_to_false.getCondition();
-			if ((cond == Condition.EQ0) || (cond == Condition.GE0)) {
+			if (cond == Condition.EQ0) {
 				com.F64.Codepoint p = this.getPrevious();
 				if (p != null) {
 					if (p instanceof Literal) {
@@ -82,14 +82,6 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 						long data = lit.getValue();
 						if (cond == Condition.EQ0) {
 							if (data == 0) {
-								cond = Condition.ALWAYS;
-							}
-							else {
-								cond = Condition.NEVER;
-							}
-						}
-						else {
-							if (data >= 0) {
 								cond = Condition.ALWAYS;
 							}
 							else {
@@ -112,8 +104,8 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 	@Override
 	public void generate(Builder b)
 	{
-		int additional, slot, bits, bits1, bits2, diff1, diff2, slot1, slot2, target_slot, fixup_slot, true_target_slot, false_target_slot;
-		long target, fixup, target1, target2, cpos;
+		int additional, bits1, bits2, diff1, diff2, slot1, slot2;
+		long target1, target2, cpos;
 		Condition cond = branch_to_false.getCondition();
 		if (cond == Condition.ALWAYS) {
 			if (false_part != null) {
@@ -127,22 +119,24 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		}
 		int t_cnt = true_part.countInstructions();
 		int f_cnt = false_part == null ? 0 : false_part.countInstructions();
-		com.F64.System s = b.getSystem();
+		b.getSystem();
 		if (t_cnt == 0) {
 			// there is no true part
 			if (f_cnt == 0) {return;}
 			switch (cond) {
 			case CARRY:
 				b.add(Ext1.CARRYQ);
-				branch_to_false.setCondition(Condition.NE0);
-				break;
-			case EQ0:
-				branch_to_false.setCondition(Condition.NE0);
-				break;
-			case GE0:
-				b.add(Ext1.LT0Q);
+				b.add(Ext1.EQ0Q);
 				branch_to_false.setCondition(Condition.EQ0);
 				break;
+			case EQ0:
+				b.add(Ext1.EQ0Q);
+				branch_to_false.setCondition(Condition.EQ0);
+				break;
+//			case GE0:
+//				b.add(Ext1.LT0Q);
+//				branch_to_false.setCondition(Condition.EQ0);
+//				break;
 			default:
 				break;
 			}

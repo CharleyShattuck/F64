@@ -124,6 +124,7 @@ public class Dictionary {
 		this.register("^.<<",			false,	new Rcl());
 		this.register("\\",				false,	new LineComment());
 		this.register("(",				false,	new Comment());
+		this.register("?if",			true,	new If(Condition.QEQ0));
 		this.register("1+",				false,	new Inc());
 		this.register("1-",				false,	new Dec());
 		this.register("2*",				false,	new Mul2());
@@ -135,12 +136,14 @@ public class Dictionary {
 		this.register("dup",			false,	new Dup());
 		this.register("else",			true,	new Else());
 		this.register("exit",			true,	new Exit());
-		this.register("if",				true,	new If());
+		this.register("for",			true,	new For());
+		this.register("if",				true,	new If(Condition.EQ0));
 		this.register("inline:",		false,	new Colon(true));
 		this.register("max",			false,	new Max());
 		this.register("min",			false,	new Min());
 		this.register("mod",			false,	new Mod());
 		this.register("negate",			false,	new Negate());
+		this.register("next",			true,	new Next());
 		this.register("nip",			false,	new Nip());
 		this.register("not",			false,	new Not());
 		this.register("ones",			false,	new Ones());
@@ -235,7 +238,6 @@ public class Dictionary {
 		this.register("ISA|^LOADMT",	false,	new Const(ISA.LOADMT.ordinal()));
 		this.register("ISA|^LOADSELF",	false,	new Const(ISA.LOADSELF.ordinal()));
 		this.register("ISA|^MOV",		false,	new Const(ISA.MOV.ordinal()));
-		this.register("ISA|^NEXT",		false,	new Const(ISA.NEXT.ordinal()));
 		this.register("ISA|^NIP",		false,	new Const(ISA.NIP.ordinal()));
 		this.register("ISA|^NOP",		false,	new Const(ISA.NOP.ordinal()));
 		this.register("ISA|^OR",		false,	new Const(ISA.OR.ordinal()));
@@ -251,6 +253,7 @@ public class Dictionary {
 		this.register("ISA|^SAVE",		false,	new Const(ISA.SAVE.ordinal()));
 		this.register("ISA|^SIMD",		false,	new Const(ISA.SIMD.ordinal()));
 		this.register("ISA|^SJMP",		false,	new Const(ISA.SJMP.ordinal()));
+		this.register("ISA|^SNEXT",		false,	new Const(ISA.SNEXT.ordinal()));
 		this.register("ISA|^SWAP",		false,	new Const(ISA.SWAP.ordinal()));
 		this.register("ISA|^UJMP0",		false,	new Const(ISA.UJMP0.ordinal()));
 		this.register("ISA|^UJMP1",		false,	new Const(ISA.UJMP1.ordinal()));

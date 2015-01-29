@@ -167,7 +167,14 @@ public class Processor implements Runnable {
 		if (slot_no == FINAL_SLOT) {return FINAL_SLOT_BITS;}
 		return 0;
 	}
-	
+
+	public static int getSlotMask(int slot_no)
+	{
+		if (slot_no < FINAL_SLOT) {return SLOT_MASK;}
+		if (slot_no == FINAL_SLOT) {return FINAL_SLOT_MASK;}
+		return 0;
+	}
+
 	public static long getIOAddress(int slot_bits)
 	{
 		assert(slot_bits >= 0);
@@ -1304,9 +1311,10 @@ public class Processor implements Runnable {
 		Condition cond = Condition.values()[(condition >> 4) & 3];
 		switch (cond) {
 		case EQ0:		if (this.register[Register.T.ordinal()] != 0) {doDrop(); doSkipConditionalJump(condition); return false;} doDrop(); break;
-		case NE0:		if (this.register[Register.T.ordinal()] == 0) {doDrop(); doSkipConditionalJump(condition); return false;} doDrop(); break;
-		case GE0:		if (this.register[Register.T.ordinal()] < 0) {doDrop(); doSkipConditionalJump(condition); return false;} doDrop(); break;
-		case CARRY:		if (!this.getFlag(Flag.CARRY)) {doSkipConditionalJump(condition); return false;} break;
+		case QEQ0:		if (this.register[Register.T.ordinal()] != 0) {doSkipConditionalJump(condition); return false;} doDrop(); break;
+//		case NE0:		if (this.register[Register.T.ordinal()] == 0) {doDrop(); doSkipConditionalJump(condition); return false;} doDrop(); break;
+//		case GE0:		if (this.register[Register.T.ordinal()] < 0) {doDrop(); doSkipConditionalJump(condition); return false;} doDrop(); break;
+//		case CARRY:		if (!this.getFlag(Flag.CARRY)) {doSkipConditionalJump(condition); return false;} break;
 		default: break;
 		}
 		switch (Branch.values()[condition & 0xf]) {
@@ -1350,7 +1358,7 @@ public class Processor implements Runnable {
 		this.register[Register.S.ordinal()] = this.register[Register.T.ordinal()];		
 	}
 
-	public void doNext(int slot)
+	public void doShortNext(int slot)
 	{
 		if (this.register[Register.R.ordinal()] == 0) {
 			this.register[Register.R.ordinal()] = this.popReturnStack();
@@ -1361,7 +1369,32 @@ public class Processor implements Runnable {
 		}
 	}
 
-	
+	public void doRemainingNext()
+	{
+		if (this.register[Register.R.ordinal()] == 0) {
+			this.register[Register.R.ordinal()] = this.popReturnStack();
+		}
+		else {
+			--this.register[Register.R.ordinal()];
+			this.jumpRemainigSlots();
+		}
+	}
+
+
+	public void doLongNext()
+	{
+		long target = system.getMemory(this.getSystemRegister(SystemRegister.P));
+		nextP();
+		if (this.register[Register.R.ordinal()] == 0) {
+			this.register[Register.R.ordinal()] = this.popReturnStack();
+		}
+		else {
+			--this.register[Register.R.ordinal()];
+			this.system_register[SystemRegister.P.ordinal()] = target;
+			this.slot = NO_OF_SLOTS;
+		}
+	}
+
 //	public boolean doJumpMethod(long index)
 //	{
 //		// check index is in range of method table
@@ -2094,7 +2127,7 @@ public class Processor implements Runnable {
 				case LIT:		this.doLit(this.nextSlot()); break;
 				case NLIT:		this.doNLit(this.nextSlot()); break;
 //				case EXT:		this.doExtendLiteral(this.nextSlot()); break;
-				case NEXT:		this.doNext(this.nextSlot()); break;
+				case SNEXT:		this.doShortNext(this.nextSlot()); break;
 				case BRANCH:	this.doConditionalJump(this.nextSlot()); break;
 				case CALL:		this.doCall(); break;
 				case CALLM:		this.doCallMethod(this.remainingSlots()); break;
@@ -2688,6 +2721,8 @@ public class Processor implements Runnable {
 		case EXITI:			this.doExitInterrupt(this.nextSlot()); break;
 		case SWAP0:			this.doSwap(this.nextSlot(), this.nextSlot()); this.slot = 0; break;
 		case LJMP:			this.doLongJump(); break;
+		case RNEXT:			this.doRemainingNext(); break;
+		case LNEXT:			this.doLongNext(); break;
 		case MIN:			this.doMin(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
 		case MAX:			this.doMax(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
 		case ADDC:			this.doAddWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
