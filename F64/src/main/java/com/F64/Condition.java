@@ -1,11 +1,21 @@
 package com.F64;
 
 public enum Condition {
-	ALWAYS,
-	EQ0,		// T == 0. T is consumed
-	GE0,		// T >= 0. T is consumed
-	CARRY,		// carry flag set
-	NEVER;		// cannot be encoded. This condition is only used during compilation.
+	EQ0("=0"),			// T == 0. T is consumed
+	NE0("!=0"),			// T != 0. T is consumed
+	GE0(">=0"),			// T >= 0. T is consumed
+	CARRY("y=1"),		// carry flag set
+	ALWAYS("true"),
+	NEVER("false");		// cannot be encoded. This condition is only used during compilation.
+
+	private String display;
+
+	private Condition(String display)
+	{
+		this.display = display;
+	}
+	
+	public String getDisplay() {return display;}
 
 	public int encode(Branch br)
 	{
@@ -16,6 +26,7 @@ public enum Condition {
 	{
 		assert(slot >= 0);
 		assert(slot <= Processor.FINAL_SLOT);
+		assert(this.ordinal() < 4);
 		return (ordinal() << 4) | slot;
 	}
 

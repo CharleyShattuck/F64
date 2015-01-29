@@ -28,6 +28,7 @@ import com.F64.Interpreter;
 public class ProcessorArray extends JFrame implements ActionListener, ItemListener, Runnable {
 	private Processor			view;
 	private System				system_view;
+	private Disassemble			disassemble_view;
 	private com.F64.ProcessorArray		processor_array;
 	private Interpreter			interpreter;
 	private JToggleButton[][]	toggle_array;
@@ -540,6 +541,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 		this.interpreter = i;
 		this.view = new Processor(pa.getProcessor(0, 0), i, c, s, d);
 		this.system_view = new System(s);
+		this.disassemble_view = new Disassemble(s);
 		
 		setVisible(true);
 	}
@@ -710,6 +712,7 @@ public class ProcessorArray extends JFrame implements ActionListener, ItemListen
 	{
 		view.update();
 		system_view.update();
+		disassemble_view.update();
 		int x = 0, y = 0;
 		int rows = this.processor_array.getRows();
 		int columns = this.processor_array.getColumns();

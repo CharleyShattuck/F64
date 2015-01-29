@@ -27,6 +27,10 @@ public class Asr extends com.F64.Codepoint {
 		cnt = value;
 	}
 
+	public boolean isStandardConstant() {return (dest == -1) && (cnt >= 0);}
+	public int getConstant() {return cnt;}
+	public void setConstant(int value) {cnt = value;}
+	
 	@Override
 	public boolean optimize(Compiler c, Optimization opt)
 	{
@@ -87,9 +91,16 @@ public class Asr extends com.F64.Codepoint {
 				}
 				if (p instanceof Asr) {
 					Asr prev = (Asr)p;
-					if ((this.cnt >= 0) && (prev.cnt >= 0)) {
+					if ((this.isStandardConstant()) && (prev.isStandardConstant())) {
 						prev.cnt += this.cnt;
 						this.remove();
+						return true;
+					}
+				}
+				if (p instanceof Div2) {
+					if (this.cnt >= 0) {
+						this.cnt += 1;
+						p.remove();
 						return true;
 					}
 				}
@@ -104,13 +115,21 @@ public class Asr extends com.F64.Codepoint {
 	@Override
 	public void generate(Builder b)
 	{
+		if (cnt == 0) {return;}
 		if (dest == -1) {
 			if (cnt == -1) {
 				b.add(RegOp3.ASR, Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal());
 				b.add(ISA.NIP);
 			}
 			else {
-				b.add(RegOp3.ASRI, Register.T.ordinal(), Register.T.ordinal(), cnt);
+				if (cnt < 4) {
+					for (int i=0; i<cnt; ++i) {
+						b.add(ISA.DIV2);
+					}
+				}
+				else {
+					b.add(RegOp3.ASRI, Register.T.ordinal(), Register.T.ordinal(), cnt);
+				}
 			}
 		}
 		else if (dest == src1) {

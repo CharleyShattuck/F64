@@ -1,4 +1,3 @@
-inline: myabs dup <0? if negate then ;
--1 myabs .
-1 myabs .
-: t -4 myabs . ;
+\ : test dup <0? if 2 / else 2 * then ;
+\ -4 test .
+\ 1 test .

@@ -68,6 +68,79 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 			);
 	}
 
+
+	public static String convertRemainingToString(long value, int slot)
+	{
+		long mask = com.F64.Processor.geRemainingMask(slot);
+		value &= mask;
+		if (mask <= 0xffL) {
+			return String.format("%02X", (int) value);
+		}
+		if (mask <= 0xffffL) {
+			return String.format("%04X", (int) value);
+		}
+		if (mask <= 0xff_ffffL) {
+			return
+				String.format(
+					"%02X_%04X",
+					(int) ((value >>> 16) & 0xffff),
+					(int) (value & 0xffff)
+				);
+		}
+		if (mask <= 0xffff_ffffL) {
+			return
+				String.format(
+					"%04X_%04X",
+					(int) ((value >>> 16) & 0xffff),
+					(int) (value & 0xffff)
+				);
+		}
+		if (mask <= 0xff_ffff_ffffL) {
+			return
+				String.format(
+						"%02X_%04X_%04X",
+						(int) ((value >>> 32) & 0xffff),
+						(int) ((value >>> 16) & 0xffff),
+						(int) (value & 0xffff)
+					);
+		}
+		if (mask <= 0xffff_ffff_ffffL) {
+			return
+				String.format(
+						"%04X_%04X_%04X",
+						(int) ((value >>> 32) & 0xffff),
+						(int) ((value >>> 16) & 0xffff),
+						(int) (value & 0xffff)
+					);
+		}
+		if (mask <= 0xff_ffff_ffff_ffffL) {
+			String.format(
+					"%02X_%04X_%04X_%04X",
+					(int) ((value >>> 48) & 0xffff),
+					(int) ((value >>> 32) & 0xffff),
+					(int) ((value >>> 16) & 0xffff),
+					(int) (value & 0xffff)
+				);			
+		}
+		return
+			String.format(
+				"%04X_%04X_%04X_%04X",
+				(int) ((value >>> 48) & 0xffff),
+				(int) ((value >>> 32) & 0xffff),
+				(int) ((value >>> 16) & 0xffff),
+				(int) (value & 0xffff)
+			);
+	}
+
+	public static String convertSlotToString(int value)
+	{
+		return
+			String.format(
+				"%02X",
+				(int) (value & com.F64.Processor.SLOT_MASK)
+			);
+	}
+
 //	private void addSlots(JPanel panel, int x, int y)
 //	{
 //	}

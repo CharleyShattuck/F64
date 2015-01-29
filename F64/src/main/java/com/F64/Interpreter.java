@@ -150,6 +150,21 @@ public class Interpreter {
 		return false;
 	}
 	
+	public void skipLine()
+	{
+		try {
+			int data = this.stream.read();
+			while (data >= 0) {
+				if (data == '\r') {break;}
+				if (data == '\n') {break;}
+				data = this.stream.read();
+			}
+		}
+		catch (IOException ex) {
+			
+		}
+	}
+
 	public String getNextWord()
 	{
 		try {

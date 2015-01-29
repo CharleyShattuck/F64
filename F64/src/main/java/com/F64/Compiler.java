@@ -44,12 +44,15 @@ public class Compiler {
 	private Block				current_block;
 	private Word				current_word;
 	private boolean				can_be_inlined;
+	private int					locals_used;
+	private java.util.TreeMap<String, Local>	local_map;
 	
 	public Compiler(System system, Processor processor)
 	{
 		this.system = system;
 		this.processor = processor;
 		builder = new Builder(system);
+		local_map = new java.util.TreeMap<String, Local>();
 	}
 
 	public System getSystem() {return system;}
@@ -64,6 +67,14 @@ public class Compiler {
 	public void setBlock(Block s) {current_block = s;}
 	public void setScope(Scope s) {current_scope = s;}
 //	public int getRemainingSlots() {return Processor.NO_OF_SLOTS - current_slot;}
+
+	public Local requestLocal(String name)
+	{
+		Local res = new Local(locals_used++);
+		local_map.put(name, res);
+		return res;
+	}
+	
 	
 //	public int getRemainingBits()
 //	{

@@ -20,6 +20,17 @@ public class Scope extends Codepoint implements java.lang.Cloneable {
 	public void setTail(Codepoint value) {tail = value;}
 	public boolean isEmpty() {return head == null;}
 	
+	public int countInstructions()
+	{
+		int res = 0;
+		Codepoint curr = head;
+		while (curr != null) {
+			res += curr.countInstructions();
+			curr = curr.getNext();
+		}
+		return res;
+	}
+	
 	public Scope clone() throws CloneNotSupportedException
 	{
 		Scope res = (Scope)super.clone();

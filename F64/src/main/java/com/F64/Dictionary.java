@@ -122,6 +122,8 @@ public class Dictionary {
 		this.register(">>.^",			false,	new Rcr());
 		this.register("^<<",			false,	new Rol());
 		this.register("^.<<",			false,	new Rcl());
+		this.register("\\",				false,	new LineComment());
+		this.register("(",				false,	new Comment());
 		this.register("1+",				false,	new Inc());
 		this.register("1-",				false,	new Dec());
 		this.register("2*",				false,	new Mul2());
@@ -148,8 +150,12 @@ public class Dictionary {
 		this.register("sign",			false,	new Sign());
 		this.register("swap",			false,	new Swap());
 		this.register("then",			true,	new Then());
+		this.register("to",				false,	new To());
 		this.register("tuck",			false,	new Tuck());
 		this.register("under",			false,	new Under());
+		this.register("value",			false,	new Value());
+		this.register("variable",		false,	new Variable());
+		this.register("vector",			false,	new Vector());
 		this.register("xor",			false,	new Xor());
 		this.register("zero",			false,	new Zero());
 
@@ -216,7 +222,7 @@ public class Dictionary {
 		this.register("ISA|^DUP",		false,	new Const(ISA.DUP.ordinal()));
 		this.register("ISA|^ENTER",		false,	new Const(ISA.ENTER.ordinal()));
 		this.register("ISA|^EXIT",		false,	new Const(ISA.EXIT.ordinal()));
-		this.register("ISA|^EXT",		false,	new Const(ISA.EXT.ordinal()));
+//		this.register("ISA|^EXT",		false,	new Const(ISA.EXT.ordinal()));
 		this.register("ISA|^EXT1",		false,	new Const(ISA.EXT1.ordinal()));
 		this.register("ISA|^EXT2",		false,	new Const(ISA.EXT2.ordinal()));
 		this.register("ISA|^EXT3",		false,	new Const(ISA.EXT3.ordinal()));
@@ -241,6 +247,7 @@ public class Dictionary {
 		this.register("ISA|^REGOP2",	false,	new Const(ISA.REGOP2.ordinal()));
 		this.register("ISA|^REGOP3",	false,	new Const(ISA.REGOP3.ordinal()));
 		this.register("ISA|^RESTORE",	false,	new Const(ISA.RESTORE.ordinal()));
+		this.register("ISA|^RJMP",		false,	new Const(ISA.RJMP.ordinal()));
 		this.register("ISA|^SAVE",		false,	new Const(ISA.SAVE.ordinal()));
 		this.register("ISA|^SIMD",		false,	new Const(ISA.SIMD.ordinal()));
 		this.register("ISA|^SJMP",		false,	new Const(ISA.SJMP.ordinal()));
@@ -260,6 +267,11 @@ public class Dictionary {
 		this.register("ISA|^UNEXT",		false,	new Const(ISA.UNEXT.ordinal()));
 		this.register("ISA|^XOR",		false,	new Const(ISA.XOR.ordinal()));
 
+		this.register("Exc|^COMPILE_ONLY",			false,	new Const(Exception.COMPILE_ONLY.ordinal()));
+		this.register("Exc|^EXECUTE_ONLY",			false,	new Const(Exception.EXECUTE_ONLY.ordinal()));
+		this.register("Exc|^INVALID_SCOPE",			false,	new Const(Exception.INVALID_SCOPE.ordinal()));
+		this.register("Exc|^UNDEFINED",				false,	new Const(Exception.UNDEFINED.ordinal()));
+		this.register("Exc|^UNSPECIFIC",			false,	new Const(Exception.UNSPECIFIC.ordinal()));
 		
 		
 	}

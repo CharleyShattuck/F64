@@ -17,6 +17,11 @@ public class Codepoint implements java.lang.Cloneable {
 	{
 	}
 	
+	public int countInstructions()
+	{
+		return 1;
+	}
+
 	public boolean hasPrecondition(Precondition pc)
 	{
 		if (owner != null) {

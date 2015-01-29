@@ -25,6 +25,22 @@ public class Mul2 extends com.F64.Codepoint {
 				}
 				break;
 
+			case PEEPHOLE:
+				if (p instanceof Mul2) {
+					p.replaceWith(new Asl(2));
+					this.remove();
+					return true;
+				}
+				if (p instanceof Asl) {
+					Asl prev = (Asl)p;
+					if (prev.isStandardConstant()) {
+						prev.setConstant(prev.getConstant()+1);
+						this.remove();
+						return true;
+					}
+				}
+				break;
+
 			default:
 				break;
 			}

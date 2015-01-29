@@ -115,6 +115,7 @@ public class Machine {
 				view.update();
 			}
 			catch (java.lang.Exception ex) {
+				ex.printStackTrace();
 				scanner.close();
 				break;
 			}

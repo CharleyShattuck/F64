@@ -89,7 +89,7 @@ public class Builder {
 		return false;
 	}
 
-	public static int getNoOfDifferentBits(long value1, long value2)
+	public static int getHighestDifferentBit1(long value1, long value2)
 	{
 		int diff = 0;
 		long mask = -1;
@@ -125,6 +125,220 @@ public class Builder {
 		return mask;
 	}
 
+	public static boolean shortJumpFitsIntoSlot(long P, long target)
+	{
+		int diff1 = Builder.getHighestDifferentBit1(target, P);
+		return diff1 <= Processor.SLOT_BITS;		
+	}
+
+	public static boolean forwardBranchCanBeImplicit(int slot, int instructionCount)
+	{
+		return((instructionCount+slot) < (Processor.NO_OF_SLOTS-2));
+	}
+
+	public static boolean forwardBranchIsImplicit(Builder b, Condition cond, Scope block)
+	{
+		long cp = b.getCurrentPosition();
+		b.add(ISA.BRANCH, cond.encode(Branch.SKIP));
+		block.generate(b);
+		return b.getCurrentP() == cp;
+	}
+
+	public static boolean forwardBranchIsImplicit(Builder b, ConditionalBranch br, Scope block)
+	{
+		long cp = b.getCurrentPosition();
+		b.add(ISA.BRANCH, br.getCondition().encode(Branch.SKIP));
+		br.set(b, -1);
+		block.generate(b);
+		return b.getCurrentP() == cp;
+	}
+
+	public static void forwardBranchImplicit(Builder b, Condition cond, Scope block)
+	{
+		long fixup = b.getCurrentPosition();
+		int fixup_slot = b.getCurrentSlot()+1;
+		b.add(ISA.BRANCH, Branch.SKIP.ordinal());
+		block.generate(b);
+		int target_slot = b.getCurrentSlot();
+		if (target_slot < Processor.NO_OF_SLOTS) {
+			com.F64.System s = b.getSystem();
+			s.setMemory(fixup, Processor.writeSlot(s.getMemory(fixup), fixup_slot, cond.encode(target_slot)));
+		}
+	}
+
+	public static boolean forwardBranchCanBeShort(long P, int slot, int instructionCount)
+	{
+		long target = P + instructionCount / Processor.NO_OF_SLOTS;
+		long diff1 = Builder.getHighestDifferentBit1(target, P);
+		return diff1 <= Processor.SLOT_BITS;
+	}
+
+	public static boolean forwardBranchIsShort(Builder b, ConditionalBranch pre, Scope block, ConditionalBranch fixup)
+	{
+		pre.generateBranch(b, Branch.SHORT);
+		long P = b.getCurrentP();
+		block.generate(b);
+		if (fixup != null) {
+			fixup.generateBranch(b, Branch.SHORT);
+		}
+		return shortJumpFitsIntoSlot(P, b.getCurrentPosition());
+	}
+
+	public static Location generateForwardBranchShort(Builder b, Condition cond)
+	{
+		b.add(ISA.BRANCH, cond.encode(Branch.SHORT), Processor.SLOT_MASK);
+		return new Location(b.getCurrentP(), b.getCurrentPosition(), b.getCurrentSlot()-1);
+	}
+
+	public static Location generateForwardBranchRem(Builder b, Condition cond)
+	{
+		b.add(ISA.BRANCH, cond.encode(Branch.REM));
+		Location res = new Location(b.getCurrentP(), b.getCurrentPosition(), b.getCurrentSlot());
+		b.flush();
+		return res;
+	}
+
+
+	public static long generateForwardBranchLong(Builder b, Condition cond)
+	{
+		b.add(ISA.BRANCH, cond.encode(Branch.LONG));
+		long res = b.getCurrentP();
+		b.addAdditionalCell(0);
+		return res;
+	}
+
+//	public static boolean forwardForwardBranch(Builder b, ConditionalBranch pre, Scope block, ConditionalBranch post)
+//	{
+//		pre.generateBranch(b);
+//		b.flush();
+//		long target1 = b.getCurrentPosition();
+//		block.generate(b);
+//		if (post != null) {
+//			post.generateBranch(b);
+//		}
+//		b.flush();
+//		long target2 = b.getCurrentPosition();
+//
+//		if (!pre.fixup(b, target1, 0)) {return false;}
+//		if (post != null) {
+//			if (!post.fixup(b, target2, 0)) {return false;}
+//		}
+//		return true;
+//	}
+
+	public static boolean forwardBranchShort(Builder b, ConditionalBranch pre, Scope block, ConditionalBranch post)
+	{
+		pre.generateBranch(b, Branch.SHORT);
+		b.flush();
+		long target1 = b.getCurrentPosition();
+		block.generate(b);
+		if (post != null) {
+			post.generateBranch(b, Branch.SHORT);
+		}
+		b.flush();
+		long target2 = b.getCurrentPosition();
+
+		if (!pre.fixup(b, target1, 0)) {return false;}
+		if (post != null) {
+			if (!post.fixup(b, target2, 0)) {return false;}
+		}
+		return true;
+	}
+
+	public static boolean forwardBranchCanBeRemaining(long P, int slot, int instructionCount)
+	{
+		long target = P + instructionCount / Processor.NO_OF_SLOTS;
+		long diff1 = Builder.getHighestDifferentBit1(target, P);
+		return diff1 <= Builder.getRemainingBits(slot+1);
+	}
+
+	public static boolean forwardBranchIsRemaining(Builder b, Condition cond, Scope block)
+	{
+		if (b.getCurrentSlot() > (Processor.NO_OF_SLOTS-4)) {
+			b.flush();
+		}
+		b.add(ISA.BRANCH, cond.encode(Branch.REM));
+		long P = b.getCurrentP();
+		block.generate(b);
+		b.flush();
+		long target = b.getCurrentPosition();
+		int diff1 = Builder.getHighestDifferentBit1(target, P);
+		return diff1 <= Processor.SLOT_BITS;
+	}
+
+	public static Location forwardBranchRemaining(Builder b, Condition cond, Scope block, Condition append_cond)
+	{
+		Location res = null;
+		if (b.getCurrentSlot() > (Processor.NO_OF_SLOTS-4)) {
+			b.flush();
+		}
+		long fixup = b.getCurrentPosition();
+		int fixup_slot = b.getCurrentSlot()+2;
+		b.add(ISA.BRANCH, cond.encode(Branch.REM));
+//		long P = b.getCurrentP();
+		block.generate(b);
+		if (append_cond != null) {
+			res = generateForwardBranchRem(b, append_cond);
+		}
+		b.flush();
+		long target = b.getCurrentPosition();
+		long mask = getAddressMask(fixup_slot);
+		com.F64.System s = b.getSystem();
+		long cell = s.getMemory(fixup);
+		cell ^= (cell ^ target) & mask;
+		s.setMemory(fixup, cell);
+		return res;
+	}
+
+	public static long forwardBranchLong(Builder b, Condition cond, Scope block, Condition append_cond)
+	{
+		long res = 0;
+		if (!fit(b.getCurrentSlot(), ISA.BRANCH.ordinal(), cond.encode(Branch.LONG))) {
+			b.flush();
+		}
+		b.add(ISA.BRANCH, cond.encode(Branch.LONG));
+		b.addAdditionalCell(0);
+		b.flush();
+		long fixup = b.getCurrentPosition()-1;
+		block.generate(b);
+		b.flush();
+		long target = b.getCurrentPosition();
+		com.F64.System s = b.getSystem();
+		s.setMemory(fixup, target);
+		return res;
+	}
+	
+	public static boolean fixupShort(System s, Location loc, long target)
+	{
+		int diff1 = Builder.getHighestDifferentBit1(target, loc.getPAdr());
+		if (diff1 <= Processor.SLOT_BITS) {
+			long fixup = loc.getAdr();
+			int fixup_slot = loc.getSlot();
+			s.setMemory(fixup, Processor.writeSlot(s.getMemory(fixup), fixup_slot, (int)(Processor.SLOT_MASK & target)));
+			return true;
+		}
+		return false;
+	}
+	
+	public static boolean fixupRem(System s, Location loc, long target)
+	{
+		int diff1 = Builder.getHighestDifferentBit1(target, loc.getPAdr());
+		int fixup_slot = loc.getSlot();
+		if (diff1 <= getRemainingBits(fixup_slot)) {
+			long fixup = loc.getAdr();
+			long data = s.getMemory(fixup);
+			long mask = getAddressMask(fixup_slot);
+			s.setMemory(fixup, data ^ ((data ^ target) & mask));
+			return true;
+		}
+		return false;
+	}
+
+	public static void fixupLong(System s, long loc, long target)
+	{
+		s.setMemory(loc, target);
+	}
+
 	
 	private System				system;
 	private long				start_position;
@@ -143,7 +357,38 @@ public class Builder {
 		additional_cells = new long[Processor.NO_OF_SLOTS];
 	}
 
+	public System getSystem() {return system;}
 	public int getCurrentSlot() {return current_slot;}
+	public long getCurrentPosition() {return current_pos;}
+	public long getCurrentP() {return current_pos+addtional_cnt;}
+	public boolean doesGenerate() {return generate;}
+	public boolean hasAdditionalData() {return addtional_cnt > 0;}
+	public int getAdditionalDataSize() {return addtional_cnt;}
+	public long getCurrentCell() {return current_cell;}
+	public void setCurrentCell(long value) {current_cell = value;}
+
+	public boolean fixupShort(Location loc)
+	{
+		flush();
+		return fixupShort(system, loc, current_cell);
+	}
+	
+	public boolean fixupRem(Location loc)
+	{
+		flush();
+		return fixupRem(system, loc, current_cell);
+	}
+	
+	public void fixupLong(long loc)
+	{
+		flush();
+		fixupLong(system, loc, current_cell);
+	}
+
+	public int getRemainingBits()
+	{
+		return getRemainingBits(current_slot);
+	}
 	
 	public Builder fork(boolean flush)
 	{
@@ -160,17 +405,19 @@ public class Builder {
 		return res;
 	}
 
-	public void refork(boolean flush, Builder origin)
+	public Builder fork(boolean flush, Builder res)
 	{
-		current_pos = origin.current_pos;
-		current_cell = origin.current_cell;
-		current_slot = origin.current_slot;
-		addtional_cnt = origin.addtional_cnt;
-		generate = false;
-		call_generated = false;
-		if (flush) {flush();}
-		start_position = current_pos;
-		start_slot = current_slot;
+		if (res == null) {res = new Builder(system);}
+		res.current_pos = current_pos;
+		res.current_cell = current_cell;
+		res.current_slot = current_slot;
+		res.addtional_cnt = addtional_cnt;
+		res.generate = false;
+		res.call_generated = false;
+		if (flush) {res.flush();}
+		res.start_position = res.current_pos;
+		res.start_slot = res.current_slot;
+		return res;
 	}
 	
 
@@ -307,16 +554,30 @@ public class Builder {
 		current_cell = Processor.writeSlot(current_cell, current_slot++, slot4);
 	}
 
+	public void finishCell(long bits)
+	{
+		if (generate) {
+			system.compileCode(current_cell | bits);
+			for (int i=0; i<addtional_cnt; ++i) {
+				system.compileCode(additional_cells[i]);
+			}
+		}
+		current_pos += addtional_cnt+1;
+		current_cell = 0;
+		current_slot = 0;
+		addtional_cnt = 0;
+	}
+
 	public void addCall(long dest_adr, boolean is_jump)
 	{
 		int instr_slots = is_jump ? 2 : 1;
 //		long curr_adr = current_pos + addtional_cnt + instr_slots;
-		int different_bits = getNoOfDifferentBits(dest_adr, 0);
+		int different_bits = getHighestDifferentBit1(dest_adr, 0);
 		int remaining_bits = getRemainingBits(current_slot+instr_slots);
 		if (different_bits > remaining_bits) {
 			flush();
 //			curr_adr = current_pos + instr_slots;
-			different_bits = getNoOfDifferentBits(dest_adr, 0);
+			different_bits = getHighestDifferentBit1(dest_adr, 0);
 			remaining_bits = getRemainingBits(current_slot+instr_slots);
 		}
 		long mask = getAddressMask(current_slot+instr_slots);
@@ -338,13 +599,13 @@ public class Builder {
 				add(ISA.LIT, (int)value);
 				return;
 			}
-			if (value < Processor.SLOT_SIZE * Processor.SLOT_SIZE) {
-				if (fit(current_slot, ISA.LIT.ordinal(), (int)(value >> Processor.SLOT_BITS), ISA.EXT.ordinal(), (int)(value & Processor.SLOT_MASK))) {
-					add(ISA.LIT, (int)(value >> Processor.SLOT_BITS));
-					add(ISA.EXT, (int)(value & Processor.SLOT_MASK));
-					return;
-				}
-			}
+//			if (value < Processor.SLOT_SIZE * Processor.SLOT_SIZE) {
+//				if (fit(current_slot, ISA.LIT.ordinal(), (int)(value >> Processor.SLOT_BITS), ISA.EXT.ordinal(), (int)(value & Processor.SLOT_MASK))) {
+//					add(ISA.LIT, (int)(value >> Processor.SLOT_BITS));
+//					add(ISA.EXT, (int)(value & Processor.SLOT_MASK));
+//					return;
+//				}
+//			}
 		}
 		else {
 			// negative
@@ -353,17 +614,82 @@ public class Builder {
 				add(ISA.NLIT, (int)abs);
 				return;
 			}
-			if (abs < Processor.SLOT_SIZE * Processor.SLOT_SIZE) {
-				if (fit(current_slot, ISA.NLIT.ordinal(), (int)(abs >> Processor.SLOT_BITS), ISA.EXT.ordinal(), (int)(value & Processor.SLOT_MASK))) {
-					add(ISA.NLIT, (int)(abs >> Processor.SLOT_BITS));
-					add(ISA.EXT, (int)(value & Processor.SLOT_MASK));
-					return;
-				}
-			}
+//			if (abs < Processor.SLOT_SIZE * Processor.SLOT_SIZE) {
+//				if (fit(current_slot, ISA.NLIT.ordinal(), (int)(abs >> Processor.SLOT_BITS), ISA.EXT.ordinal(), (int)(value & Processor.SLOT_MASK))) {
+//					add(ISA.NLIT, (int)(abs >> Processor.SLOT_BITS));
+//					add(ISA.EXT, (int)(value & Processor.SLOT_MASK));
+//					return;
+//				}
+//			}
 		}
 		if (!fit(current_slot, ISA.FETCHPINC.ordinal())) {flush();}
 		add(ISA.FETCHPINC);
-		additional_cells[addtional_cnt++] = value;
+		addAdditionalCell(value);
 	}
 	
+
+	public void addAdditionalCell(long value)
+	{
+		additional_cells[addtional_cnt++] = value;
+	}
+
+	public void forwardBranch(ConditionalBranch br, Scope block)
+	{
+		Builder probe = null;
+		int instr_cnt = block.countInstructions();
+		if (Builder.forwardBranchCanBeImplicit(getCurrentSlot(), instr_cnt)) {
+			probe = fork(false);
+			if (Builder.forwardBranchIsImplicit(probe, br.getCondition(), block)) {
+				Builder.forwardBranchImplicit(this, br.getCondition(), block);
+				return;
+			}
+		}
+		if (Builder.forwardBranchCanBeShort(getCurrentP(), getCurrentSlot(), instr_cnt)) {
+			probe = fork(false, probe);
+			if (Builder.forwardBranchIsShort(probe, br, block, null)) {
+				Builder.forwardBranchShort(this, br, block, null);
+				probe.flush();
+				return;
+			}
+		}
+		if (Builder.forwardBranchCanBeRemaining(getCurrentP(), getCurrentSlot(), instr_cnt)) {
+			probe = fork(false, probe);
+			if (Builder.forwardBranchIsRemaining(probe, br.getCondition(), block)) {
+				return;
+			}
+		}
+		Builder.forwardBranchLong(this, br.getCondition(), block, null);
+
+	}
+
+	public void forwardBranch(Condition cond, Scope block)
+	{
+		Builder probe = null;
+		int instr_cnt = block.countInstructions();
+		if (Builder.forwardBranchCanBeImplicit(getCurrentSlot(), instr_cnt)) {
+			probe = fork(false);
+			if (Builder.forwardBranchIsImplicit(probe, Condition.EQ0, block)) {
+				Builder.forwardBranchImplicit(this, Condition.EQ0, block);
+				return;
+			}
+		}
+		ConditionalBranch pre = new ConditionalBranch(Condition.EQ0);
+		ConditionalBranch post = new ConditionalBranch(Condition.ALWAYS);
+		if (Builder.forwardBranchCanBeShort(getCurrentP(), getCurrentSlot(), instr_cnt)) {
+			probe = fork(false, probe);
+			if (Builder.forwardBranchIsShort(probe, pre, block, post)) {
+				Builder.forwardBranchShort(this, pre, block, post);
+				probe.flush();
+				return;
+			}
+		}
+		if (Builder.forwardBranchCanBeRemaining(getCurrentP(), getCurrentSlot(), instr_cnt)) {
+			probe = fork(false, probe);
+			if (Builder.forwardBranchIsRemaining(probe, Condition.EQ0, block)) {
+				return;
+			}
+		}
+		Builder.forwardBranchLong(this, Condition.EQ0, block, null);
+	}
+
 }

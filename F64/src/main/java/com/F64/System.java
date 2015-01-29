@@ -30,6 +30,15 @@ public class System {
 	public long getStackSize() {return stack.length;}
 	public long getReturnStackSize() {return return_stack.length;}
 	public long getCodePosition() {return code_position;}
+	public long getDataPosition() {return data_position;}
+
+	public long reserveData(long cells)
+	{
+		long new_pos = data_position - cells;
+		assert(new_pos > code_position);
+		data_position = new_pos;
+		return data_position;
+	}
 
 	public boolean isValidCodeAddress(long adr)
 	{

@@ -25,6 +25,22 @@ public class Div2 extends com.F64.Codepoint {
 				}
 				break;
 
+			case PEEPHOLE:
+				if (p instanceof Div2) {
+					p.replaceWith(new Asr(2));
+					this.remove();
+					return true;
+				}
+				if (p instanceof Asr) {
+					Asr prev = (Asr)p;
+					if (prev.isStandardConstant()) {
+						prev.setConstant(prev.getConstant()+1);
+						this.remove();
+						return true;
+					}
+				}
+				break;
+
 			default:
 				break;
 			}
