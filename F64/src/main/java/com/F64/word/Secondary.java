@@ -40,6 +40,7 @@ public class Secondary extends com.F64.Word {
 		}
 		else {
 			c.compile(new com.F64.codepoint.Secondary(codepoint.getAdr()));
+			c.getMainScope().internalCall();
 		}
 	}
 

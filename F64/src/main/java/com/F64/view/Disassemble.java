@@ -238,15 +238,20 @@ public class Disassemble extends JFrame implements ActionListener {
 		int additional = 0;
 		int slot = 0;
 		int size;
-		int value;
+		int value, value2;
 		long target;
 		com.F64.ISA opcode;
 		com.F64.Ext1 ext1;
+		com.F64.Ext2 ext2;
+		com.F64.Ext3 ext3;
+		com.F64.Ext4 ext4;
+		com.F64.RegOp1 rop1;
+		com.F64.RegOp2 rop2;
 		com.F64.RegOp3 rop3;
 		String txt = "";
 		while (slot < com.F64.Processor.NO_OF_SLOTS) {
 			if (slot > 0) {
-				txt = txt + "; ";
+				txt = txt + " , ";
 			}
 			value = com.F64.Processor.readSlot(cell, slot++);
 			opcode = com.F64.ISA.values()[value];
@@ -255,33 +260,96 @@ public class Disassemble extends JFrame implements ActionListener {
 			case RJMP:
 			case CALL:
 			case CALLM:
-				txt = txt + opcode.getDisplay() + " " + Processor.convertRemainingToString(cell, slot);
+				txt = txt + opcode.getDisplay()
+					+ " " + Processor.convertRemainingToString(cell, slot)
+				;
 				slot = com.F64.Processor.NO_OF_SLOTS;
+				size = 0;
 				break;
 
-			
+			case MOV:
+			case SWAP:
+				txt = txt + opcode.getDisplay()
+					+ " " + com.F64.Register.getDisplay(com.F64.Processor.readSlot(cell, slot++))
+					+ " " + com.F64.Register.getDisplay(com.F64.Processor.readSlot(cell, slot++))
+				;
+				size = 0;
+				break;
+
+			case NLIT:
+				txt = txt + opcode.getDisplay()
+					+ " #-" + Processor.convertSlotToString(com.F64.Processor.readSlot(cell, slot++)+1)
+				;
+				size = 0;
+				break;
+
+			case RFETCH:
+			case RSTORE:
+			case LFETCH:
+			case LSTORE:
+			case INC:
+			case DEC:
+				txt = txt + opcode.getDisplay()
+					+ " " + com.F64.Register.getDisplay(com.F64.Processor.readSlot(cell, slot++))
+				;
+				size = 0;
+				break;
+
 			case BRANCH:
 				int bc = com.F64.Processor.readSlot(cell, slot++);
 				com.F64.Condition cond = com.F64.Condition.values()[(bc >> 4) & 3];
 				com.F64.Branch br = com.F64.Branch.values()[bc & 0x0f];
 				switch (br) {
 				case REM:
-					txt = txt + opcode.getDisplay() + " " + cond.getDisplay() + " " + br.getDisplay() + " " + Processor.convertRemainingToString(cell, slot);
+					txt = txt + opcode.getDisplay()
+						+ " " + cond.getDisplay()
+						+ " " + br.getDisplay()
+						+ " " + Processor.convertRemainingToString(cell, slot)
+					;
 					slot = com.F64.Processor.NO_OF_SLOTS;
 					break;
 				case IO:
 				case SHORT:
 					target = com.F64.Processor.readSlot(cell, slot++);
-					txt = txt + opcode.getDisplay() + " " + cond.getDisplay() + " " + br.getDisplay() + " " + Processor.convertSlotToString((int) target);
+					txt = txt + opcode.getDisplay()
+						+ " " + cond.getDisplay()
+						+ " " + br.getDisplay()
+						+ " " + Processor.convertSlotToString((int) target)
+					;
 					break;
 
 				case LONG:
 					++additional;
 				default:
-					txt = txt + opcode.getDisplay() + " " + cond.getDisplay() + " " + br.getDisplay();
+					txt = txt + opcode.getDisplay()
+						+ " " + cond.getDisplay()
+						+ " " + br.getDisplay()
+					;
 					break;
 				
 				}
+				break;
+
+			case REGOP1:
+				rop1 = com.F64.RegOp1.values()[com.F64.Processor.readSlot(cell, slot++)];
+				txt =
+					txt + rop1.getDisplay()
+					+ " " + com.F64.Register.getDisplay(com.F64.Processor.readSlot(cell, slot++))
+					;
+				size = 0;
+				break;
+
+			case REGOP2:
+				rop2 = com.F64.RegOp2.values()[com.F64.Processor.readSlot(cell, slot++)];
+				txt =
+					txt + rop2.getDisplay()
+					+ " " + com.F64.Register.getDisplay(com.F64.Processor.readSlot(cell, slot++))
+					+ (rop2.isImmediate()
+						? (" #" + Processor.convertSlotToString(com.F64.Processor.readSlot(cell, slot++)))
+						: (" " + com.F64.Register.getDisplay(com.F64.Processor.readSlot(cell, slot++)))
+					)
+					;
+				size = 0;
 				break;
 
 			case REGOP3:
@@ -289,20 +357,37 @@ public class Disassemble extends JFrame implements ActionListener {
 				txt =
 					txt + rop3.getDisplay()
 					+ " " + com.F64.Register.getDisplay(com.F64.Processor.readSlot(cell, slot++))
-					+ ", " + com.F64.Register.getDisplay(com.F64.Processor.readSlot(cell, slot++))
+					+ " " + com.F64.Register.getDisplay(com.F64.Processor.readSlot(cell, slot++))
 					+ (rop3.isImmediate()
-					? (", #" + Processor.convertSlotToString(com.F64.Processor.readSlot(cell, slot++)))
-					: (", " + com.F64.Register.getDisplay(com.F64.Processor.readSlot(cell, slot++))));
+						? (" #" + Processor.convertSlotToString(com.F64.Processor.readSlot(cell, slot++)))
+						: (" " + com.F64.Register.getDisplay(com.F64.Processor.readSlot(cell, slot++)))
+					)
+					;
 				size = 0;
 				break;
 			
 			case EXT1:
 				ext1 = com.F64.Ext1.values()[com.F64.Processor.readSlot(cell, slot++)];
-				size = ext1.size()-2;
+				size = ext1.size()-1;
 				switch (ext1) {
 				case LJMP:
 					++additional;
 					txt = txt + ext1.getDisplay();
+					break;
+
+//				case SWAP0:
+//					txt = txt + ext1.getDisplay()
+//						+ " " + com.F64.Register.getDisplay(com.F64.Processor.readSlot(cell, slot++))
+//						+ " " + com.F64.Register.getDisplay(com.F64.Processor.readSlot(cell, slot++))
+//					;
+//					break;
+
+				case EXITI:
+					value = com.F64.Processor.readSlot(cell, slot++);
+					txt = txt + ext1.getDisplay()
+						+ " #" + Processor.convertSlotToString(value)
+					;
+					size = 0;
 					break;
 
 				default:
@@ -312,12 +397,238 @@ public class Disassemble extends JFrame implements ActionListener {
 				}
 				break;
 
+			case EXT2: // all instruction here have size 3
+				ext2 = com.F64.Ext2.values()[com.F64.Processor.readSlot(cell, slot++)];
+				value = com.F64.Processor.readSlot(cell, slot++);
+				size = 0;
+				switch (ext2) {
+				case EQ0Q:
+				case FETCHINC:
+				case FETCHR:
+				case GE0Q:
+				case GT0Q:
+				case LE0Q:
+				case LT0Q:
+				case NE0Q:
+				case POPR:
+				case PUSHR:
+				case RCL:
+				case RCR:
+				case ROL:
+				case ROR:
+				case STOREINC:
+				case STORER:
+					txt = txt + ext2.getDisplay()
+						+ " " + com.F64.Register.getDisplay(value)
+					;
+					break;
+
+				case FETCHS:
+				case POPS:
+				case PUSHS:
+				case SFETCH:
+				case SSTORE:
+				case STORES:
+					txt = txt + ext2.getDisplay()
+						+ " " + com.F64.SystemRegister.getDisplay(value)
+					;
+					break;
+
+				case FETCHL:
+				case POPL:
+				case PUSHL:
+				case STOREL:
+					txt = txt + ext2.getDisplay()
+						+ " " + com.F64.Local.getDisplay(value)
+					;
+					break;
+
+				case CFLAG:
+				case SFLAG:
+					txt = txt + ext2.getDisplay()
+						+ " " + com.F64.Flag.getDisplay(value)
+					;
+					break;
+
+				case JMPIO:
+				case FETCHPORT:
+				case FETCHPORTWAIT:
+					txt = txt + ext2.getDisplay()
+						+ " " + com.F64.Port.getDisplayMask(value)
+					;
+					break;
+
+				case BLIT:
+				case CBIT:
+				case CONFIGFETCH:
+				case RBIT:
+				case RCLI:
+				case RCRI:
+				case ROLI:
+				case RORI:
+				case SBIT:
+				case STOREPORT:
+				case STOREPORTWAIT:
+				case TBIT:
+				case WBIT:
 				default:
-					txt = txt + opcode.getDisplay();
+					txt = txt + ext2.getDisplay()
+						+ " #" + Processor.convertSlotToString(value)
+					;
+					break;
+				
+				}
+				break;
+
+			case EXT3: // all instruction here have size 4
+				ext3 = com.F64.Ext3.values()[com.F64.Processor.readSlot(cell, slot++)];
+				value = com.F64.Processor.readSlot(cell, slot++);
+				value2 = com.F64.Processor.readSlot(cell, slot++);
+				size = 0;
+				switch (ext3) {
+				case SWAPRS:
+				case MOVRS:
+					txt = txt + ext3.getDisplay()
+					+ " " + com.F64.Register.getDisplay(value)
+					+ " " + com.F64.SystemRegister.getDisplay(value2)
+				;
+				break;
+
+				case MOVSR:
+					txt = txt + ext3.getDisplay()
+					+ " " + com.F64.SystemRegister.getDisplay(value)
+					+ " " + com.F64.Register.getDisplay(value2)
+				;
+				break;
+
+				case SWAPRL:
+				case MOVRL:
+					txt = txt + ext3.getDisplay()
+					+ " " + com.F64.Register.getDisplay(value)
+					+ " " + com.F64.Local.getDisplay(value2)
+				;
+				break;
+
+				case MOVLR:
+					txt = txt + ext3.getDisplay()
+					+ " " + com.F64.Local.getDisplay(value)
+					+ " " + com.F64.Register.getDisplay(value2)
+				;
+				break;
+
+				case MOVRI:
+					txt = txt + ext3.getDisplay()
+					+ " " + com.F64.Register.getDisplay(value)
+					+ " #" + Processor.convertSlotToString(value2)
+				;
+
+				case MOVSI:
+					txt = txt + ext3.getDisplay()
+					+ " " + com.F64.SystemRegister.getDisplay(value)
+					+ " #" + Processor.convertSlotToString(value2)
+				;
+
+				case MOVLI:
+					txt = txt + ext3.getDisplay()
+					+ " " + com.F64.Local.getDisplay(value)
+					+ " #" + Processor.convertSlotToString(value2)
+				;
+
+				case BITFF1:
+				case BITFL1:
+				case EQ0Q:
+				case GE0Q:
+				case GT0Q:
+				case LE0Q:
+				case LT0Q:
+				case NE0Q:
+				case RRBIT:
+				case RRCBIT:
+				case RRRBIT:
+				case RRSBIT:
+				case RRTBIT:
+				case RRWBIT:
+					txt = txt + ext3.getDisplay()
+						+ " " + com.F64.Register.getDisplay(value)
+						+ " " + com.F64.Register.getDisplay(value2)
+					;
+					break;
+
+				case RCBIT:
+				case RCL:
+				case RCR:
+				case ROL:
+				case ROR:
+				case RSBIT:
+				case RTBIT:
+				case RWBIT:
+				default:
+					txt = txt + ext3.getDisplay()
+						+ " " + com.F64.Register.getDisplay(value)
+						+ " #" + Processor.convertSlotToString(value2)
+					;
+					break;				
+				}
+				break;
+
+			case EXT4: // all instruction here have size 3
+				ext4 = com.F64.Ext4.values()[com.F64.Processor.readSlot(cell, slot++)];
+				value = com.F64.Processor.readSlot(cell, slot++);
+				size = 0;
+				switch (ext4) {
+				case LFETCHI:
+				case LFETCHPED:
+				case LFETCHPEI:
+				case LFETCHPOD:
+				case LFETCHPOI:
+				case LSTOREI:
+				case LSTOREPED:
+				case LSTOREPEI:
+				case LSTOREPOD:
+				case LSTOREPOI:
+					txt = txt + ext4.getDisplay()
+						+ " " + com.F64.Local.getDisplay(value)
+					;
+					break;
+
+				case RFETCHI:
+				case RFETCHPED:
+				case RFETCHPEI:
+				case RFETCHPOD:
+				case RFETCHPOI:
+				case RSTOREI:
+				case RSTOREPED:
+				case RSTOREPEI:
+				case RSTOREPOD:
+				case RSTOREPOI:
+					txt = txt + ext4.getDisplay()
+						+ " " + com.F64.Register.getDisplay(value)
+					;
+					break;
+
+				case SFETCHI:
+				case SFETCHPED:
+				case SFETCHPEI:
+				case SFETCHPOD:
+				case SFETCHPOI:
+				case SSTOREI:
+				case SSTOREPED:
+				case SSTOREPEI:
+				case SSTOREPOD:
+				case SSTOREPOI:
+					txt = txt + ext4.getDisplay()
+						+ " " + com.F64.SystemRegister.getDisplay(value)
+					;
+					break;
+				}
+				break;
+
+			default:
+				txt = txt + opcode.getDisplay();
 			}
 			while (size > 1) {
 				value = com.F64.Processor.readSlot(cell, slot++);
-				txt = txt + " " + Processor.convertSlotToString(value);
+				txt = txt + " #" + Processor.convertSlotToString(value);
 				--size;
 			}
 		}

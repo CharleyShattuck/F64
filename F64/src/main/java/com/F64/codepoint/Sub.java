@@ -102,7 +102,7 @@ public class Sub extends com.F64.Codepoint {
 							b.add(ISA.DEC, Register.T.ordinal());						
 						}
 						else if (constant < Processor.SLOT_SIZE) {
-							b.add(RegOp3.SUBI, Register.T.ordinal(), Register.T.ordinal(), (int)constant);						
+							b.add(RegOp2.SUBI, Register.T.ordinal(), (int)constant);						
 						}
 						else {
 							b.addLiteral(constant);
@@ -114,7 +114,7 @@ public class Sub extends com.F64.Codepoint {
 							b.add(ISA.INC, Register.T.ordinal());						
 						}
 						else if (constant > -Processor.SLOT_SIZE) {
-							b.add(RegOp3.ADDI, Register.T.ordinal(), Register.T.ordinal(), -(int)constant);						
+							b.add(RegOp2.ADDI, Register.T.ordinal(), -(int)constant);						
 						}
 						else {
 							b.addLiteral(constant);

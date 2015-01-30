@@ -4,7 +4,9 @@ public enum Register {
 	Z("0",	"always 0"),
 	T("t",	"top of parameter stack"),
 	S("s",	"second of parameter stack"),
-	R("r",	"top of return stack");
+	R("r",	"top of return stack"),
+	W("w",	"temporary (work) register"),
+	;
 
 	private String display;
 	private String tooltip;

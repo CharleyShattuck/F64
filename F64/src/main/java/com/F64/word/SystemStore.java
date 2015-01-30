@@ -13,7 +13,7 @@ public class SystemStore extends com.F64.Word {
 		Processor p = i.getProcessor();
 		int reg = (int)p.getRegister(Register.T.ordinal());
 		p.doDrop();
-		p.doSStore(reg);
+		p.doStoreSystem(reg);
 	}
 
 	@Override

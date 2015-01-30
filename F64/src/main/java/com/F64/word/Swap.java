@@ -11,7 +11,7 @@ public class Swap extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doSwap(Register.T.ordinal(), Register.S.ordinal());
+		p.doSwapRR(Register.T.ordinal(), Register.S.ordinal());
 	}
 
 	@Override

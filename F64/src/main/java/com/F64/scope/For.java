@@ -32,7 +32,7 @@ public class For extends com.F64.Block implements java.lang.Cloneable {
 	@Override
 	public boolean optimize(Compiler c, Optimization opt)
 	{
-		boolean res = false;
+		boolean res = body.optimize(c, opt);
 		if (super.optimize(c, opt)) {res = true;}
 		com.F64.Codepoint p = this.getPrevious();
 		if (p != null) {
@@ -50,10 +50,20 @@ public class For extends com.F64.Block implements java.lang.Cloneable {
 			}
 			if (opt == Optimization.LOOP_UNROLLING) {
 				if (count_valid) {
-					if ((count < unroll_limit) && (((count*countInstructions())) <= unroll_limit)) {
+					int bodycnt = body.countInstructions();
+					if ((bodycnt > 3)
+						&& (count < unroll_limit)
+						&& (((count*body.countInstructions())) <= unroll_limit)
+					) {
 						com.F64.Scope replacement = new com.F64.Scope(this);
-						for (int i=0; i<count; ++i) {
-							replacement.append(this);
+						for (int i=0; i<=count; ++i) {
+							com.F64.Block blk = null;
+							try {
+								blk = (com.F64.Block)body.clone();
+							} catch (CloneNotSupportedException e) {
+								e.printStackTrace();
+							}
+							replacement.append(blk);
 						}
 						replaceWithScope(replacement);
 						return true;
@@ -62,7 +72,7 @@ public class For extends com.F64.Block implements java.lang.Cloneable {
 			}
 		}
 		if (opt == Optimization.DEAD_CODE_ELIMINATION) {
-			if (this.isEmpty()) {
+			if (body.isEmpty()) {
 				if (count_valid) {
 					this.remove();
 				}

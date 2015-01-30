@@ -39,7 +39,7 @@ public class Compiler {
 	private System				system;
 	private Processor			processor;
 	private Builder				builder;
-	private Scope				main_scope;
+	private Main				main_scope;
 	private Scope				current_scope;
 	private Block				current_block;
 	private Word				current_word;
@@ -62,7 +62,7 @@ public class Compiler {
 	public Word getWord() {return current_word;}
 	public Block getBlock() {return current_block;}
 	public Scope getScope() {return current_scope;}
-	public Scope getMainScope() {return main_scope;}
+	public Main getMainScope() {return main_scope;}
 	public void setWord(Word s) {current_word = s;}
 	public void setBlock(Block s) {current_block = s;}
 	public void setScope(Scope s) {current_scope = s;}

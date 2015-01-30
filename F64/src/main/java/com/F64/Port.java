@@ -1,22 +1,22 @@
 package com.F64;
 
 public enum Port {
-	UP("up port", "U"),
-	DOWN("down port", "D"),
-	RIGHT("right port", "R"),
-	LEFT("left port", "L"),
-	FRONT("front port", "F"),
-	BACK("back port", "B"),
-	FUTURE("future port", "T"),
-	PAST("past port", "P");
+	UP(		"u",	"up port"),
+	DOWN(	"d",	"down port"),
+	RIGHT(	"r",	"right port"),
+	LEFT(	"l",	"left port"),
+	FRONT(	"f",	"front port"),
+	BACK(	"b",	"back port"),
+	FUTURE(	"t",	"future port"),
+	PAST(	"p",	"past port");
 
 	private String tooltip;
-	private String abbr;
+	private String display;
 
-	private Port(String tooltip, String abbr)
+	private Port(String display, String tooltip)
 	{
 		this.tooltip = tooltip;
-		this.abbr = abbr;
+		this.display = display;
 	}
 	
 	long getMask()
@@ -27,6 +27,18 @@ public enum Port {
 	}
 
 	public String getTooltip() {return tooltip;}
-	public String getAbbreviation() {return abbr;}
+	public String getDisplay() {return display;}
 
+
+	public static String getDisplayMask(int mask)
+	{
+		String res = "";
+		for (int i=0; i<Port.values().length; ++i) {
+			if ((mask & (1 << i)) != 0) {
+				res = res + Port.values()[i].getDisplay();
+			}			
+		}
+		return res;
+	}
+	
 }

@@ -47,6 +47,7 @@ public class Machine {
 		compiler = new Compiler(system, processor);
 		interpreter = new Interpreter(system, processor, compiler, dictionary);
 		Builder builder = compiler.getBuilder();
+		builder.start(true);;
 		// * secondary
 		com.F64.codepoint.Mul.setAdr(system.getCodePosition());
 		builder.add(ISA.LIT, 0);
@@ -98,6 +99,7 @@ public class Machine {
 		builder.add(ISA.EXIT);
 		builder.flush();
 		//
+		builder.stop();
 //		processor.powerOn();
 		view = new com.F64.view.ProcessorArray(processor_array, interpreter, compiler, system, dictionary);
 		view.update();

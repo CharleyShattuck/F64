@@ -5,8 +5,8 @@ import com.F64.codepoint.Exit;
 import com.F64.codepoint.Skip;
 
 public class Scope extends Codepoint implements java.lang.Cloneable {
-	private Codepoint							head;
-	private Codepoint							tail;
+	protected Codepoint							head;
+	protected Codepoint							tail;
 	private java.util.ArrayList<Precondition>	preconditions;
 
 	public Scope(Scope parent)
@@ -41,11 +41,13 @@ public class Scope extends Codepoint implements java.lang.Cloneable {
 			Codepoint prevcl = null;
 			while (curr != null) {
 				Codepoint currcl = curr.clone();
-				currcl.setOwner(this);
+				currcl.setOwner(res);
 				currcl.setPrevious(prevcl);
 				if (prevcl != null) {prevcl.setNext(currcl);}
-				tail = currcl;
-				if (head == null) {head = currcl;}
+				res.tail = currcl;
+				if (res.head == null) {res.head = currcl;}
+				prevcl = currcl;
+				curr = curr.getNext();
 			}
 		}
 		return res;
@@ -156,31 +158,6 @@ public class Scope extends Codepoint implements java.lang.Cloneable {
 	@Override
 	public boolean optimize(Compiler c, Optimization opt)
 	{
-		if (opt == Optimization.ENTER_EXIT_ELIMINATION) {
-			if ((head != null) && (head instanceof com.F64.codepoint.Enter) && (tail instanceof com.F64.codepoint.Exit)) {
-				Codepoint curr = head.getNext();
-				if (curr == tail) {
-					// no code inside colon definition
-					head = tail = new com.F64.codepoint.Skip();
-					return true;
-				}
-				Builder b = c.getBuilder();
-				b.start(false);
-				
-				while (curr != tail) {
-					curr.generate(b);
-					if (b.exceed1Cell()) {break;}
-					curr = curr.getNext();
-				}
-				if (!b.exceed1Cell()) {
-					b.stop();
-					head.remove();
-					tail.remove();
-					return true;
-				}
-			}
-			return false;
-		}
 		boolean res = false;
 		boolean optimized = true;
 		while (optimized) {

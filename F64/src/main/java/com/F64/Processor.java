@@ -1409,16 +1409,65 @@ public class Processor implements Runnable {
 //		return true;
 //	}
 
-	public void doSwap(int src, int dst)
+	public void doSwapRR(int dst, int src)
 	{
-		long tmp = this.register[dst];
-		this.setRegister(dst, this.register[src]);
+		long tmp = this.getRegister(dst);
+		this.setRegister(dst, this.getRegister(src));
 		this.setRegister(src, tmp);
 	}
 
-	public void doMove(int src, int dst)
+	public void doMoveRR(int dst, int src)
 	{
-		this.setRegister(dst, this.register[src]);
+		this.setRegister(dst, this.getRegister(src));
+	}
+
+	public void doMoveRI(int dst, int src)
+	{
+		this.setRegister(dst, src);
+	}
+
+	public void doSwapRS(int dst, int src)
+	{
+		long tmp = this.getRegister(dst);
+		this.setRegister(dst, this.getSystemRegister(src));
+		this.setSystemRegister(src, tmp);
+	}
+
+	public void doMoveRS(int dst, int src)
+	{
+		this.setRegister(dst, this.getSystemRegister(src));
+	}
+
+	public void doMoveSR(int dst, int src)
+	{
+		this.setSystemRegister(dst, this.getRegister(src));
+	}
+
+	public void doMoveSI(int dst, int src)
+	{
+		this.setSystemRegister(dst, src);
+	}
+
+	public void doSwapRL(int dst, int src)
+	{
+		long tmp = this.getRegister(dst);
+		this.setRegister(dst, this.getLocalRegister(src));
+		this.setLocalRegister(src, tmp);
+	}
+
+	public void doMoveRL(int dst, int src)
+	{
+		this.setRegister(dst, this.getLocalRegister(src));
+	}
+
+	public void doMoveLR(int dst, int src)
+	{
+		this.setLocalRegister(dst, this.getRegister(src));
+	}
+
+	public void doMoveLI(int dst, int src)
+	{
+		this.setLocalRegister(dst, src);
 	}
 
 //	public void doMoveStack(int src, int dst)
@@ -1460,8 +1509,8 @@ public class Processor implements Runnable {
 
 	public void doRFetchIndirect(int ireg)
 	{
-		int reg = (int)this.getRegister(ireg);
-		long tmp = this.getRegister(reg & SLOT_MASK);
+		int reg = (int)(this.getRegister(ireg) & SLOT_MASK);
+		long tmp = this.getRegister(reg);
 		this.doDup();
 		this.register[Register.T.ordinal()] = tmp;
 	}
@@ -1470,14 +1519,14 @@ public class Processor implements Runnable {
 	{
 		long tmp = this.register[Register.T.ordinal()];
 		this.doDrop();
-		int reg = (int)this.getRegister(ireg);
-		this.setRegister(reg & SLOT_MASK, tmp);
+		int reg = (int)(this.getRegister(ireg) & SLOT_MASK);
+		this.setRegister(reg, tmp);
 	}
 
 	public void doSFetchIndirect(int ireg)
 	{
-		int reg = (int)this.getRegister(ireg);
-		long tmp = this.getSystemRegister(reg & SLOT_MASK);
+		int reg = (int)(this.getRegister(ireg) & SLOT_MASK);
+		long tmp = this.getSystemRegister(reg);
 		this.doDup();
 		this.register[Register.T.ordinal()] = tmp;
 	}
@@ -1486,14 +1535,14 @@ public class Processor implements Runnable {
 	{
 		long tmp = this.register[Register.T.ordinal()];
 		this.doDrop();
-		int reg = (int)this.getRegister(ireg);
-		this.setSystemRegister(reg & SLOT_MASK, tmp);
+		int reg = (int)(this.getRegister(ireg) & SLOT_MASK);
+		this.setSystemRegister(reg, tmp);
 	}
 
 	public void doLFetchIndirect(int ireg)
 	{
-		int reg = (int)this.getRegister(ireg);
-		long tmp = this.getLocalRegister(reg & SLOT_MASK);
+		int reg = (int)(this.getRegister(ireg) & SLOT_MASK);
+		long tmp = this.getLocalRegister(reg);
 		this.doDup();
 		this.register[Register.T.ordinal()] = tmp;
 	}
@@ -1502,8 +1551,8 @@ public class Processor implements Runnable {
 	{
 		long tmp = this.register[Register.T.ordinal()];
 		this.doDrop();
-		int reg = (int)this.getRegister(ireg);
-		this.setLocalRegister(reg & SLOT_MASK, tmp);
+		int reg = (int)(this.getRegister(ireg) & SLOT_MASK);
+		this.setLocalRegister(reg, tmp);
 	}
 
 	public void doLFetch(int reg)
@@ -1534,19 +1583,122 @@ public class Processor implements Runnable {
 		this.setRegister(reg, tmp);
 	}
 
-	public void doSFetch(int reg)
+
+	public void doRFetchFetch(int reg, boolean dec, boolean pre, boolean post)
 	{
-		long tmp = this.getSystemRegister(reg);
+		long tmp = this.getRegister(reg);
+		if (pre) {
+			if (dec) {--tmp;}
+			else {++tmp;}
+			this.setRegister(reg, tmp);
+		}
 		this.doDup();
-		this.register[Register.T.ordinal()] = tmp;
+		this.register[Register.T.ordinal()] = this.system.getMemory(tmp);
+		if (post) {
+			if (dec) {--tmp;}
+			else {++tmp;}
+			this.setRegister(reg, tmp);
+		}
 	}
 
-	public void doSStore(int reg)
+	public void doRFetchStore(int reg, boolean dec, boolean pre, boolean post)
 	{
-		long tmp = this.register[Register.T.ordinal()];
+		long tmp = this.getRegister(reg);
+		if (pre) {
+			if (dec) {--tmp;}
+			else {++tmp;}
+			this.setRegister(reg, tmp);
+		}
+		this.system.setMemory(tmp, this.register[Register.T.ordinal()]);
 		this.doDrop();
-		this.setSystemRegister(reg, tmp);
+		if (post) {
+			if (dec) {--tmp;}
+			else {++tmp;}
+			this.setRegister(reg, tmp);
+		}
 	}
+
+	public void doLFetchFetch(int reg, boolean dec, boolean pre, boolean post)
+	{
+		long tmp = this.getLocalRegister(reg);
+		if (pre) {
+			if (dec) {--tmp;}
+			else {++tmp;}
+			this.setLocalRegister(reg, tmp);
+		}
+		this.doDup();
+		this.register[Register.T.ordinal()] = this.system.getMemory(tmp);
+		if (post) {
+			if (dec) {--tmp;}
+			else {++tmp;}
+			this.setLocalRegister(reg, tmp);
+		}
+	}
+
+	public void doLFetchStore(int reg, boolean dec, boolean pre, boolean post)
+	{
+		long tmp = this.getLocalRegister(reg);
+		if (pre) {
+			if (dec) {--tmp;}
+			else {++tmp;}
+			this.setLocalRegister(reg, tmp);
+		}
+		this.system.setMemory(tmp, this.register[Register.T.ordinal()]);
+		this.doDrop();
+		if (post) {
+			if (dec) {--tmp;}
+			else {++tmp;}
+			this.setLocalRegister(reg, tmp);
+		}
+	}
+
+	public void doSFetchFetch(int reg, boolean dec, boolean pre, boolean post)
+	{
+		long tmp = this.getSystemRegister(reg);
+		if (pre) {
+			if (dec) {--tmp;}
+			else {++tmp;}
+			this.setSystemRegister(reg, tmp);
+		}
+		this.doDup();
+		this.register[Register.T.ordinal()] = this.system.getMemory(tmp);
+		if (post) {
+			if (dec) {--tmp;}
+			else {++tmp;}
+			this.setSystemRegister(reg, tmp);
+		}
+	}
+
+	public void doSFetchStore(int reg, boolean dec, boolean pre, boolean post)
+	{
+		long tmp = this.getSystemRegister(reg);
+		if (pre) {
+			if (dec) {--tmp;}
+			else {++tmp;}
+			this.setSystemRegister(reg, tmp);
+		}
+		this.system.setMemory(tmp, this.register[Register.T.ordinal()]);
+		this.doDrop();
+		if (post) {
+			if (dec) {--tmp;}
+			else {++tmp;}
+			this.setSystemRegister(reg, tmp);
+		}
+	}
+
+//	public void doSFetch(int reg)
+//	{
+//		long tmp = this.getSystemRegister(reg);
+//		this.doDup();
+//		this.register[Register.T.ordinal()] = tmp;
+//	}
+//
+//	public void doSStore(int reg)
+//	{
+//		long tmp = this.register[Register.T.ordinal()];
+//		this.doDrop();
+//		this.setSystemRegister(reg, tmp);
+//	}
 
 	public void doFetchR(int reg)
 	{
@@ -2141,8 +2293,8 @@ public class Processor implements Runnable {
 				case UJMP8:		this.slot = 8; break;
 				case UJMP9:		this.slot = 9; break;
 				case UJMP10:	this.slot = 10; break;
-				case SWAP:		this.doSwap(this.nextSlot(), this.nextSlot()); break;
-				case MOV:		this.doMove(this.nextSlot(), this.nextSlot()); break;
+				case SWAP:		this.doSwapRR(this.nextSlot(), this.nextSlot()); break;
+				case MOV:		this.doMoveRR(this.nextSlot(), this.nextSlot()); break;
 				case OR:		this.doOr(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
 				case ENTER:		this.doEnter(); break;
 				case LOADSELF:	this.doLoadSelf(); break;
@@ -2719,7 +2871,7 @@ public class Processor implements Runnable {
 		case RDUP:			this.doRDup(); break;
 		case EXECUTE:		this.doExecute(); break;
 		case EXITI:			this.doExitInterrupt(this.nextSlot()); break;
-		case SWAP0:			this.doSwap(this.nextSlot(), this.nextSlot()); this.slot = 0; break;
+//		case SWAP0:			this.doSwap(this.nextSlot(), this.nextSlot()); this.slot = 0; break;
 		case LJMP:			this.doLongJump(); break;
 		case RNEXT:			this.doRemainingNext(); break;
 		case LNEXT:			this.doLongNext(); break;
@@ -2792,8 +2944,8 @@ public class Processor implements Runnable {
 		case STORES:		this.doStoreS(this.nextSlot()); break;
 		case SFETCH:		this.doFetchSystem(this.nextSlot()); break;
 		case SSTORE:		this.doStoreSystem(this.nextSlot()); break;
-		case SFETCHI:		this.doSFetch(this.nextSlot()); break;
-		case SSTOREI:		this.doSStore(this.nextSlot()); break;
+//		case SFETCHI:		this.doSFetch(this.nextSlot()); break;
+//		case SSTOREI:		this.doSStore(this.nextSlot()); break;
 		case FETCHPORT:		this.doFetchPort(this.nextSlot(), false); break;
 		case STOREPORT:		this.doStorePort(this.nextSlot(), false); break;
 		case FETCHPORTWAIT:	this.doFetchPort(this.nextSlot(), true); break;
@@ -2814,6 +2966,15 @@ public class Processor implements Runnable {
 	public void doExt3()
 	{
 		switch (Ext3.values()[this.nextSlot()]) {
+		case SWAPRS:		this.doSwapRS(this.nextSlot(), this.nextSlot()); break;
+		case SWAPRL:		this.doSwapRL(this.nextSlot(), this.nextSlot()); break;
+		case MOVSR:			this.doMoveSR(this.nextSlot(), this.nextSlot()); break;
+		case MOVRS:			this.doMoveRS(this.nextSlot(), this.nextSlot()); break;
+		case MOVLR:			this.doMoveLR(this.nextSlot(), this.nextSlot()); break;
+		case MOVRL:			this.doMoveRL(this.nextSlot(), this.nextSlot()); break;
+		case MOVRI:			this.doMoveRI(this.nextSlot(), this.nextSlot()); break;
+		case MOVSI:			this.doMoveSI(this.nextSlot(), this.nextSlot()); break;
+		case MOVLI:			this.doMoveLI(this.nextSlot(), this.nextSlot()); break;
 		case ROL:			this.doRol(this.nextSlot(), this.nextSlot()); break;
 		case ROR:			this.doRor(this.nextSlot(), this.nextSlot()); break;
 		case RCL:			this.doRcl(this.nextSlot(), this.nextSlot()); break;
@@ -2843,12 +3004,41 @@ public class Processor implements Runnable {
 	public void doExt4()
 	{
 		switch (Ext4.values()[this.nextSlot()]) {
-		case RFETCHI:		this.doRFetchIndirect(this.nextSlot()); break;
-		case RSTOREI:		this.doRStoreIndirect(this.nextSlot()); break;
-		case LFETCHI:		this.doLFetchIndirect(this.nextSlot()); break;
-		case LSTOREI:		this.doLStoreIndirect(this.nextSlot()); break;
-		case SFETCHI:		this.doSFetchIndirect(this.nextSlot()); break;
-		case SSTOREI:		this.doSStoreIndirect(this.nextSlot()); break;
+		case RFETCHI:	this.doRFetchIndirect(this.nextSlot()); break;
+		case RSTOREI:	this.doRStoreIndirect(this.nextSlot()); break;
+		case LFETCHI:	this.doLFetchIndirect(this.nextSlot()); break;
+		case LSTOREI:	this.doLStoreIndirect(this.nextSlot()); break;
+		case SFETCHI:	this.doSFetchIndirect(this.nextSlot()); break;
+		case SSTOREI:	this.doSStoreIndirect(this.nextSlot()); break;
+
+		case RFETCHPEI:	this.doRFetchFetch(this.nextSlot(), false, true, false); break;
+		case RSTOREPEI:	this.doRFetchStore(this.nextSlot(), false, true, false); break;
+		case LFETCHPEI:	this.doLFetchFetch(this.nextSlot(), false, true, false); break;
+		case LSTOREPEI:	this.doLFetchStore(this.nextSlot(), false, true, false); break;
+		case SFETCHPEI:	this.doSFetchFetch(this.nextSlot(), false, true, false); break;
+		case SSTOREPEI:	this.doSFetchStore(this.nextSlot(), false, true, false); break;
+
+		case RFETCHPOI:	this.doRFetchFetch(this.nextSlot(), false, false, true); break;
+		case RSTOREPOI:	this.doRFetchStore(this.nextSlot(), false, false, true); break;
+		case LFETCHPOI:	this.doLFetchFetch(this.nextSlot(), false, false, true); break;
+		case LSTOREPOI:	this.doLFetchStore(this.nextSlot(), false, false, true); break;
+		case SFETCHPOI:	this.doSFetchFetch(this.nextSlot(), false, false, true); break;
+		case SSTOREPOI:	this.doSFetchStore(this.nextSlot(), false, false, true); break;
+
+		case RFETCHPED:	this.doRFetchFetch(this.nextSlot(), true, true, false); break;
+		case RSTOREPED:	this.doRFetchStore(this.nextSlot(), true, true, false); break;
+		case LFETCHPED:	this.doLFetchFetch(this.nextSlot(), true, true, false); break;
+		case LSTOREPED:	this.doLFetchStore(this.nextSlot(), true, true, false); break;
+		case SFETCHPED:	this.doSFetchFetch(this.nextSlot(), true, true, false); break;
+		case SSTOREPED:	this.doSFetchStore(this.nextSlot(), true, true, false); break;
+
+		case RFETCHPOD:	this.doRFetchFetch(this.nextSlot(), true, false, true); break;
+		case RSTOREPOD:	this.doRFetchStore(this.nextSlot(), true, false, true); break;
+		case LFETCHPOD:	this.doLFetchFetch(this.nextSlot(), true, false, true); break;
+		case LSTOREPOD:	this.doLFetchStore(this.nextSlot(), true, false, true); break;
+		case SFETCHPOD:	this.doSFetchFetch(this.nextSlot(), true, false, true); break;
+		case SSTOREPOD:	this.doSFetchStore(this.nextSlot(), true, false, true); break;
+
 		default: this.interrupt(Flag.ILLEGAL);
 		}
 	}

@@ -9,5 +9,8 @@ public class Local {
 	}
 
 	public int getIndex() {return index;}
+	public String getDisplay() {return "l" + index;}
+
+	public static String getDisplay(int index) {return "l" + index;}
 
 }

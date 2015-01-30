@@ -13,7 +13,7 @@ public class SystemFetch extends com.F64.Word {
 		Processor p = i.getProcessor();
 		int reg = (int)p.getRegister(Register.T.ordinal());
 		p.doDrop();
-		p.doSFetch(reg);
+		p.doFetchSystem(reg);
 		
 	}
 

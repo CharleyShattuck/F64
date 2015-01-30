@@ -5,7 +5,6 @@ public enum Ext1 {
 	RDUP(2,		"rdup",		"dup R"),
 	EXECUTE(2,	"execute",	"Execute word. Move T to I"),
 	EXITI(3,	"exiti",	"return from interrupt (interrupt # in next slot)"),
-	SWAP0(4,	"swap0",	"swap register and jump to slot 0 (register in next 2 slots)"),
 	LJMP(2,		"ljmp",		"Long jump. Address in next cell."),
 	RNEXT(-1,	"rnext",	"remaining next"),
 	LNEXT(2,	"lnext",	"long next"),

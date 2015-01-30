@@ -19,6 +19,7 @@ public class Exit extends com.F64.Word {
 	{
 		Compiler c = i.getCompiler();
 		c.compile(new com.F64.codepoint.Exit());
+		c.getMainScope().internalExit();
 	}
 
 }
