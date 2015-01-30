@@ -7,6 +7,7 @@ public class ProcessorArray {
 	private int				columns;
 	private Processor[][]	array;
 
+	public System getSystem() {return system;}
 	
 	public ProcessorArray(int columns, int rows, System system, BootROM rom, int stack_size, int return_stack_size)
 	{

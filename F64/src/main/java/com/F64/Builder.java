@@ -184,20 +184,20 @@ public class Builder {
 		return shortJumpFitsIntoSlot(P, b.getCurrentPosition());
 	}
 
-	public static Location generateForwardBranchShort(Builder b, Condition cond)
-	{
-		b.add(ISA.BRANCH, cond.encode(Branch.SHORT), Processor.SLOT_MASK);
-		return new Location(b.getCurrentP(), b.getCurrentPosition(), b.getCurrentSlot()-1);
-	}
-
-	public static Location generateForwardBranchRem(Builder b, Condition cond)
-	{
-		b.add(ISA.BRANCH, cond.encode(Branch.REM));
-		Location res = new Location(b.getCurrentP(), b.getCurrentPosition(), b.getCurrentSlot());
-		b.flush();
-		return res;
-	}
-
+//	public static Location generateForwardBranchShort(Builder b, Condition cond)
+//	{
+//		b.add(ISA.BRANCH, cond.encode(Branch.SHORT), Processor.SLOT_MASK);
+//		return new Location(b.getCurrentP(), b.getCurrentPosition(), b.getCurrentSlot()-1);
+//	}
+//
+//	public static Location generateForwardBranchRem(Builder b, Condition cond)
+//	{
+//		b.add(ISA.BRANCH, cond.encode(Branch.REM));
+//		Location res = new Location(b.getCurrentP(), b.getCurrentPosition(), b.getCurrentSlot());
+//		b.flush();
+//		return res;
+//	}
+//
 
 	public static long generateForwardBranchLong(Builder b, Condition cond)
 	{
@@ -266,29 +266,29 @@ public class Builder {
 		return diff1 <= Processor.SLOT_BITS;
 	}
 
-	public static Location forwardBranchRemaining(Builder b, Condition cond, Scope block, Condition append_cond)
-	{
-		Location res = null;
-		if (b.getCurrentSlot() > (Processor.NO_OF_SLOTS-4)) {
-			b.flush();
-		}
-		long fixup = b.getCurrentPosition();
-		int fixup_slot = b.getCurrentSlot()+2;
-		b.add(ISA.BRANCH, cond.encode(Branch.REM));
-//		long P = b.getCurrentP();
-		block.generate(b);
-		if (append_cond != null) {
-			res = generateForwardBranchRem(b, append_cond);
-		}
-		b.flush();
-		long target = b.getCurrentPosition();
-		long mask = getAddressMask(fixup_slot);
-		com.F64.System s = b.getSystem();
-		long cell = s.getMemory(fixup);
-		cell ^= (cell ^ target) & mask;
-		s.setMemory(fixup, cell);
-		return res;
-	}
+//	public static Location forwardBranchRemaining(Builder b, Condition cond, Scope block, Condition append_cond)
+//	{
+//		Location res = null;
+//		if (b.getCurrentSlot() > (Processor.NO_OF_SLOTS-4)) {
+//			b.flush();
+//		}
+//		long fixup = b.getCurrentPosition();
+//		int fixup_slot = b.getCurrentSlot()+2;
+//		b.add(ISA.BRANCH, cond.encode(Branch.REM));
+////		long P = b.getCurrentP();
+//		block.generate(b);
+//		if (append_cond != null) {
+//			res = generateForwardBranchRem(b, append_cond);
+//		}
+//		b.flush();
+//		long target = b.getCurrentPosition();
+//		long mask = getAddressMask(fixup_slot);
+//		com.F64.System s = b.getSystem();
+//		long cell = s.getMemory(fixup);
+//		cell ^= (cell ^ target) & mask;
+//		s.setMemory(fixup, cell);
+//		return res;
+//	}
 
 	public static long forwardBranchLong(Builder b, Condition cond, Scope block, Condition append_cond)
 	{
@@ -308,31 +308,31 @@ public class Builder {
 		return res;
 	}
 	
-	public static boolean fixupShort(System s, Location loc, long target)
-	{
-		int diff1 = Builder.getHighestDifferentBit1(target, loc.getPAdr());
-		if (diff1 <= Processor.SLOT_BITS) {
-			long fixup = loc.getAdr();
-			int fixup_slot = loc.getSlot();
-			s.setMemory(fixup, Processor.writeSlot(s.getMemory(fixup), fixup_slot, (int)(Processor.SLOT_MASK & target)));
-			return true;
-		}
-		return false;
-	}
-	
-	public static boolean fixupRem(System s, Location loc, long target)
-	{
-		int diff1 = Builder.getHighestDifferentBit1(target, loc.getPAdr());
-		int fixup_slot = loc.getSlot();
-		if (diff1 <= getRemainingBits(fixup_slot)) {
-			long fixup = loc.getAdr();
-			long data = s.getMemory(fixup);
-			long mask = getAddressMask(fixup_slot);
-			s.setMemory(fixup, data ^ ((data ^ target) & mask));
-			return true;
-		}
-		return false;
-	}
+//	public static boolean fixupShort(System s, Location loc, long target)
+//	{
+//		int diff1 = Builder.getHighestDifferentBit1(target, loc.getPAdr());
+//		if (diff1 <= Processor.SLOT_BITS) {
+//			long fixup = loc.getAdr();
+//			int fixup_slot = loc.getSlot();
+//			s.setMemory(fixup, Processor.writeSlot(s.getMemory(fixup), fixup_slot, (int)(Processor.SLOT_MASK & target)));
+//			return true;
+//		}
+//		return false;
+//	}
+//	
+//	public static boolean fixupRem(System s, Location loc, long target)
+//	{
+//		int diff1 = Builder.getHighestDifferentBit1(target, loc.getPAdr());
+//		int fixup_slot = loc.getSlot();
+//		if (diff1 <= getRemainingBits(fixup_slot)) {
+//			long fixup = loc.getAdr();
+//			long data = s.getMemory(fixup);
+//			long mask = getAddressMask(fixup_slot);
+//			s.setMemory(fixup, data ^ ((data ^ target) & mask));
+//			return true;
+//		}
+//		return false;
+//	}
 
 	public static void fixupLong(System s, long loc, long target)
 	{
@@ -367,28 +367,28 @@ public class Builder {
 	public long getCurrentCell() {return current_cell;}
 	public void setCurrentCell(long value) {current_cell = value;}
 
-	public boolean fixupShort(Location loc)
-	{
-		flush();
-		return fixupShort(system, loc, current_cell);
-	}
-	
-	public boolean fixupRem(Location loc)
-	{
-		flush();
-		return fixupRem(system, loc, current_cell);
-	}
-	
-	public void fixupLong(long loc)
-	{
-		flush();
-		fixupLong(system, loc, current_cell);
-	}
-
-	public int getRemainingBits()
-	{
-		return getRemainingBits(current_slot);
-	}
+//	public boolean fixupShort(Location loc)
+//	{
+//		flush();
+//		return fixupShort(system, loc, current_cell);
+//	}
+//	
+//	public boolean fixupRem(Location loc)
+//	{
+//		flush();
+//		return fixupRem(system, loc, current_cell);
+//	}
+//	
+//	public void fixupLong(long loc)
+//	{
+//		flush();
+//		fixupLong(system, loc, current_cell);
+//	}
+//
+//	public int getRemainingBits()
+//	{
+//		return getRemainingBits(current_slot);
+//	}
 	
 	public Builder fork(boolean flush)
 	{
