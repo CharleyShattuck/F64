@@ -403,8 +403,8 @@ public class Disassemble extends JFrame implements ActionListener {
 				size = 0;
 				switch (ext2) {
 				case EQ0Q:
-				case FETCHINC:
-				case FETCHR:
+//				case FETCHINC:
+//				case FETCHR:
 				case GE0Q:
 				case GT0Q:
 				case LE0Q:
@@ -416,28 +416,28 @@ public class Disassemble extends JFrame implements ActionListener {
 				case RCR:
 				case ROL:
 				case ROR:
-				case STOREINC:
-				case STORER:
+//				case STOREINC:
+//				case STORER:
 					txt = txt + ext2.getDisplay()
 						+ " " + com.F64.Register.getDisplay(value)
 					;
 					break;
 
-				case FETCHS:
+//				case FETCHS:
 				case POPS:
 				case PUSHS:
 				case SFETCH:
 				case SSTORE:
-				case STORES:
+//				case STORES:
 					txt = txt + ext2.getDisplay()
 						+ " " + com.F64.SystemRegister.getDisplay(value)
 					;
 					break;
 
-				case FETCHL:
+//				case FETCHL:
 				case POPL:
 				case PUSHL:
-				case STOREL:
+//				case STOREL:
 					txt = txt + ext2.getDisplay()
 						+ " " + com.F64.Local.getDisplay(value)
 					;
@@ -576,11 +576,13 @@ public class Disassemble extends JFrame implements ActionListener {
 				value = com.F64.Processor.readSlot(cell, slot++);
 				size = 0;
 				switch (ext4) {
+				case LFETCH:
 				case LFETCHI:
 				case LFETCHPED:
 				case LFETCHPEI:
 				case LFETCHPOD:
 				case LFETCHPOI:
+				case LSTORE:
 				case LSTOREI:
 				case LSTOREPED:
 				case LSTOREPEI:
@@ -591,11 +593,13 @@ public class Disassemble extends JFrame implements ActionListener {
 					;
 					break;
 
+				case RFETCH:
 				case RFETCHI:
 				case RFETCHPED:
 				case RFETCHPEI:
 				case RFETCHPOD:
 				case RFETCHPOI:
+				case RSTORE:
 				case RSTOREI:
 				case RSTOREPED:
 				case RSTOREPEI:
@@ -606,11 +610,13 @@ public class Disassemble extends JFrame implements ActionListener {
 					;
 					break;
 
+				case SFETCH:
 				case SFETCHI:
 				case SFETCHPED:
 				case SFETCHPEI:
 				case SFETCHPOD:
 				case SFETCHPOI:
+				case SSTORE:
 				case SSTOREI:
 				case SSTOREPED:
 				case SSTOREPEI:

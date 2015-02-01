@@ -4,7 +4,7 @@ public enum Ext3 {
 //	BITCNT1(4,"count the number of 1 bits in a register (destination register in next slot, source register in next slot+1)"),
 //	BITCNT0(4,"count the number of 0 bits in a register (destination register in next slot, source register in next slot+1)"),
 	SWAPRS(4,	"swaps",	"swap a register with a system register (register in next slot, system register in next slot+1)"),
-	SWAPRL(4,	"swaps",	"swap a register with a local register (register in next slot, local register in next slot+1)"),
+	SWAPRL(4,	"swapl",	"swap a register with a local register (register in next slot, local register in next slot+1)"),
 	MOVSR(4,	"r->s",		"move a register to a system register (system register in next slot, register in next slot+1)"),
 	MOVRS(4,	"s->r",		"move a system register to a register (register in next slot, system register in next slot+1)"),
 	MOVLR(4,	"r->l",		"move a register to a local register (local register in next slot, register in next slot+1)"),
