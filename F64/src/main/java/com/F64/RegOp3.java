@@ -12,7 +12,7 @@ public enum RegOp3 {
 	AND(false,		"and",			"Bitwise and. dest = src1 & src2. If either src1 or src2 is register S then a nip operation is appended"),
 	OR(false,		"or",			"Bitwise or. dest = src1 | src2. If either src1 or src2 is register S then a nip operation is appended"),
 	XOR(false,		"xor",			"Bitwise exclusive or. dest = src1 ^ src2. If either src1 or src2 is register S then a nip operation is appended"),
-	XORN(false,		"xor~",			"Bitwise exclusive or with inverted second operand. dest = src1 ^ ~src2. If either src1 or src2 is register S then a nip operation is appended"),
+	EQV(false,		"eqv",			"Bitwise equvalent. dest = src1 ^ ~src2. If either src1 or src2 is register S then a nip operation is appended"),
 	ASL(false,		"<<",			"Arithmetic shift left. dest = src1 << src2. If src2 < 0 then dest = src1. If src2 >= 64 then dest = 0(src1>=0) or MIN_INT(src1<0). If either src1 or src2 is register S then a nip operation is appended"),
 	ASR(false,		">>",			"Arithmetic shift right. dest = src1 >> src2. If src2 < 0 then dest = src1. If src2 >= 64 then dest = 0(src1>=0) or -1(src1<0). If either src1 or src2 is register S then a nip operation is appended"),
 	LSL(false,		"<<<",			"Logical shift left. dest = src1 <<< src2. If src2 < 0 then dest = src1. If src2 >= 64 then dest = 0. If either src1 or src2 is register S then a nip operation is appended"),

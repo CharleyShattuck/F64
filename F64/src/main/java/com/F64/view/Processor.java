@@ -1,6 +1,7 @@
 package com.F64.view;
 
 import java.awt.Color;
+import java.awt.Dimension;
 //import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -21,6 +22,7 @@ import javax.swing.JTabbedPane;
 //import javax.swing.JTextField;
 import javax.swing.JToolBar;
 //import javax.swing.SwingConstants;
+
 
 
 import com.F64.Compiler;
@@ -46,6 +48,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 	private Register			register_panel;
 	private LocalRegister		local_panel;
 	private SystemRegister		system_register_panel;
+	private MediaRegister		media_panel;
 	private Flags				flag_panel;
 	private Ports				port_panel;
 	private Slots				slot_panel;
@@ -152,7 +155,8 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 	public Processor(com.F64.Processor p, Interpreter i, Compiler c, System s, Dictionary d)
 	{
 		this.processor = p;
-		this.setSize(1000,800);
+		this.setSize(1000,850);
+		this.setPreferredSize(new Dimension(1000, 850));
 		this.setTitle("Single Processor View");
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		Insets panel_insets = new Insets( 0, 0, 0, 0);
@@ -179,6 +183,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		this.register_panel = new Register(p);
 		this.local_panel = new LocalRegister(p);
 		this.system_register_panel = new SystemRegister(p);
+		this.media_panel = new MediaRegister(p);
 		this.parameter_stack = new ParameterStack(p);
 		this.return_stack = new ReturnStack(p);
 		this.flag_panel = new Flags(this);
@@ -192,6 +197,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		this.register_pane.addTab("Register", null, this.register_panel, "General purpose register");
 		this.register_pane.addTab("Local", null, this.local_panel, "Local register");
 		this.register_pane.addTab("System", null, this.system_register_panel, "System register");
+		this.register_pane.addTab("Media", null, this.media_panel, "Multi media register");
 		this.register_pane.addTab("Flags", null, this.flag_panel, "Flags");
 		this.register_pane.addTab("Stack", null, this.parameter_stack, "Parameter stack");
 		this.register_pane.addTab("Return", null, this.return_stack, "Return stack");
@@ -204,7 +210,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 				new GridBagConstraints(
 					x, y,
 					1, 2,
-					0.0, 1.0,
+					0.8, 1.0,
 					GridBagConstraints.WEST,
 					GridBagConstraints.BOTH,
 					panel_insets,
@@ -299,6 +305,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 			this.register_panel.setBackground(Color.RED);
 			this.local_panel.setBackground(Color.RED);
 			this.system_register_panel.setBackground(Color.RED);
+			this.media_panel.setBackground(Color.RED);
 			this.flag_panel.setBackground(Color.RED);
 			this.port_panel.setBackground(Color.RED);
 			this.slot_panel.setBackground(Color.RED);
@@ -308,6 +315,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 			this.register_panel.setBackground(null);
 			this.local_panel.setBackground(null);
 			this.system_register_panel.setBackground(null);
+			this.media_panel.setBackground(null);
 			this.flag_panel.setBackground(null);
 			this.port_panel.setBackground(null);
 			this.slot_panel.setBackground(null);
@@ -315,6 +323,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		this.register_panel.update();
 		this.local_panel.update();
 		this.system_register_panel.update();
+		this.media_panel.update();
 		this.parameter_stack.update();
 		this.return_stack.update();
 //		for (i=0; i<com.F64.Processor.SLOT_SIZE; ++i) {
@@ -336,6 +345,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		this.register_panel.setProcessor(p);
 		this.local_panel.setProcessor(p);
 		this.system_register_panel.setProcessor(p);
+		this.media_panel.setProcessor(p);
 		this.parameter_stack.setProcessor(p);
 		this.return_stack.setProcessor(p);
 		this.update();

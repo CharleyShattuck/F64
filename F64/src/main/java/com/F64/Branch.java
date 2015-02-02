@@ -13,9 +13,10 @@ public enum Branch {
 	SLOT9(0,	"j9",		"goto slot 9"),
 	SLOT10(0,	"j10",		"goto slot 10"),
 	SKIP(0,		"skip",		"goto next cell"),
-	SHORT(1,	"short",	"replace the lowest bits of P with next slot and beginn with slot 0"),
+	FORWARD(1,	"forward",	"Add P with next slot and beginn with slot 0. If next slot is 0 the take use 64"),
+	BACK(1,		"back",		"Subtract the next slot from P and beginn with slot 0. If next slot is 0 the take use 64"),
 	IO(1,		"i/o",		"next slot holds I/O address"),
-	REM(-1,		"rem",		"remaining slots define the address replacement"),
+//	REM(-1,		"rem",		"remaining slots define the address replacement"),
 	LONG(-2,	"long",		"fetch P from Memory[P] and beginn with slot 0");
 
 	private int size;

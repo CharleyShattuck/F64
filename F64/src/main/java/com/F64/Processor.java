@@ -4,9 +4,16 @@ public class Processor implements Runnable {
 
 	public static final int		VERSION = 0x010000;
 	public static final long	IO_BASE = 0xFFFF_FFFF_FFFF_FF00L;
-	public static final int		BIT_PER_CELL = 64;
-	public static final int		NO_OF_REG = 64;
+	public static final int		SLOT_ENCODE_BITS = 4;
 	public static final int		SLOT_BITS = 6;
+	public static final int		MEDIA_BITS = 9;
+	public static final int		MEDIA_SLICE_BITS = MEDIA_BITS - SLOT_BITS;
+	public static final int		MEDIA_SLICE_SIZE = 1 << MEDIA_SLICE_BITS;
+	public static final int		MEDIA_SLICE_MASK = MEDIA_SLICE_SIZE - 1;
+	public static final int		BIT_PER_CELL = 1 << SLOT_BITS;
+	public static final int		MEDIA_REGISTER_BITS = 1 << MEDIA_BITS;
+	public static final int		NO_OF_MEDIA_REGISTER_CELLS = 1 << MEDIA_SLICE_BITS;
+	public static final int		NO_OF_REG = BIT_PER_CELL;
 	public static final int		NO_OF_FULL_SLOTS = BIT_PER_CELL / SLOT_BITS;
 	public static final int		SLOT_SIZE = 1 << SLOT_BITS;
 	public static final int		SLOT_MASK = SLOT_SIZE - 1;
@@ -412,6 +419,7 @@ public class Processor implements Runnable {
 	private System				system;
 	private long[]				register;
 	private long[]				local_register;
+	private long[][]			media_register;
 	private long[]				system_register;
 	private long[]				read_port;
 	private long[]				write_port;
@@ -426,6 +434,7 @@ public class Processor implements Runnable {
 	private int					port_read_mask;
 	private int					port_write_mask;
 	private int					slot;
+	private int					slice;
 	private int					saved_slot;
 //	private int					max_slot;	// max # of slots
 	private boolean				carry;
@@ -442,6 +451,7 @@ public class Processor implements Runnable {
 		this.y = y;
 		this.z = z;
 		this.register = new long[NO_OF_REG];
+		this.media_register = new long[NO_OF_REG][];
 		this.local_register = new long[NO_OF_REG];
 		this.system_register = new long[NO_OF_REG];
 		this.read_port = new long[Port.values().length];
@@ -450,12 +460,16 @@ public class Processor implements Runnable {
 		this.register[Register.Z.ordinal()] = 0;
 		if (stack_size > 0) {parameter_stack = new long[stack_size];}
 		if (return_stack_size > 0) {return_stack = new long[return_stack_size];}
-		//this.setInterruptFlag(Register.INTF, Interrupt.Reset, true);
+		for (int i=0; i<NO_OF_REG; ++i) {
+			this.media_register[i] = new long[NO_OF_MEDIA_REGISTER_CELLS];
+		}
 	}
 
 	public long getRegister(Register reg) {return this.getRegister(reg.ordinal());}
 	public void setRegister(Register reg, long value) {this.setRegister(reg.ordinal(), value);}
 
+	public long[] getMediaRegister(int reg) {return this.media_register[reg];}
+	
 	public long getSystemRegister(SystemRegister reg) {return this.getSystemRegister(reg.ordinal());}
 	public void setSystemRegister(SystemRegister reg, long value) {this.setSystemRegister(reg.ordinal(), value);}
 
@@ -463,6 +477,7 @@ public class Processor implements Runnable {
 	public boolean hasFailed() {return this.failed;}
 	public boolean isWaiting() {return this.waiting;}
 	public int getSlot() {return this.slot;}
+	public int getSlice() {return this.slice;}
 	public void setSlot(int reg, int slot, int value) {this.setRegister(reg, writeSlot(this.getRegister(reg), slot, value));}
 	public int getSlot(int reg, int slot) {return readSlot(this.getRegister(reg), slot);}
 	public int getSlot(int slot) {return readSlot(this.system_register[SystemRegister.I.ordinal()], slot);}
@@ -475,6 +490,8 @@ public class Processor implements Runnable {
 	public void setPort(Port p, boolean writing, long value) {this.setPort(p.ordinal(), writing, value);}
 	public int getPortReadMask() {return this.port_read_mask;}
 	public int getPortWriteMask() {return this.port_write_mask;}
+
+	public void setSlice(int value) {slice = value % NO_OF_MEDIA_REGISTER_CELLS;}
 
 	public long adc(long a, long b, boolean carry)
 	{
@@ -639,6 +656,8 @@ public class Processor implements Runnable {
 	{
 		long res = this.system_register[SystemRegister.FLAG.ordinal()];
 		int aux_data = this.slot;
+		aux_data <<= MEDIA_SLICE_BITS;
+		aux_data |= slice & MEDIA_SLICE_MASK;
 		aux_data <<= 9;
 		if (this.port_read_mask != 0) {
 			aux_data |= this.port_read_mask;
@@ -653,7 +672,7 @@ public class Processor implements Runnable {
 		return res;
 	}
 	
-	public void setFlagForInterrupt(long data)
+	public void setFlagFromInterrupt(long data)
 	{
 		int aux_data = readSlot(data, 0);
 		aux_data <<= SLOT_BITS;
@@ -668,6 +687,8 @@ public class Processor implements Runnable {
 			this.port_read_mask = port;
 		}
 		aux_data >>= 9;
+		this.slice = aux_data & MEDIA_SLICE_MASK;
+		aux_data >>= MEDIA_SLICE_BITS;
 		this.slot = aux_data;
 		long mask = -1;
 		this.system_register[SystemRegister.FLAG.ordinal()] = data & (mask >>> (3*SLOT_BITS));
@@ -1280,11 +1301,16 @@ public class Processor implements Runnable {
 //		return res | nextSlot();
 //	}
 
-	public void shortJump(int slot_bits)
+	public void shortJump(int slot_bits, boolean forward)
 	{
-		long mask = SLOT_MASK;
-		this.system_register[SystemRegister.P.ordinal()] &= ~mask;
-		this.system_register[SystemRegister.P.ordinal()] |= slot_bits;
+		if (slot_bits == 0) {slot_bits = SLOT_SIZE;}
+//		long mask = SLOT_MASK;
+		if (forward) {
+			this.system_register[SystemRegister.P.ordinal()] += slot_bits;
+		}
+		else {
+			this.system_register[SystemRegister.P.ordinal()]-= slot_bits;
+		}
 		this.slot = NO_OF_SLOTS;
 	}
 
@@ -1297,10 +1323,11 @@ public class Processor implements Runnable {
 	private void doSkipConditionalJump(int condition)
 	{
 		switch (Branch.values()[condition & 0xf]) {
-		case SHORT:		this.nextSlot(); break;
+		case FORWARD:	this.nextSlot(); break;
+		case BACK:		this.nextSlot(); break;
 		case IO:		this.nextSlot(); break;
 		case LONG:		++this.system_register[SystemRegister.P.ordinal()]; break;
-		case REM:		this.slot = NO_OF_SLOTS; break;
+//		case REM:		this.slot = NO_OF_SLOTS; break;
 		default:
 		}
 	}
@@ -1330,10 +1357,11 @@ public class Processor implements Runnable {
 		case SLOT9:		this.slot = 9; break;
 		case SLOT10:	this.slot = 10; break;
 		case SKIP:		this.slot = NO_OF_SLOTS; break;
-		case SHORT:		this.shortJump(this.nextSlot()); break;
+		case FORWARD:	this.shortJump(this.nextSlot(), true); break;
+		case BACK:		this.shortJump(this.nextSlot(), false); break;
 		case IO:		this.doJumpIO(this.nextSlot()); break;
 		case LONG:		this.longJump(); break;
-		case REM:		this.jumpRemainigSlots(); break;
+//		case REM:		this.jumpRemainigSlots(); break;
 		}
 		return true;
 	}
@@ -1358,14 +1386,14 @@ public class Processor implements Runnable {
 		this.register[Register.S.ordinal()] = this.register[Register.T.ordinal()];		
 	}
 
-	public void doShortNext(int slot)
+	public void doShortNext(int slot, boolean forward)
 	{
 		if (this.register[Register.R.ordinal()] == 0) {
 			this.register[Register.R.ordinal()] = this.popReturnStack();
 		}
 		else {
 			--this.register[Register.R.ordinal()];
-			this.shortJump(slot);
+			this.shortJump(slot, forward);
 		}
 	}
 
@@ -1885,7 +1913,7 @@ public class Processor implements Runnable {
 		this.setRegister(d, dest);
 	}
 
-	public void doXorNot(int d, int s1, int s2)
+	public void doEquivalent(int d, int s1, int s2)
 	{
 		long src1 = this.getRegister(s1);
 		long src2 = this.getRegister(s2);
@@ -2293,12 +2321,12 @@ public class Processor implements Runnable {
 				case LIT:		this.doLit(this.nextSlot()); break;
 				case NLIT:		this.doNLit(this.nextSlot()); break;
 //				case EXT:		this.doExtendLiteral(this.nextSlot()); break;
-				case SNEXT:		this.doShortNext(this.nextSlot()); break;
+				case SNEXT:		this.doShortNext(this.nextSlot(), false); break;
 				case BRANCH:	this.doConditionalJump(this.nextSlot()); break;
 				case CALL:		this.doCall(); break;
-				case CALLM:		this.doCallMethod(this.remainingSlots()); break;
-				case RJMP:		this.jumpRemainigSlots(); break;
-				case SJMP:		this.shortJump(this.nextSlot()); break;
+				case CALLM:		this.doCallMethod(this.nextSlot()); break;
+				case FJMP:		this.shortJump(this.nextSlot(), true); break;
+				case BJMP:		this.shortJump(this.nextSlot(), false); break;
 				case SAVE:		this.doSave(); break;
 				case RESTORE:	this.doRestore(); break;
 				case USKIP:		this.slot = NO_OF_SLOTS; break;
@@ -2592,7 +2620,7 @@ public class Processor implements Runnable {
 		// restore I
 		this.system_register[SystemRegister.I.ordinal()] = this.register[Register.R.ordinal()];
 		// restore flags with slot
-		this.setFlagForInterrupt(this.popReturnStack());
+		this.setFlagFromInterrupt(this.popReturnStack());
 		this.waiting = (this.port_read_mask != 0) || (this.port_write_mask != 0);
 		// restore R
 		this.register[Register.R.ordinal()] = this.popReturnStack();
@@ -3078,10 +3106,11 @@ public class Processor implements Runnable {
 		}
 	}
 
+	
 	public void doRegisterOperation(int op, int d)
 	{
 		switch (RegOp1.values()[op]) {
-		case NOT:		this.doXorNot(d, d, Register.Z.ordinal()); break;
+		case NOT:		this.doEquivalent(d, d, Register.Z.ordinal()); break;
 		case ABS:		this.doAbs(d, d); break;
 		case NEGATE:	this.doNegate(d, d); break;
 		case SIGN:		this.doSign(d, d); break;
@@ -3107,7 +3136,7 @@ public class Processor implements Runnable {
 		switch (RegOp2.values()[op]) {
 		case MIN:		this.doMin(d, d, s); break;
 		case MAX:		this.doMax(d, d, s); break;
-		case NOT:		this.doXorNot(d, s, Register.Z.ordinal()); break;
+		case NOT:		this.doEquivalent(d, s, Register.Z.ordinal()); break;
 		case ABS:		this.doAbs(d, s); break;
 		case NEGATE:	this.doNegate(d, s); break;
 		case SIGN:		this.doSign(d, s); break;
@@ -3126,7 +3155,7 @@ public class Processor implements Runnable {
 		case AND:		this.doAnd(d, d, s); break;
 		case OR:		this.doOr(d, d, s); break;
 		case XOR:		this.doXor(d, d, s); break;
-		case XORN:		this.doXorNot(d, d, s); break;
+		case EQV:		this.doEquivalent(d, d, s); break;
 		case ASL:		this.doAsl(d, d, s); break;
 		case ASR:		this.doAsr(d, d, s); break;
 		case LSL:		this.doLsl(d, d, s); break;
@@ -3161,7 +3190,7 @@ public class Processor implements Runnable {
 		case AND:		this.doAnd(d, s1, s2); break;
 		case OR:		this.doOr(d, s1, s2); break;
 		case XOR:		this.doXor(d, s1, s2); break;
-		case XORN:		this.doXorNot(d, s1, s2); break;
+		case EQV:		this.doEquivalent(d, s1, s2); break;
 		case ASL:		this.doAsl(d, s1, s2); break;
 		case ASR:		this.doAsr(d, s1, s2); break;
 		case LSL:		this.doLsl(d, s1, s2); break;
@@ -3183,6 +3212,164 @@ public class Processor implements Runnable {
 		case DIV2SUB:	this.doDiv2Sub(d, s1, s2); break;
 		default: this.interrupt(Flag.ILLEGAL);
 		}
+	}
+
+	private static long SIMDAddModI32(long s1, long s2)
+	{
+		int s1_0 = (int) (s1 & 0xffff_ffff);
+		int s2_0 = (int) (s2 & 0xffff_ffff);
+		int s1_1 = (int) (s1 >> 32);
+		int s2_1 = (int) (s2 >> 32);
+		int d_0 = s1_0 + s2_0;
+		int d_1 = s1_1 + s2_1;
+		long d = d_0;
+		d <<= 32;
+		d |= ((long)d_1) & 0xffff_ffff;
+		return d;
+	}
+
+	private boolean doSIMDAddModI32(int d, int s1, int s2)
+	{
+		long[] da = this.getMediaRegister(d);
+		long[] s1a = this.getMediaRegister(s1);
+		long[] s2a = this.getMediaRegister(s2);
+		for (int i=0; i<MEDIA_SLICE_SIZE; ++i) {
+			da[i] = SIMDAddModI32(s1a[i], s2a[i]);
+		}
+		return true;
+	}
+
+	private void doSIMDAddModU32(int d, int s1, int s2)
+	{
+	}
+
+	private void doSIMDAddModI16(int d, int s1, int s2)
+	{
+	}
+
+	private void doSIMDAddModU16(int d, int s1, int s2)
+	{
+	}
+
+	private void doSIMDAddModI8(int d, int s1, int s2)
+	{
+	}
+
+	private void doSIMDAddModU8(int d, int s1, int s2)
+	{
+	}
+
+	private void doSIMDAddMod(SIMDType stype, int d, int s1, int s2)
+	{
+		switch (stype) {
+		case SINT16:	doSIMDAddModI16(d, s1, s2); return;
+		case SINT32:	doSIMDAddModI32(d, s1, s2); return;
+		case SINT8:		doSIMDAddModI8(d, s1, s2); return;
+		case UINT16:	doSIMDAddModU16(d, s1, s2); return;
+		case UINT32:	doSIMDAddModU32(d, s1, s2); return;
+		case UINT8:		doSIMDAddModU8(d, s1, s2); return;
+		}
+	}
+
+	private void doSIMDAddSatI32(int d, int s1, int s2)
+	{
+	}
+
+	private void doSIMDAddSatU32(int d, int s1, int s2)
+	{
+	}
+
+	private void doSIMDAddSatI16(int d, int s1, int s2)
+	{
+	}
+
+	private void doSIMDAddSatU16(int d, int s1, int s2)
+	{
+	}
+
+	private void doSIMDAddSatI8(int d, int s1, int s2)
+	{
+	}
+
+	private void doSIMDAddSatU8(int d, int s1, int s2)
+	{
+	}
+
+	private void doSIMDAddSat(SIMDType stype, int d, int s1, int s2)
+	{
+		switch (stype) {
+		case SINT16:	doSIMDAddSatI16(d, s1, s2); return;
+		case SINT32:	doSIMDAddSatI32(d, s1, s2); return;
+		case SINT8:		doSIMDAddSatI8(d, s1, s2); return;
+		case UINT16:	doSIMDAddSatU16(d, s1, s2); return;
+		case UINT32:	doSIMDAddSatU32(d, s1, s2); return;
+		case UINT8:		doSIMDAddSatU8(d, s1, s2); return;
+		}
+	}
+
+	public void doSIMDOperation(int op, int par, int d, int s1, int s2)
+	{
+		SIMDOperation soper = SIMDOperation.values()[op];
+		SIMDType t = SIMDType.values()[par & 0x0f];
+		SIMDArithmetic sarit = SIMDArithmetic.values()[(par >> 1) & 0x01];
+		if (d == 0) {return;}
+		switch (soper) {
+		case ADD:	if (sarit == SIMDArithmetic.MODULAR) {doSIMDAddMod(t, d, s1, s2);} else {doSIMDAddSat(t, d, s1, s2);} return;
+		case AND:
+			break;
+		case DIV:
+			break;
+		case EQQ:
+			break;
+		case EQV:
+			break;
+		case GEQ:
+			break;
+		case GTQ:
+			break;
+		case LEQ:
+			break;
+		case LTQ:
+			break;
+		case MAX:
+			break;
+		case MIN:
+			break;
+		case MOD:
+			break;
+		case MUL:
+			break;
+		case MULADD:
+			break;
+		case NEQ:
+			break;
+		case OR:
+			break;
+		case SUB:
+			break;
+		case XOR:
+			break;
+		}
+//		SimdSize size = SimdSize.values()[par & 3];
+//		switch (size) {
+//		case BIT64:
+//			break;
+//		case BIT128:
+//			if (((s1 & 1) != 0) || ((s2 & 1) != 0) || ((d & 1) != 0)) {
+//				if (this.interrupt(Flag.ALIGNED)) {return false;}
+//			}
+//			break;
+//		case BIT256:
+//			if (((s1 & 3) != 0) || ((s2 & 3) != 0) || ((d & 3) != 0)) {
+//				if (this.interrupt(Flag.ALIGNED)) {return false;}
+//			}
+//			break;
+//		case BIT512:
+//			if (((s1 & 7) != 0) || ((s2 & 7) != 0) || ((d & 7) != 0)) {
+//				if (this.interrupt(Flag.ALIGNED)) {return false;}
+//			}
+//			break;
+//		}
 	}
 
 	public boolean interrupt(Flag no)
@@ -3294,31 +3481,6 @@ public class Processor implements Runnable {
 		this.setFlag(SystemRegister.INTS, Flag.RESET, false);
 	}
 
-
-	public boolean doSIMDOperation(int op, int par, int d, int s1, int s2)
-	{
-		SimdSize size = SimdSize.values()[par & 3];
-		switch (size) {
-		case BIT64:
-			break;
-		case BIT128:
-			if (((s1 & 1) != 0) || ((s2 & 1) != 0) || ((d & 1) != 0)) {
-				if (this.interrupt(Flag.ALIGNED)) {return false;}
-			}
-			break;
-		case BIT256:
-			if (((s1 & 3) != 0) || ((s2 & 3) != 0) || ((d & 3) != 0)) {
-				if (this.interrupt(Flag.ALIGNED)) {return false;}
-			}
-			break;
-		case BIT512:
-			if (((s1 & 7) != 0) || ((s2 & 7) != 0) || ((d & 7) != 0)) {
-				if (this.interrupt(Flag.ALIGNED)) {return false;}
-			}
-			break;
-		}
-		return true;
-	}
 	
 	public synchronized void start()
 	{

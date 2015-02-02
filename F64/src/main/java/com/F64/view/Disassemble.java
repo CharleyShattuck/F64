@@ -38,8 +38,8 @@ public class Disassemble extends JFrame implements ActionListener {
 	{
 		JLabel label;
 		system = s;
-		this.setSize(1200,500);
-		this.setPreferredSize(new Dimension(1200, 800));
+		this.setSize(1300,500);
+		this.setPreferredSize(new Dimension(1300, 800));
 		this.setTitle("Disassemble View");
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		Font font = new Font(Font.MONOSPACED, Font.BOLD , 12);
@@ -257,7 +257,6 @@ public class Disassemble extends JFrame implements ActionListener {
 			opcode = com.F64.ISA.values()[value];
 			size = opcode.size();
 			switch (opcode) {
-			case RJMP:
 			case CALL:
 			case CALLM:
 				txt = txt + opcode.getDisplay()
@@ -300,21 +299,38 @@ public class Disassemble extends JFrame implements ActionListener {
 				com.F64.Condition cond = com.F64.Condition.values()[(bc >> 4) & 3];
 				com.F64.Branch br = com.F64.Branch.values()[bc & 0x0f];
 				switch (br) {
-				case REM:
-					txt = txt + opcode.getDisplay()
-						+ " " + cond.getDisplay()
-						+ " " + br.getDisplay()
-						+ " " + Processor.convertRemainingToString(cell, slot)
-					;
-					slot = com.F64.Processor.NO_OF_SLOTS;
-					break;
+//				case REM:
+//					txt = txt + opcode.getDisplay()
+//						+ " " + cond.getDisplay()
+//						+ " " + br.getDisplay()
+//						+ " " + Processor.convertRemainingToString(cell, slot)
+//					;
+//					slot = com.F64.Processor.NO_OF_SLOTS;
+//					break;
 				case IO:
-				case SHORT:
 					target = com.F64.Processor.readSlot(cell, slot++);
 					txt = txt + opcode.getDisplay()
 						+ " " + cond.getDisplay()
 						+ " " + br.getDisplay()
-						+ " " + Processor.convertSlotToString((int) target)
+						+ " @" + Processor.convertSlotToString((int) target)
+					;
+					break;
+
+				case FORWARD:
+					target = com.F64.Processor.readSlot(cell, slot++);
+					txt = txt + opcode.getDisplay()
+						+ " " + cond.getDisplay()
+						+ " " + br.getDisplay()
+						+ " +" + Processor.convertSlotToString((int) target)
+					;
+					break;
+
+				case BACK:
+					target = com.F64.Processor.readSlot(cell, slot++);
+					txt = txt + opcode.getDisplay()
+						+ " " + cond.getDisplay()
+						+ " " + br.getDisplay()
+						+ " -" + Processor.convertSlotToString((int) target)
 					;
 					break;
 

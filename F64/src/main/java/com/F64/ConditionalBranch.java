@@ -124,14 +124,15 @@ public class ConditionalBranch {
 				p_adr = b.getCurrentP();
 				remaining_bits = 0;
 				return;
-			case REM:
-				b.add(ISA.RJMP);
-				fixup_adr = b.getCurrentPosition();
-				fixup_slot = b.getCurrentSlot();
-				p_adr = b.getCurrentP();
-				remaining_bits = Builder.getRemainingBits(fixup_slot);
-				return;
-			case SHORT:	b.add(ISA.SJMP, Processor.SLOT_MASK); break;
+//			case REM:
+//				b.add(ISA.RJMP);
+//				fixup_adr = b.getCurrentPosition();
+//				fixup_slot = b.getCurrentSlot();
+//				p_adr = b.getCurrentP();
+//				remaining_bits = Builder.getRemainingBits(fixup_slot);
+//				return;
+			case FORWARD:b.add(ISA.FJMP, Processor.SLOT_MASK); break;
+			case BACK:	b.add(ISA.BJMP, Processor.SLOT_MASK); break;
 			case SKIP:	b.add(ISA.USKIP); break;
 			case SLOT0:	b.add(ISA.UJMP0); break;
 			case SLOT1:	b.add(ISA.UJMP1); break;
@@ -162,20 +163,21 @@ public class ConditionalBranch {
 			p_adr = b.getCurrentP();
 			remaining_bits = 0;
 			break;
-		case SHORT:
-			b.add(code, cond.encode(Branch.SHORT), Processor.SLOT_MASK);
+		case FORWARD:
+		case BACK:
+			b.add(code, cond.encode(branch), Processor.SLOT_MASK);
 			fixup_adr = b.getCurrentPosition();
 			fixup_slot = b.getCurrentSlot()-1;
 			p_adr = b.getCurrentP();
 			remaining_bits = 0;
 			break;
-		case REM:
-			b.add(code, cond.encode(Branch.REM));
-			fixup_adr = b.getCurrentPosition();
-			fixup_slot = b.getCurrentSlot();
-			p_adr = b.getCurrentP();
-			remaining_bits = Builder.getRemainingBits(fixup_slot);
-			break;
+//		case REM:
+//			b.add(code, cond.encode(Branch.REM));
+//			fixup_adr = b.getCurrentPosition();
+//			fixup_slot = b.getCurrentSlot();
+//			p_adr = b.getCurrentP();
+//			remaining_bits = Builder.getRemainingBits(fixup_slot);
+//			break;
 		case LONG:
 			b.add(code, cond.encode(Branch.LONG));
 			b.addAdditionalCell(0);
@@ -205,7 +207,7 @@ public class ConditionalBranch {
 	public boolean fixup(Builder b, long target_adr, int target_slot)
 	{
 		long data;
-		int diff1;
+		long diff;
 		System s = b.getSystem();
 		if ((cond != null) && (branch != null)) {
 			switch (branch) {
@@ -218,40 +220,62 @@ public class ConditionalBranch {
 					s.setMemory(fixup_adr, target_adr);
 				}
 				return true;
-			case REM:
+//			case REM:
+//				assert(target_slot == 0);
+//				diff1 = Builder.getHighestDifferentBit1(target_adr, p_adr);
+//				if (diff1 <= remaining_bits) {
+//					long mask = Builder.getAddressMask(fixup_slot);
+//					if (b.doesGenerate()) {
+//						if (fixup_adr == b.getCurrentPosition()) {
+//							data = b.getCurrentCell();
+//							data = data ^ ((data ^ target_adr) & mask);
+//							b.setCurrentCell(data);
+//						}
+//						else {
+//							data = s.getMemory(fixup_adr);
+//							data = data ^ ((data ^ target_adr) & mask);
+//							s.setMemory(fixup_adr, data);
+//						}
+//					}
+//					return true;
+//				}
+//				assert(false);
+//				return false;
+			case FORWARD:
 				assert(target_slot == 0);
-				diff1 = Builder.getHighestDifferentBit1(target_adr, p_adr);
-				if (diff1 <= remaining_bits) {
-					long mask = Builder.getAddressMask(fixup_slot);
+				assert(target_adr > p_adr);
+				diff = target_adr - p_adr;
+				if (diff <= Processor.SLOT_SIZE) {
 					if (b.doesGenerate()) {
 						if (fixup_adr == b.getCurrentPosition()) {
 							data = b.getCurrentCell();
-							data = data ^ ((data ^ target_adr) & mask);
+							data = Processor.writeSlot(data, fixup_slot, (int)(Processor.SLOT_MASK & diff));
 							b.setCurrentCell(data);
 						}
 						else {
 							data = s.getMemory(fixup_adr);
-							data = data ^ ((data ^ target_adr) & mask);
+							data = Processor.writeSlot(data, fixup_slot, (int)(Processor.SLOT_MASK & diff));
 							s.setMemory(fixup_adr, data);
 						}
 					}
 					return true;
 				}
-				assert(false);
 				return false;
-			case SHORT:
+
+			case BACK:
 				assert(target_slot == 0);
-				diff1 = Builder.getHighestDifferentBit1(target_adr, p_adr);
-				if (diff1 <= Processor.SLOT_BITS) {
+				assert(target_adr < p_adr);
+				diff = p_adr - target_adr;
+				if (diff <= Processor.SLOT_BITS) {
 					if (b.doesGenerate()) {
 						if (fixup_adr == b.getCurrentPosition()) {
 							data = b.getCurrentCell();
-							data = Processor.writeSlot(data, fixup_slot, (int)(Processor.SLOT_MASK & target_adr));
+							data = Processor.writeSlot(data, fixup_slot, (int)(Processor.SLOT_MASK & diff));
 							b.setCurrentCell(data);
 						}
 						else {
 							data = s.getMemory(fixup_adr);
-							data = Processor.writeSlot(data, fixup_slot, (int)(Processor.SLOT_MASK & target_adr));
+							data = Processor.writeSlot(data, fixup_slot, (int)(Processor.SLOT_MASK & diff));
 							s.setMemory(fixup_adr, data);
 						}
 					}

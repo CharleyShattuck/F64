@@ -202,7 +202,7 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 			additional = probe.getAdditionalDataSize();
 			branch_to_false.generateBranch(probe, Branch.SKIP);
 			true_part.generate(probe);
-			branch_to_end.generateBranch(probe, Branch.SHORT);
+			branch_to_end.generateBranch(probe, Branch.FORWARD);
 			if ((cpos == probe.getCurrentPosition()) && (additional == probe.getAdditionalDataSize())) {
 				probe.flush();
 				false_part.generate(probe);
@@ -213,7 +213,7 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 				if (diff2 <= bits2) {
 					branch_to_false.generateBranch(b, Branch.SKIP);
 					true_part.generate(b);
-					branch_to_end.generateBranch(b, Branch.SHORT);
+					branch_to_end.generateBranch(b, Branch.FORWARD);
 					b.flush();
 					false_part.generate(b);
 					b.flush();
@@ -235,33 +235,33 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		//	|	-	|	-	|	-	|	-	|	-	| SKIP	|		|		|		|		|	|
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	v
 
-		if (Builder.forwardBranchCanBeImplicit(b.getCurrentSlot(), t_cnt + 2)) {
-			probe = b.fork(false);
-			cpos = probe.getCurrentPosition();
-			additional = probe.getAdditionalDataSize();
-			branch_to_false.generateBranch(probe, Branch.SKIP);
-			true_part.generate(probe);
-			branch_to_end.generateBranch(probe, Branch.REM);
-			if ((cpos == probe.getCurrentPosition()) && (additional == probe.getAdditionalDataSize())) {
-				probe.flush();
-				false_part.generate(probe);
-				probe.flush();
-				// pattern 1 fit
-				diff2 = Builder.getHighestDifferentBit1(probe.getCurrentPosition(), probe.getCurrentPosition());
-				bits2 = Builder.getRemainingBits(branch_to_end.getFixupSlot());
-				if (diff2 <= bits2) {
-					branch_to_false.generateBranch(b, Branch.SKIP);
-					true_part.generate(b);
-					branch_to_end.generateBranch(b, Branch.REM);
-					b.flush();
-					false_part.generate(b);
-					b.flush();
-					branch_to_end.fixup(b, b.getCurrentPosition(), 0);
-					return;
-				}
-			}
-		}
-
+//		if (Builder.forwardBranchCanBeImplicit(b.getCurrentSlot(), t_cnt + 2)) {
+//			probe = b.fork(false);
+//			cpos = probe.getCurrentPosition();
+//			additional = probe.getAdditionalDataSize();
+//			branch_to_false.generateBranch(probe, Branch.SKIP);
+//			true_part.generate(probe);
+//			branch_to_end.generateBranch(probe, Branch.REM);
+//			if ((cpos == probe.getCurrentPosition()) && (additional == probe.getAdditionalDataSize())) {
+//				probe.flush();
+//				false_part.generate(probe);
+//				probe.flush();
+//				// pattern 1 fit
+//				diff2 = Builder.getHighestDifferentBit1(probe.getCurrentPosition(), probe.getCurrentPosition());
+//				bits2 = Builder.getRemainingBits(branch_to_end.getFixupSlot());
+//				if (diff2 <= bits2) {
+//					branch_to_false.generateBranch(b, Branch.SKIP);
+//					true_part.generate(b);
+//					branch_to_end.generateBranch(b, Branch.REM);
+//					b.flush();
+//					false_part.generate(b);
+//					b.flush();
+//					branch_to_end.fixup(b, b.getCurrentPosition(), 0);
+//					return;
+//				}
+//			}
+//		}
+//
 		
 		// try pattern 4 (implicit + long)
 		//	
@@ -317,9 +317,9 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	v
 
 		probe = b.fork(false);
-		branch_to_false.generateBranch(probe, Branch.SHORT);
+		branch_to_false.generateBranch(probe, Branch.FORWARD);
 		true_part.generate(probe);
-		branch_to_end.generateBranch(probe, Branch.SHORT);
+		branch_to_end.generateBranch(probe, Branch.FORWARD);
 		probe.flush();
 		target1 = probe.getCurrentPosition();
 		false_part.generate(probe);
@@ -332,9 +332,9 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 
 		if ((diff1 <= bits1) && (diff2 <= bits2)) {
 			// we can use this pattern
-			branch_to_false.generateBranch(b, Branch.SHORT);
+			branch_to_false.generateBranch(b, Branch.FORWARD);
 			true_part.generate(b);
-			branch_to_end.generateBranch(b, Branch.SHORT);
+			branch_to_end.generateBranch(b, Branch.FORWARD);
 			b.flush();
 			target1 = b.getCurrentPosition();
 			false_part.generate(b);
@@ -365,34 +365,34 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	|
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	v
 
-		probe = b.fork(false);
-		branch_to_false.generateBranch(probe, Branch.SHORT);
-		true_part.generate(probe);
-		branch_to_end.generateBranch(probe, Branch.REM);
-		probe.flush();
-		target1 = probe.getCurrentPosition();
-		false_part.generate(probe);
-		probe.flush();
-		target2 = probe.getCurrentPosition();
-		diff1 = Builder.getHighestDifferentBit1(branch_to_false.getPAdr(), target1);
-		diff2 = Builder.getHighestDifferentBit1(branch_to_end.getPAdr(), target2);
-		bits1 = Processor.getSlotBits(branch_to_false.getFixupSlot());
-		bits2 = Builder.getRemainingBits(branch_to_end.getFixupSlot());
-
-		if ((diff1 <= bits1) && (diff2 <= bits2)) {
-			// we can use this pattern
-			branch_to_false.generateBranch(b, Branch.SHORT);
-			true_part.generate(b);
-			branch_to_end.generateBranch(b, Branch.REM);
-			b.flush();
-			target1 = b.getCurrentPosition();
-			false_part.generate(b);
-			b.flush();
-			target2 = b.getCurrentPosition();
-			branch_to_false.fixup(b, target1, 0);
-			branch_to_end.fixup(b, target2, 0);
-			return;
-		}
+//		probe = b.fork(false);
+//		branch_to_false.generateBranch(probe, Branch.SHORT);
+//		true_part.generate(probe);
+//		branch_to_end.generateBranch(probe, Branch.REM);
+//		probe.flush();
+//		target1 = probe.getCurrentPosition();
+//		false_part.generate(probe);
+//		probe.flush();
+//		target2 = probe.getCurrentPosition();
+//		diff1 = Builder.getHighestDifferentBit1(branch_to_false.getPAdr(), target1);
+//		diff2 = Builder.getHighestDifferentBit1(branch_to_end.getPAdr(), target2);
+//		bits1 = Processor.getSlotBits(branch_to_false.getFixupSlot());
+//		bits2 = Builder.getRemainingBits(branch_to_end.getFixupSlot());
+//
+//		if ((diff1 <= bits1) && (diff2 <= bits2)) {
+//			// we can use this pattern
+//			branch_to_false.generateBranch(b, Branch.SHORT);
+//			true_part.generate(b);
+//			branch_to_end.generateBranch(b, Branch.REM);
+//			b.flush();
+//			target1 = b.getCurrentPosition();
+//			false_part.generate(b);
+//			b.flush();
+//			target2 = b.getCurrentPosition();
+//			branch_to_false.fixup(b, target1, 0);
+//			branch_to_end.fixup(b, target2, 0);
+//			return;
+//		}
 
 		
 		// try pattern 7 (short + long)
@@ -418,7 +418,7 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	v
 
 		probe = b.fork(false);
-		branch_to_false.generateBranch(probe, Branch.SHORT);
+		branch_to_false.generateBranch(probe, Branch.FORWARD);
 		true_part.generate(probe);
 		branch_to_end.generateBranch(probe, Branch.LONG);
 		probe.flush();
@@ -431,7 +431,7 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 
 		if (diff1 <= bits1) {
 			// we can use this pattern
-			branch_to_false.generateBranch(b, Branch.SHORT);
+			branch_to_false.generateBranch(b, Branch.FORWARD);
 			true_part.generate(b);
 			branch_to_end.generateBranch(b, Branch.LONG);
 			b.flush();
@@ -461,36 +461,36 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		//	|	-	|	-	|	-	|	-	|	-	| SKIP	|		|		|		|		|	|
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	v
 
-		probe = b.fork(false);
-		branch_to_false.generateBranch(probe, Branch.REM);
-		probe.flush();
-		true_part.generate(probe);
-		branch_to_end.generateBranch(probe, Branch.SHORT);
-		probe.flush();
-		target1 = probe.getCurrentPosition();
-		false_part.generate(probe);
-		probe.flush();
-		target2 = probe.getCurrentPosition();
-		diff1 = Builder.getHighestDifferentBit1(branch_to_false.getPAdr(), target1);
-		diff2 = Builder.getHighestDifferentBit1(branch_to_end.getPAdr(), target2);
-		bits1 = Builder.getRemainingBits(branch_to_false.getFixupSlot());
-		bits2 = Processor.getSlotBits(branch_to_end.getFixupSlot());
-
-		if ((diff1 <= bits1) && (diff2 <= bits2)) {
-			// we can use this pattern
-			branch_to_false.generateBranch(b, Branch.REM);
-			b.flush();
-			true_part.generate(b);
-			branch_to_end.generateBranch(b, Branch.SHORT);
-			b.flush();
-			target1 = b.getCurrentPosition();
-			false_part.generate(b);
-			b.flush();
-			target2 = b.getCurrentPosition();
-			branch_to_false.fixup(b, target1, 0);
-			branch_to_end.fixup(b, target2, 0);
-			return;
-		}
+//		probe = b.fork(false);
+//		branch_to_false.generateBranch(probe, Branch.REM);
+//		probe.flush();
+//		true_part.generate(probe);
+//		branch_to_end.generateBranch(probe, Branch.SHORT);
+//		probe.flush();
+//		target1 = probe.getCurrentPosition();
+//		false_part.generate(probe);
+//		probe.flush();
+//		target2 = probe.getCurrentPosition();
+//		diff1 = Builder.getHighestDifferentBit1(branch_to_false.getPAdr(), target1);
+//		diff2 = Builder.getHighestDifferentBit1(branch_to_end.getPAdr(), target2);
+//		bits1 = Builder.getRemainingBits(branch_to_false.getFixupSlot());
+//		bits2 = Processor.getSlotBits(branch_to_end.getFixupSlot());
+//
+//		if ((diff1 <= bits1) && (diff2 <= bits2)) {
+//			// we can use this pattern
+//			branch_to_false.generateBranch(b, Branch.REM);
+//			b.flush();
+//			true_part.generate(b);
+//			branch_to_end.generateBranch(b, Branch.SHORT);
+//			b.flush();
+//			target1 = b.getCurrentPosition();
+//			false_part.generate(b);
+//			b.flush();
+//			target2 = b.getCurrentPosition();
+//			branch_to_false.fixup(b, target1, 0);
+//			branch_to_end.fixup(b, target2, 0);
+//			return;
+//		}
 
 
 		// try pattern 9 (remaining + remaining)
@@ -514,36 +514,36 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	|
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	v
 
-		probe = b.fork(false);
-		branch_to_false.generateBranch(probe, Branch.REM);
-		probe.flush();
-		true_part.generate(probe);
-		branch_to_end.generateBranch(probe, Branch.REM);
-		probe.flush();
-		target1 = probe.getCurrentPosition();
-		false_part.generate(probe);
-		probe.flush();
-		target2 = probe.getCurrentPosition();
-		diff1 = Builder.getHighestDifferentBit1(branch_to_false.getPAdr(), target1);
-		diff2 = Builder.getHighestDifferentBit1(branch_to_end.getPAdr(), target2);
-		bits1 = Builder.getRemainingBits(branch_to_false.getFixupSlot());
-		bits2 = Builder.getRemainingBits(branch_to_end.getFixupSlot());
-
-		if ((diff1 <= bits1) && (diff2 <= bits2)) {
-			// we can use this pattern
-			branch_to_false.generateBranch(b, Branch.REM);
-			b.flush();
-			true_part.generate(b);
-			branch_to_end.generateBranch(b, Branch.REM);
-			b.flush();
-			target1 = b.getCurrentPosition();
-			false_part.generate(b);
-			b.flush();
-			target2 = b.getCurrentPosition();
-			branch_to_false.fixup(b, target1, 0);
-			branch_to_end.fixup(b, target2, 0);
-			return;
-		}
+//		probe = b.fork(false);
+//		branch_to_false.generateBranch(probe, Branch.REM);
+//		probe.flush();
+//		true_part.generate(probe);
+//		branch_to_end.generateBranch(probe, Branch.REM);
+//		probe.flush();
+//		target1 = probe.getCurrentPosition();
+//		false_part.generate(probe);
+//		probe.flush();
+//		target2 = probe.getCurrentPosition();
+//		diff1 = Builder.getHighestDifferentBit1(branch_to_false.getPAdr(), target1);
+//		diff2 = Builder.getHighestDifferentBit1(branch_to_end.getPAdr(), target2);
+//		bits1 = Builder.getRemainingBits(branch_to_false.getFixupSlot());
+//		bits2 = Builder.getRemainingBits(branch_to_end.getFixupSlot());
+//
+//		if ((diff1 <= bits1) && (diff2 <= bits2)) {
+//			// we can use this pattern
+//			branch_to_false.generateBranch(b, Branch.REM);
+//			b.flush();
+//			true_part.generate(b);
+//			branch_to_end.generateBranch(b, Branch.REM);
+//			b.flush();
+//			target1 = b.getCurrentPosition();
+//			false_part.generate(b);
+//			b.flush();
+//			target2 = b.getCurrentPosition();
+//			branch_to_false.fixup(b, target1, 0);
+//			branch_to_end.fixup(b, target2, 0);
+//			return;
+//		}
 
 		// try pattern 10 (remaining + long)
 		//	
@@ -568,34 +568,34 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	|
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	v
 
-		probe = b.fork(false);
-		branch_to_false.generateBranch(probe, Branch.REM);
-		probe.flush();
-		true_part.generate(probe);
-		branch_to_end.generateBranch(probe, Branch.LONG);
-		probe.flush();
-		target1 = probe.getCurrentPosition();
-		false_part.generate(probe);
-		probe.flush();
-		target2 = probe.getCurrentPosition();
-		diff1 = Builder.getHighestDifferentBit1(branch_to_false.getPAdr(), target1);
-		bits1 = Builder.getRemainingBits(branch_to_false.getFixupSlot());
-
-		if (diff1 <= bits1) {
-			// we can use this pattern
-			branch_to_false.generateBranch(b, Branch.REM);
-			b.flush();
-			true_part.generate(b);
-			branch_to_end.generateBranch(b, Branch.LONG);
-			b.flush();
-			target1 = b.getCurrentPosition();
-			false_part.generate(b);
-			b.flush();
-			target2 = b.getCurrentPosition();
-			branch_to_false.fixup(b, target1, 0);
-			branch_to_end.fixup(b, target2, 0);
-			return;
-		}
+//		probe = b.fork(false);
+//		branch_to_false.generateBranch(probe, Branch.REM);
+//		probe.flush();
+//		true_part.generate(probe);
+//		branch_to_end.generateBranch(probe, Branch.LONG);
+//		probe.flush();
+//		target1 = probe.getCurrentPosition();
+//		false_part.generate(probe);
+//		probe.flush();
+//		target2 = probe.getCurrentPosition();
+//		diff1 = Builder.getHighestDifferentBit1(branch_to_false.getPAdr(), target1);
+//		bits1 = Builder.getRemainingBits(branch_to_false.getFixupSlot());
+//
+//		if (diff1 <= bits1) {
+//			// we can use this pattern
+//			branch_to_false.generateBranch(b, Branch.REM);
+//			b.flush();
+//			true_part.generate(b);
+//			branch_to_end.generateBranch(b, Branch.LONG);
+//			b.flush();
+//			target1 = b.getCurrentPosition();
+//			false_part.generate(b);
+//			b.flush();
+//			target2 = b.getCurrentPosition();
+//			branch_to_false.fixup(b, target1, 0);
+//			branch_to_end.fixup(b, target2, 0);
+//			return;
+//		}
 
 		
 		// try pattern 11 (long + short)
@@ -620,7 +620,7 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		probe = b.fork(false);
 		branch_to_false.generateBranch(probe, Branch.LONG);
 		true_part.generate(probe);
-		branch_to_end.generateBranch(probe, Branch.SHORT);
+		branch_to_end.generateBranch(probe, Branch.FORWARD);
 		probe.flush();
 		target1 = probe.getCurrentPosition();
 		false_part.generate(probe);
@@ -633,7 +633,7 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 			// we can use this pattern
 			branch_to_false.generateBranch(b, Branch.LONG);
 			true_part.generate(b);
-			branch_to_end.generateBranch(b, Branch.SHORT);
+			branch_to_end.generateBranch(b, Branch.FORWARD);
 			b.flush();
 			target1 = b.getCurrentPosition();
 			false_part.generate(b);
@@ -668,32 +668,32 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	|
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	v
 
-		probe = b.fork(false);
-		branch_to_false.generateBranch(probe, Branch.LONG);
-		true_part.generate(probe);
-		branch_to_end.generateBranch(probe, Branch.REM);
-		probe.flush();
-		target1 = probe.getCurrentPosition();
-		false_part.generate(probe);
-		probe.flush();
-		target2 = probe.getCurrentPosition();
-		diff2 = Builder.getHighestDifferentBit1(branch_to_end.getPAdr(), target2);
-		bits2 = Builder.getRemainingBits(branch_to_end.getFixupSlot());
-
-		if (diff2 <= bits2) {
-			// we can use this pattern
-			branch_to_false.generateBranch(b, Branch.LONG);
-			true_part.generate(b);
-			branch_to_end.generateBranch(b, Branch.REM);
-			b.flush();
-			target1 = b.getCurrentPosition();
-			false_part.generate(b);
-			b.flush();
-			target2 = b.getCurrentPosition();
-			branch_to_false.fixup(b, target1, 0);
-			branch_to_end.fixup(b, target2, 0);
-			return;
-		}
+//		probe = b.fork(false);
+//		branch_to_false.generateBranch(probe, Branch.LONG);
+//		true_part.generate(probe);
+//		branch_to_end.generateBranch(probe, Branch.REM);
+//		probe.flush();
+//		target1 = probe.getCurrentPosition();
+//		false_part.generate(probe);
+//		probe.flush();
+//		target2 = probe.getCurrentPosition();
+//		diff2 = Builder.getHighestDifferentBit1(branch_to_end.getPAdr(), target2);
+//		bits2 = Builder.getRemainingBits(branch_to_end.getFixupSlot());
+//
+//		if (diff2 <= bits2) {
+//			// we can use this pattern
+//			branch_to_false.generateBranch(b, Branch.LONG);
+//			true_part.generate(b);
+//			branch_to_end.generateBranch(b, Branch.REM);
+//			b.flush();
+//			target1 = b.getCurrentPosition();
+//			false_part.generate(b);
+//			b.flush();
+//			target2 = b.getCurrentPosition();
+//			branch_to_false.fixup(b, target1, 0);
+//			branch_to_end.fixup(b, target2, 0);
+//			return;
+//		}
 
 		// pattern 13 (long + long)
 		// this works always

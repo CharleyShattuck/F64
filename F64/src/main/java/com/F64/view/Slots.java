@@ -17,6 +17,7 @@ import com.F64.ISA;
 public class Slots extends JPanel {
 	private JTextField			slot_no;
 	private JTextField[]		slots;
+	private JTextField			slice_no;
 
 	public Slots()
 	{
@@ -89,12 +90,42 @@ public class Slots extends JPanel {
 				)
 			);
 		}
+		y += limit;
+		label = new JLabel("slice#");
+		this.add(
+			label,
+			new GridBagConstraints(
+				x, y,
+				1, 1,
+				0.0, 0.0,
+				GridBagConstraints.WEST,
+				GridBagConstraints.BOTH,
+				label_insets,
+				2, 0
+			)
+		);
+		this.slice_no = new JTextField("", 20);
+		this.slice_no.setFont(font);
+//		this.slot_no.setHorizontalAlignment(JTextField.RIGHT);
+		this.add(
+			this.slice_no,
+			new GridBagConstraints(
+				x+1, y,
+				1, 1,
+				0.0, 0.0,
+				GridBagConstraints.WEST,
+				GridBagConstraints.BOTH,
+				field_insets,
+				2, 0
+			)
+		);
 	}
 
 	public void update(com.F64.Processor processor)
 	{
 		int slot = processor.getSlot();
 		this.slot_no.setText(Integer.toString(slot));
+		this.slice_no.setText(Integer.toString(processor.getSlice()));
 
 		ISA instr = ISA.values()[processor.getSlot(slot)];
 		int i = 0;

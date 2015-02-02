@@ -125,10 +125,14 @@ public class Builder {
 		return mask;
 	}
 
-	public static boolean shortJumpFitsIntoSlot(long P, long target)
+	public static boolean forwardJumpFitsIntoSlot(long P, long target)
 	{
-		int diff1 = Builder.getHighestDifferentBit1(target, P);
-		return diff1 <= Processor.SLOT_BITS;		
+		return (target - P) <= Processor.SLOT_SIZE;		
+	}
+
+	public static boolean backJumpFitsIntoSlot(long P, long target)
+	{
+		return (P - target) <= Processor.SLOT_SIZE;		
 	}
 
 	public static boolean forwardBranchCanBeImplicit(int slot, int instructionCount)
@@ -175,13 +179,20 @@ public class Builder {
 
 	public static boolean forwardBranchIsShort(Builder b, ConditionalBranch pre, Scope block, ConditionalBranch fixup)
 	{
-		pre.generateBranch(b, Branch.SHORT);
+//		pre.generateBranch(b, Branch.SHORT);
+//		long P = b.getCurrentP();
+//		block.generate(b);
+//		if (fixup != null) {
+//			fixup.generateBranch(b, Branch.SHORT);
+//		}
+//		return shortJumpFitsIntoSlot(P, b.getCurrentPosition());
+		pre.generateBranch(b, Branch.FORWARD);
 		long P = b.getCurrentP();
 		block.generate(b);
 		if (fixup != null) {
-			fixup.generateBranch(b, Branch.SHORT);
+			fixup.generateBranch(b, Branch.FORWARD);
 		}
-		return shortJumpFitsIntoSlot(P, b.getCurrentPosition());
+		return forwardJumpFitsIntoSlot(P, b.getCurrentPosition());
 	}
 
 //	public static Location generateForwardBranchShort(Builder b, Condition cond)
@@ -228,12 +239,12 @@ public class Builder {
 
 	public static boolean forwardBranchShort(Builder b, ConditionalBranch pre, Scope block, ConditionalBranch post)
 	{
-		pre.generateBranch(b, Branch.SHORT);
+		pre.generateBranch(b, Branch.FORWARD);
 		b.flush();
 		long target1 = b.getCurrentPosition();
 		block.generate(b);
 		if (post != null) {
-			post.generateBranch(b, Branch.SHORT);
+			post.generateBranch(b, Branch.FORWARD);
 		}
 		b.flush();
 		long target2 = b.getCurrentPosition();
@@ -245,26 +256,26 @@ public class Builder {
 		return true;
 	}
 
-	public static boolean forwardBranchCanBeRemaining(long P, int slot, int instructionCount)
-	{
-		long target = P + instructionCount / Processor.NO_OF_SLOTS;
-		long diff1 = Builder.getHighestDifferentBit1(target, P);
-		return diff1 <= Builder.getRemainingBits(slot+1);
-	}
-
-	public static boolean forwardBranchIsRemaining(Builder b, Condition cond, Scope block)
-	{
-		if (b.getCurrentSlot() > (Processor.NO_OF_SLOTS-4)) {
-			b.flush();
-		}
-		b.add(ISA.BRANCH, cond.encode(Branch.REM));
-		long P = b.getCurrentP();
-		block.generate(b);
-		b.flush();
-		long target = b.getCurrentPosition();
-		int diff1 = Builder.getHighestDifferentBit1(target, P);
-		return diff1 <= Processor.SLOT_BITS;
-	}
+//	public static boolean forwardBranchCanBeRemaining(long P, int slot, int instructionCount)
+//	{
+//		long target = P + instructionCount / Processor.NO_OF_SLOTS;
+//		long diff1 = Builder.getHighestDifferentBit1(target, P);
+//		return diff1 <= Builder.getRemainingBits(slot+1);
+//	}
+//
+//	public static boolean forwardBranchIsRemaining(Builder b, Condition cond, Scope block)
+//	{
+//		if (b.getCurrentSlot() > (Processor.NO_OF_SLOTS-4)) {
+//			b.flush();
+//		}
+//		b.add(ISA.BRANCH, cond.encode(Branch.REM));
+//		long P = b.getCurrentP();
+//		block.generate(b);
+//		b.flush();
+//		long target = b.getCurrentPosition();
+//		int diff1 = Builder.getHighestDifferentBit1(target, P);
+//		return diff1 <= Processor.SLOT_BITS;
+//	}
 
 //	public static Location forwardBranchRemaining(Builder b, Condition cond, Scope block, Condition append_cond)
 //	{
@@ -652,12 +663,12 @@ public class Builder {
 				return;
 			}
 		}
-		if (Builder.forwardBranchCanBeRemaining(getCurrentP(), getCurrentSlot(), instr_cnt)) {
-			probe = fork(false, probe);
-			if (Builder.forwardBranchIsRemaining(probe, br.getCondition(), block)) {
-				return;
-			}
-		}
+//		if (Builder.forwardBranchCanBeRemaining(getCurrentP(), getCurrentSlot(), instr_cnt)) {
+//			probe = fork(false, probe);
+//			if (Builder.forwardBranchIsRemaining(probe, br.getCondition(), block)) {
+//				return;
+//			}
+//		}
 		Builder.forwardBranchLong(this, br.getCondition(), block, null);
 
 	}
@@ -683,12 +694,12 @@ public class Builder {
 				return;
 			}
 		}
-		if (Builder.forwardBranchCanBeRemaining(getCurrentP(), getCurrentSlot(), instr_cnt)) {
-			probe = fork(false, probe);
-			if (Builder.forwardBranchIsRemaining(probe, Condition.EQ0, block)) {
-				return;
-			}
-		}
+//		if (Builder.forwardBranchCanBeRemaining(getCurrentP(), getCurrentSlot(), instr_cnt)) {
+//			probe = fork(false, probe);
+//			if (Builder.forwardBranchIsRemaining(probe, Condition.EQ0, block)) {
+//				return;
+//			}
+//		}
 		Builder.forwardBranchLong(this, Condition.EQ0, block, null);
 	}
 
