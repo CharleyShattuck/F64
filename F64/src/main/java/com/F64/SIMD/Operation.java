@@ -1,6 +1,6 @@
-package com.F64;
+package com.F64.SIMD;
 
-public enum SIMDOperation {
+public enum Operation {
 	ADD,
 	SUB,
 	MUL,
@@ -20,4 +20,5 @@ public enum SIMDOperation {
 	GEQ,
 	GTQ,
 	;
+
 }

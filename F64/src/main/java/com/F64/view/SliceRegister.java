@@ -78,7 +78,7 @@ public class SliceRegister extends JPanel implements ActionListener {
 	public void update()
 	{
 		for (int i=0; i<com.F64.Processor.NO_OF_REG; ++i) {
-			long value = processor.getMediaRegister(i)[slice];
+			long value = processor.getSIMDRegister(i)[slice];
 			this.fields[i].setText(Processor.convertLongToString(value));
 		}
 
@@ -96,12 +96,12 @@ public class SliceRegister extends JPanel implements ActionListener {
 					try {
 						String txt = ev.getActionCommand();
 						long value = Long.parseLong(txt.replaceAll(" ", ""), 16);
-						this.processor.getMediaRegister(i)[slice] = value;
+						this.processor.getSIMDRegister(i)[slice] = value;
 					}
 					catch (Exception ex) {}
 				}
 				this.updating = true;
-				this.fields[i].setText(Processor.convertLongToString(this.processor.getMediaRegister(i)[slice]));
+				this.fields[i].setText(Processor.convertLongToString(this.processor.getSIMDRegister(i)[slice]));
 				this.updating = false;
 				return;
 			}

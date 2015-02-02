@@ -1,6 +1,6 @@
-package com.F64;
+package com.F64.SIMD;
 
-public enum SIMDType {
+public enum Type {
 	UINT8,
 	UINT16,
 	UINT32,

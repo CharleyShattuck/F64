@@ -168,7 +168,7 @@ public class Machine {
 		assert(Ext6.values().length <= Processor.SLOT_SIZE);
 		assert(RegOp3.values().length <= Processor.SLOT_SIZE);
 		assert(RegOp3.values().length <= Processor.SLOT_SIZE);
-		assert(SIMDOperation.values().length <= Processor.SLOT_SIZE);
+		assert(com.F64.SIMD.Operation.values().length <= Processor.SLOT_SIZE);
 		assert(Flag.values().length <= (Processor.BIT_PER_CELL - 3*Processor.SLOT_BITS));
 		assert(SystemRegister.values().length <= Processor.SLOT_SIZE);
 		assert(Register.values().length <= Processor.SLOT_SIZE);

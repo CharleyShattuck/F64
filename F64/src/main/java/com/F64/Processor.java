@@ -419,13 +419,13 @@ public class Processor implements Runnable {
 	private System				system;
 	private long[]				register;
 	private long[]				local_register;
-	private long[][]			media_register;
 	private long[]				system_register;
 	private long[]				read_port;
 	private long[]				write_port;
 	private long[]				parameter_stack;
 	private long[]				return_stack;
 	private Processor[]			port_partner;
+	private	com.F64.SIMD.Unit	simd;
 	private long				communication;
 	private int					communication_register;
 	private int					x;
@@ -446,12 +446,12 @@ public class Processor implements Runnable {
 	
 	public Processor(System system, int x, int y, int z, int stack_size, int return_stack_size)
 	{
+		this.simd = new com.F64.SIMD.Unit();
 		this.system = system;
 		this.x = x;
 		this.y = y;
 		this.z = z;
 		this.register = new long[NO_OF_REG];
-		this.media_register = new long[NO_OF_REG][];
 		this.local_register = new long[NO_OF_REG];
 		this.system_register = new long[NO_OF_REG];
 		this.read_port = new long[Port.values().length];
@@ -460,15 +460,12 @@ public class Processor implements Runnable {
 		this.register[Register.Z.ordinal()] = 0;
 		if (stack_size > 0) {parameter_stack = new long[stack_size];}
 		if (return_stack_size > 0) {return_stack = new long[return_stack_size];}
-		for (int i=0; i<NO_OF_REG; ++i) {
-			this.media_register[i] = new long[NO_OF_MEDIA_REGISTER_CELLS];
-		}
 	}
 
 	public long getRegister(Register reg) {return this.getRegister(reg.ordinal());}
 	public void setRegister(Register reg, long value) {this.setRegister(reg.ordinal(), value);}
 
-	public long[] getMediaRegister(int reg) {return this.media_register[reg];}
+	public long[] getSIMDRegister(int reg) {return simd.getRegister(reg);}
 	
 	public long getSystemRegister(SystemRegister reg) {return this.getSystemRegister(reg.ordinal());}
 	public void setSystemRegister(SystemRegister reg, long value) {this.setSystemRegister(reg.ordinal(), value);}
@@ -2366,7 +2363,7 @@ public class Processor implements Runnable {
 				case REGOP1:	this.doRegisterOperation(this.nextSlot(), this.nextSlot()); break;
 				case REGOP2:	this.doRegisterOperation(this.nextSlot(), this.nextSlot(), this.nextSlot()); break;
 				case REGOP3:	this.doRegisterOperation(this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot()); break;
-				case SIMD:		this.doSIMDOperation(this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot()); break;
+				case SIMD:		simd.doOperation(this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot(), this.nextSlot()); break;
 				default: if (this.interrupt(Flag.ILLEGAL)) {return;}
 				}
 			}
@@ -3214,163 +3211,7 @@ public class Processor implements Runnable {
 		}
 	}
 
-	private static long SIMDAddModI32(long s1, long s2)
-	{
-		int s1_0 = (int) (s1 & 0xffff_ffff);
-		int s2_0 = (int) (s2 & 0xffff_ffff);
-		int s1_1 = (int) (s1 >> 32);
-		int s2_1 = (int) (s2 >> 32);
-		int d_0 = s1_0 + s2_0;
-		int d_1 = s1_1 + s2_1;
-		long d = d_0;
-		d <<= 32;
-		d |= ((long)d_1) & 0xffff_ffff;
-		return d;
-	}
 
-	private boolean doSIMDAddModI32(int d, int s1, int s2)
-	{
-		long[] da = this.getMediaRegister(d);
-		long[] s1a = this.getMediaRegister(s1);
-		long[] s2a = this.getMediaRegister(s2);
-		for (int i=0; i<MEDIA_SLICE_SIZE; ++i) {
-			da[i] = SIMDAddModI32(s1a[i], s2a[i]);
-		}
-		return true;
-	}
-
-	private void doSIMDAddModU32(int d, int s1, int s2)
-	{
-	}
-
-	private void doSIMDAddModI16(int d, int s1, int s2)
-	{
-	}
-
-	private void doSIMDAddModU16(int d, int s1, int s2)
-	{
-	}
-
-	private void doSIMDAddModI8(int d, int s1, int s2)
-	{
-	}
-
-	private void doSIMDAddModU8(int d, int s1, int s2)
-	{
-	}
-
-	private void doSIMDAddMod(SIMDType stype, int d, int s1, int s2)
-	{
-		switch (stype) {
-		case SINT16:	doSIMDAddModI16(d, s1, s2); return;
-		case SINT32:	doSIMDAddModI32(d, s1, s2); return;
-		case SINT8:		doSIMDAddModI8(d, s1, s2); return;
-		case UINT16:	doSIMDAddModU16(d, s1, s2); return;
-		case UINT32:	doSIMDAddModU32(d, s1, s2); return;
-		case UINT8:		doSIMDAddModU8(d, s1, s2); return;
-		}
-	}
-
-	private void doSIMDAddSatI32(int d, int s1, int s2)
-	{
-	}
-
-	private void doSIMDAddSatU32(int d, int s1, int s2)
-	{
-	}
-
-	private void doSIMDAddSatI16(int d, int s1, int s2)
-	{
-	}
-
-	private void doSIMDAddSatU16(int d, int s1, int s2)
-	{
-	}
-
-	private void doSIMDAddSatI8(int d, int s1, int s2)
-	{
-	}
-
-	private void doSIMDAddSatU8(int d, int s1, int s2)
-	{
-	}
-
-	private void doSIMDAddSat(SIMDType stype, int d, int s1, int s2)
-	{
-		switch (stype) {
-		case SINT16:	doSIMDAddSatI16(d, s1, s2); return;
-		case SINT32:	doSIMDAddSatI32(d, s1, s2); return;
-		case SINT8:		doSIMDAddSatI8(d, s1, s2); return;
-		case UINT16:	doSIMDAddSatU16(d, s1, s2); return;
-		case UINT32:	doSIMDAddSatU32(d, s1, s2); return;
-		case UINT8:		doSIMDAddSatU8(d, s1, s2); return;
-		}
-	}
-
-	public void doSIMDOperation(int op, int par, int d, int s1, int s2)
-	{
-		SIMDOperation soper = SIMDOperation.values()[op];
-		SIMDType t = SIMDType.values()[par & 0x0f];
-		SIMDArithmetic sarit = SIMDArithmetic.values()[(par >> 1) & 0x01];
-		if (d == 0) {return;}
-		switch (soper) {
-		case ADD:	if (sarit == SIMDArithmetic.MODULAR) {doSIMDAddMod(t, d, s1, s2);} else {doSIMDAddSat(t, d, s1, s2);} return;
-		case AND:
-			break;
-		case DIV:
-			break;
-		case EQQ:
-			break;
-		case EQV:
-			break;
-		case GEQ:
-			break;
-		case GTQ:
-			break;
-		case LEQ:
-			break;
-		case LTQ:
-			break;
-		case MAX:
-			break;
-		case MIN:
-			break;
-		case MOD:
-			break;
-		case MUL:
-			break;
-		case MULADD:
-			break;
-		case NEQ:
-			break;
-		case OR:
-			break;
-		case SUB:
-			break;
-		case XOR:
-			break;
-		}
-//		SimdSize size = SimdSize.values()[par & 3];
-//		switch (size) {
-//		case BIT64:
-//			break;
-//		case BIT128:
-//			if (((s1 & 1) != 0) || ((s2 & 1) != 0) || ((d & 1) != 0)) {
-//				if (this.interrupt(Flag.ALIGNED)) {return false;}
-//			}
-//			break;
-//		case BIT256:
-//			if (((s1 & 3) != 0) || ((s2 & 3) != 0) || ((d & 3) != 0)) {
-//				if (this.interrupt(Flag.ALIGNED)) {return false;}
-//			}
-//			break;
-//		case BIT512:
-//			if (((s1 & 7) != 0) || ((s2 & 7) != 0) || ((d & 7) != 0)) {
-//				if (this.interrupt(Flag.ALIGNED)) {return false;}
-//			}
-//			break;
-//		}
-	}
 
 	public boolean interrupt(Flag no)
 	{
