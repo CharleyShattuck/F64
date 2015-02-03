@@ -17,55 +17,56 @@ public class Processor implements Runnable {
 	public static final int		NO_OF_FULL_SLOTS = BIT_PER_CELL / SLOT_BITS;
 	public static final int		SLOT_SIZE = 1 << SLOT_BITS;
 	public static final int		SLOT_MASK = SLOT_SIZE - 1;
-	public static final int		FINAL_SLOT_BITS = BIT_PER_CELL - (NO_OF_FULL_SLOTS*SLOT_BITS);
-	public static final int		FINAL_SLOT_SIZE = 1 << FINAL_SLOT_BITS;
-	public static final int		FINAL_SLOT_MASK = FINAL_SLOT_SIZE - 1;
-	public static final int		FINAL_SLOT = NO_OF_FULL_SLOTS;
-	public static final int		NO_OF_SLOTS = FINAL_SLOT+1;
+	public static final int		FIRST_SLOT_BITS = BIT_PER_CELL - (NO_OF_FULL_SLOTS*SLOT_BITS);
+	public static final int		FIRST_SLOT_SIZE = 1 << FIRST_SLOT_BITS;
+	public static final int		FIRST_SLOT_MASK = FIRST_SLOT_SIZE - 1;
+	public static final int		FIRST_SLOT = 0;
+	public static final int		NO_OF_SLOTS = NO_OF_FULL_SLOTS+1;
 	public static final long	TRUE = -1L;
 	public static final long	FALSE = 0L;
 
-	public static final long	SLOT0_MASK = -1L << (BIT_PER_CELL-SLOT_BITS);
+	public static final long	SLOT0_MASK = -1L << (BIT_PER_CELL-FIRST_SLOT_BITS);
 
 	public static final int[]	SLOT_SHIFT = {
-		BIT_PER_CELL-SLOT_BITS,
-		BIT_PER_CELL-(SLOT_BITS*2),
-		BIT_PER_CELL-(SLOT_BITS*3),
-		BIT_PER_CELL-(SLOT_BITS*4),
-		BIT_PER_CELL-(SLOT_BITS*5),
-		BIT_PER_CELL-(SLOT_BITS*6),
-		BIT_PER_CELL-(SLOT_BITS*7),
-		BIT_PER_CELL-(SLOT_BITS*8),
-		BIT_PER_CELL-(SLOT_BITS*9),
-		BIT_PER_CELL-(SLOT_BITS*10),
+		SLOT_BITS*10,
+		SLOT_BITS*9,
+		SLOT_BITS*8,
+		SLOT_BITS*7,
+		SLOT_BITS*6,
+		SLOT_BITS*5,
+		SLOT_BITS*4,
+		SLOT_BITS*3,
+		SLOT_BITS*2,
+		SLOT_BITS*1,
+		0,
 	};
 	
-	public static final long[]	SLOT_MASKS = {
-		SLOT0_MASK,
-		SLOT0_MASK >>> SLOT_BITS,
-		SLOT0_MASK >>> (SLOT_BITS*2),
-		SLOT0_MASK >>> (SLOT_BITS*3),
-		SLOT0_MASK >>> (SLOT_BITS*4),
-		SLOT0_MASK >>> (SLOT_BITS*5),
-		SLOT0_MASK >>> (SLOT_BITS*6),
-		SLOT0_MASK >>> (SLOT_BITS*7),
-		SLOT0_MASK >>> (SLOT_BITS*8),
-		SLOT0_MASK >>> (SLOT_BITS*9),
-		SLOT0_MASK >>> (SLOT_BITS*10)
+	public static final long[]	REMAINING_MASKS = {
+		-1L >>> FIRST_SLOT_BITS,
+		-1L >>> (FIRST_SLOT_BITS + SLOT_BITS),
+		-1L >>> (FIRST_SLOT_BITS + (SLOT_BITS*2)),
+		-1L >>> (FIRST_SLOT_BITS + (SLOT_BITS*3)),
+		-1L >>> (FIRST_SLOT_BITS + (SLOT_BITS*4)),
+		-1L >>> (FIRST_SLOT_BITS + (SLOT_BITS*5)),
+		-1L >>> (FIRST_SLOT_BITS + (SLOT_BITS*6)),
+		-1L >>> (FIRST_SLOT_BITS + (SLOT_BITS*7)),
+		-1L >>> (FIRST_SLOT_BITS + (SLOT_BITS*8)),
+		-1L >>> (FIRST_SLOT_BITS + (SLOT_BITS*9)),
+		0
 	};
 
-	public static final long[]	REMAINING_MASKS = {
-		-1L >>> SLOT_BITS,
-		-1L >>> (SLOT_BITS*2),
-		-1L >>> (SLOT_BITS*3),
-		-1L >>> (SLOT_BITS*4),
-		-1L >>> (SLOT_BITS*5),
-		-1L >>> (SLOT_BITS*6),
-		-1L >>> (SLOT_BITS*7),
-		-1L >>> (SLOT_BITS*8),
-		-1L >>> (SLOT_BITS*9),
-		-1L >>> (SLOT_BITS*10)
-	};
+//	public static final long[]	SLOT_MASKS = {
+//		-1L >>> SLOT_BITS,
+//		-1L >>> (SLOT_BITS*2),
+//		-1L >>> (SLOT_BITS*3),
+//		-1L >>> (SLOT_BITS*4),
+//		-1L >>> (SLOT_BITS*5),
+//		-1L >>> (SLOT_BITS*6),
+//		-1L >>> (SLOT_BITS*7),
+//		-1L >>> (SLOT_BITS*8),
+//		-1L >>> (SLOT_BITS*9),
+//		-1L >>> (SLOT_BITS*10)
+//	};
 
 	
 	public static final long[] BIT_MASK =
@@ -170,15 +171,15 @@ public class Processor implements Runnable {
 
 	public static int getSlotBits(int slot_no)
 	{
-		if (slot_no < FINAL_SLOT) {return SLOT_BITS;}
-		if (slot_no == FINAL_SLOT) {return FINAL_SLOT_BITS;}
+		if (slot_no == FIRST_SLOT) {return FIRST_SLOT_BITS;}
+		if (slot_no < NO_OF_SLOTS) {return SLOT_BITS;}
 		return 0;
 	}
 
 	public static int getSlotMask(int slot_no)
 	{
-		if (slot_no < FINAL_SLOT) {return SLOT_MASK;}
-		if (slot_no == FINAL_SLOT) {return FINAL_SLOT_MASK;}
+		if (slot_no == FIRST_SLOT) {return FIRST_SLOT_MASK;}
+		if (slot_no < NO_OF_SLOTS) {return SLOT_MASK;}
 		return 0;
 	}
 
@@ -365,36 +366,26 @@ public class Processor implements Runnable {
 
 	public static long writeSlot(long data, int slot, int value)
 	{
-		long mask;
 		assert(slot >= 0);
 		assert(value >= 0);
-		if (slot > FINAL_SLOT) {
+		if (slot >= NO_OF_SLOTS) {
 			assert(value == 0);
 			return data;
 		}
-		if (slot == FINAL_SLOT) {assert(value < FINAL_SLOT_SIZE);}
+		if (slot == FIRST_SLOT) {assert(value < FIRST_SLOT_SIZE);}
 		else {assert(value < SLOT_SIZE);}
-		if (slot == FINAL_SLOT) {
-			mask = FINAL_SLOT_MASK;
-			data &= ~mask;
-			data |= value;
-			return data | value;
-		}
-		long tmp = value & SLOT_MASK;
-		mask = SLOT_MASK;
-		tmp <<= (BIT_PER_CELL-((slot+1)*SLOT_BITS));
-		mask <<= (BIT_PER_CELL-((slot+1)*SLOT_BITS));
-		data &= ~mask;
-		return data | tmp;
+		int shift = SLOT_SHIFT[slot];
+		long mask = SLOT_MASK;
+		long val = value;
+		mask <<= shift;
+		val <<= shift;
+		return data ^ ((data ^ val) & mask);
 	}
 
 	public static int readSlot(long value, int slot)
 	{
 		assert(slot >= 0);
-		int res = 0;
-		if (slot < FINAL_SLOT) {res = ((int)(value >> (BIT_PER_CELL-((slot+1)*SLOT_BITS)))) & SLOT_MASK;}
-		else if (slot == FINAL_SLOT) {res = ((int)value) & FINAL_SLOT_MASK;}
-		return res;
+		return (int)(value >>> SLOT_SHIFT[slot]) & SLOT_MASK;
 	}
 
 	public static long setBit(long data, int bitpos)
@@ -2381,7 +2372,7 @@ public class Processor implements Runnable {
 				triggerInterrupts();
 			}
 			//
-			if ((!this.waiting) && (this.slot > FINAL_SLOT)) {
+			if ((!this.waiting) && (this.slot >= NO_OF_SLOTS)) {
 				// load new instruction cell
 				long adr = this.system_register[SystemRegister.P.ordinal()];
 				if (adr >= 0) {

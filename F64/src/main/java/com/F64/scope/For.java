@@ -100,11 +100,11 @@ public class For extends com.F64.Block implements java.lang.Cloneable {
 		b.flush();
 		long target = b.getCurrentPosition();
 		body.generate(b);
-		if ((target == b.getCurrentP()) && (b.getCurrentSlot() <= Processor.FINAL_SLOT))  {
+		if ((target == b.getCurrentP()) && (b.getCurrentSlot() < Processor.NO_OF_SLOTS))  {
 			b.add(ISA.UNEXT);
 			return;
 		}
-		if (b.getCurrentSlot() == Processor.FINAL_SLOT)  {
+		if (b.getCurrentSlot() == (Processor.NO_OF_SLOTS-1))  {
 			b.flush();
 		}
 		int diff = Builder.getHighestDifferentBit1(b.getCurrentP(), target);

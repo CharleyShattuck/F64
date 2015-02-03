@@ -4,89 +4,44 @@ public class Builder {
 
 	public static boolean fit(int slot, int slot0)
 	{
-		if (slot < Processor.FINAL_SLOT) {return true;}
-		if (slot == Processor.FINAL_SLOT) {return slot0 < Processor.FINAL_SLOT_SIZE;}
-		return false;
+		if (slot < 0) {return false;}
+		if (slot == Processor.FIRST_SLOT) {return slot0 < Processor.FIRST_SLOT_SIZE;}
+		return slot < Processor.NO_OF_SLOTS;
 	}
 
 	public static boolean fit(int slot, int slot0, int slot1)
 	{
-		if (slot < (Processor.FINAL_SLOT-1)) {return true;}
-		if (slot == (Processor.FINAL_SLOT-1)) {return slot1 < Processor.FINAL_SLOT_SIZE;}
-		if (slot == Processor.FINAL_SLOT) {
-			return (slot0 < Processor.FINAL_SLOT_SIZE) && (slot1 == 0);
-		}
-		return false;
+		if (!fit(slot, slot0)) {return false;}
+		if (slot1 == 0) {return true;}
+		return slot < Processor.NO_OF_SLOTS-1;
 	}
 
 	public static boolean fit(int slot, int slot0, int slot1, int slot2)
 	{
-		if (slot < (Processor.FINAL_SLOT-2)) {return true;}
-		if (slot == (Processor.FINAL_SLOT-2)) {return slot2 < Processor.FINAL_SLOT_SIZE;}
-		if (slot == Processor.FINAL_SLOT-1) {
-			return (slot1 < Processor.FINAL_SLOT_SIZE) && (slot2 == 0);
-		}
-		if (slot == Processor.FINAL_SLOT) {
-			return (slot0 < Processor.FINAL_SLOT_SIZE) && (slot1 == 0) && (slot2 == 0);
-		}
-		return false;
+		if (!fit(slot, slot0, slot1)) {return false;}
+		if (slot2 == 0) {return true;}
+		return slot < Processor.NO_OF_SLOTS-2;
 	}
 
 	public static boolean fit(int slot, int slot0, int slot1, int slot2, int slot3)
 	{
-		if (slot < (Processor.FINAL_SLOT-3)) {return true;}
-		if (slot == (Processor.FINAL_SLOT-3)) {return slot3 < Processor.FINAL_SLOT_SIZE;}
-		if (slot == Processor.FINAL_SLOT-2) {
-			return (slot2 < Processor.FINAL_SLOT_SIZE) && (slot3 == 0);
-		}
-		if (slot == Processor.FINAL_SLOT-1) {
-			return (slot1 < Processor.FINAL_SLOT_SIZE) && (slot2 == 0) && (slot3 == 0);
-		}
-		if (slot == Processor.FINAL_SLOT) {
-			return (slot0 < Processor.FINAL_SLOT_SIZE) && (slot1 == 0) && (slot2 == 0) && (slot3 == 0);
-		}
-		return false;
+		if (!fit(slot, slot0, slot1, slot2)) {return false;}
+		if (slot3 == 0) {return true;}
+		return slot < Processor.NO_OF_SLOTS-3;
 	}
 
 	public static boolean fit(int slot, int slot0, int slot1, int slot2, int slot3, int slot4)
 	{
-		if (slot < (Processor.FINAL_SLOT-4)) {return true;}
-		if (slot == (Processor.FINAL_SLOT-4)) {return slot4 < Processor.FINAL_SLOT_SIZE;}
-		if (slot == Processor.FINAL_SLOT-3) {
-			return (slot3 < Processor.FINAL_SLOT_SIZE) && (slot4 == 0);
-		}
-		if (slot == Processor.FINAL_SLOT-2) {
-			return (slot2 < Processor.FINAL_SLOT_SIZE) && (slot3 == 0) && (slot4 == 0);
-		}
-		if (slot == Processor.FINAL_SLOT-1) {
-			return (slot1 < Processor.FINAL_SLOT_SIZE) && (slot2 == 0) && (slot3 == 0) && (slot4 == 0);
-		}
-		if (slot == Processor.FINAL_SLOT) {
-			return (slot0 < Processor.FINAL_SLOT_SIZE) && (slot1 == 0) && (slot2 == 0) && (slot3 == 0) && (slot4 == 0);
-		}
-		return false;
+		if (!fit(slot, slot0, slot1, slot2, slot3)) {return false;}
+		if (slot4 == 0) {return true;}
+		return slot < Processor.NO_OF_SLOTS-4;
 	}
 
 	public static boolean fit(int slot, int slot0, int slot1, int slot2, int slot3, int slot4, int slot5)
 	{
-		if (slot < (Processor.FINAL_SLOT-5)) {return true;}
-		if (slot == (Processor.FINAL_SLOT-5)) {return slot5 < Processor.FINAL_SLOT_SIZE;}
-		if (slot == Processor.FINAL_SLOT-4) {
-			return (slot4 < Processor.FINAL_SLOT_SIZE) && (slot5 == 0);
-		}
-		if (slot == Processor.FINAL_SLOT-3) {
-			return (slot3 < Processor.FINAL_SLOT_SIZE) && (slot4 == 0) && (slot5 == 0);
-		}
-		if (slot == Processor.FINAL_SLOT-2) {
-			return (slot2 < Processor.FINAL_SLOT_SIZE) && (slot3 == 0) && (slot4 == 0) && (slot5 == 0);
-		}
-		if (slot == Processor.FINAL_SLOT-1) {
-			return (slot1 < Processor.FINAL_SLOT_SIZE) && (slot2 == 0) && (slot3 == 0) && (slot4 == 0) && (slot5 == 0);
-		}
-		if (slot == Processor.FINAL_SLOT) {
-			return (slot0 < Processor.FINAL_SLOT_SIZE) && (slot1 == 0) && (slot2 == 0) && (slot3 == 0) && (slot4 == 0) && (slot5 == 0);
-		}
-		return false;
+		if (!fit(slot, slot0, slot1, slot2, slot3, slot4)) {return false;}
+		if (slot5 == 0) {return true;}
+		return slot < Processor.NO_OF_SLOTS-5;
 	}
 
 	public static int getHighestDifferentBit1(long value1, long value2)
@@ -100,29 +55,14 @@ public class Builder {
 		return diff;
 	}
 	
-	public static int getRemainingBits(int pos)
+	public static int getRemainingBits(int slot)
 	{
-		int res = 0;
-		while (pos < Processor.FINAL_SLOT) {
-			res += Processor.SLOT_BITS;
-			++pos;
-		}
-		if (pos == Processor.FINAL_SLOT) {
-			res += Processor.FINAL_SLOT_BITS;
-		}
-		return res;
+		return Processor.SLOT_SHIFT[slot];
 	}
 	
 	public static long getAddressMask(int slot)
 	{
-		if (slot > Processor.FINAL_SLOT) {return 0;}
-		else if (slot == Processor.FINAL_SLOT) {return Processor.FINAL_SLOT_MASK;}
-		long mask = -1L >>> (Processor.SLOT_BITS - Processor.FINAL_SLOT_BITS);
-		while (slot > 0) {
-			--slot;
-			mask = mask >>> Processor.SLOT_BITS;
-		}
-		return mask;
+		return -1 >>> (Processor.BIT_PER_CELL - Processor.SLOT_SHIFT[slot]);
 	}
 
 	public static boolean forwardJumpFitsIntoSlot(long P, long target)
@@ -471,7 +411,7 @@ public class Builder {
 	{
 		if (current_slot > 0) {
 			if (generate) {
-				if (current_slot < Processor.FINAL_SLOT) {
+				if (current_slot < (Processor.NO_OF_SLOTS-1)) {
 					// add a skip instruction if cell is not full
 					current_cell = Processor.writeSlot(current_cell, current_slot++, ISA.USKIP.ordinal());
 				}
@@ -495,13 +435,19 @@ public class Builder {
 	public void add(ISA op)
 	{
 		if (!fit(current_slot, op.ordinal())) {flush();}
+		if ((current_slot == Processor.FIRST_SLOT) && (op.ordinal() >= Processor.FIRST_SLOT_SIZE)) {
+			current_cell = Processor.writeSlot(current_cell, current_slot++, ISA.NOP.ordinal());
+		}
 		current_cell = Processor.writeSlot(current_cell, current_slot++, op.ordinal());
 	}
 	
 	public void add(ISA op, int slot0)
 	{
 		if (!fit(current_slot, op.ordinal(), slot0)) {flush();}
-		current_cell = Processor.writeSlot(current_cell, current_slot++, op.ordinal());
+		if ((current_slot == Processor.FIRST_SLOT) && (op.ordinal() >= Processor.FIRST_SLOT_SIZE)) {
+			current_cell = Processor.writeSlot(current_cell, current_slot++, ISA.NOP.ordinal());
+		}
+	current_cell = Processor.writeSlot(current_cell, current_slot++, op.ordinal());
 		current_cell = Processor.writeSlot(current_cell, current_slot++, slot0);
 	}
 
@@ -514,6 +460,9 @@ public class Builder {
 	public void add(ISA op, int slot0, int slot1)
 	{
 		if (!fit(current_slot, op.ordinal(), slot0, slot1)) {flush();}
+		if ((current_slot == Processor.FIRST_SLOT) && (op.ordinal() >= Processor.FIRST_SLOT_SIZE)) {
+			current_cell = Processor.writeSlot(current_cell, current_slot++, ISA.NOP.ordinal());
+		}
 		current_cell = Processor.writeSlot(current_cell, current_slot++, op.ordinal());
 		current_cell = Processor.writeSlot(current_cell, current_slot++, slot0);
 		current_cell = Processor.writeSlot(current_cell, current_slot++, slot1);
@@ -529,6 +478,9 @@ public class Builder {
 	public void add(ISA op, int slot0, int slot1, int slot2)
 	{
 		if (!fit(current_slot, op.ordinal(), slot0, slot1, slot2)) {flush();}
+		if ((current_slot == Processor.FIRST_SLOT) && (op.ordinal() >= Processor.FIRST_SLOT_SIZE)) {
+			current_cell = Processor.writeSlot(current_cell, current_slot++, ISA.NOP.ordinal());
+		}
 		current_cell = Processor.writeSlot(current_cell, current_slot++, op.ordinal());
 		current_cell = Processor.writeSlot(current_cell, current_slot++, slot0);
 		current_cell = Processor.writeSlot(current_cell, current_slot++, slot1);
@@ -545,6 +497,9 @@ public class Builder {
 	public void add(ISA op, int slot0, int slot1, int slot2, int slot3)
 	{
 		if (!fit(current_slot, op.ordinal(), slot0, slot1, slot2, slot3)) {flush();}
+		if ((current_slot == Processor.FIRST_SLOT) && (op.ordinal() >= Processor.FIRST_SLOT_SIZE)) {
+			current_cell = Processor.writeSlot(current_cell, current_slot++, ISA.NOP.ordinal());
+		}
 		current_cell = Processor.writeSlot(current_cell, current_slot++, op.ordinal());
 		current_cell = Processor.writeSlot(current_cell, current_slot++, slot0);
 		current_cell = Processor.writeSlot(current_cell, current_slot++, slot1);
@@ -562,6 +517,9 @@ public class Builder {
 	public void add(ISA op, int slot0, int slot1, int slot2, int slot3, int slot4)
 	{
 		if (!fit(current_slot, op.ordinal(), slot0, slot1, slot2, slot3, slot4)) {flush();}
+		if ((current_slot == Processor.FIRST_SLOT) && (op.ordinal() >= Processor.FIRST_SLOT_SIZE)) {
+			current_cell = Processor.writeSlot(current_cell, current_slot++, ISA.NOP.ordinal());
+		}
 		current_cell = Processor.writeSlot(current_cell, current_slot++, op.ordinal());
 		current_cell = Processor.writeSlot(current_cell, current_slot++, slot0);
 		current_cell = Processor.writeSlot(current_cell, current_slot++, slot1);

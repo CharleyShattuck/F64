@@ -26,7 +26,7 @@ public enum Condition {
 	public int encode(int slot)
 	{
 		assert(slot >= 0);
-		assert(slot <= Processor.FINAL_SLOT);
+		assert(slot < Processor.NO_OF_SLOTS);
 		assert(this.ordinal() < 4);
 		return (ordinal() << 4) | slot;
 	}

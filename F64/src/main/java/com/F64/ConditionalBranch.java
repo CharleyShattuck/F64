@@ -382,7 +382,7 @@ public class ConditionalBranch implements java.lang.Cloneable {
 				else {
 					if (b.doesGenerate()) {
 						int value = 0;
-						if (target_slot > Processor.FINAL_SLOT) {
+						if (target_slot >= Processor.NO_OF_SLOTS) {
 							value = this.cond.encode(Branch.SKIP);
 						}
 						else {
