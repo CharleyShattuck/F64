@@ -7,8 +7,13 @@ public enum Ext1 {
 	EXECUTE(2,	"execute",	"Execute word. Move T to I"),
 	EXITI(3,	"exiti",	"return from interrupt (interrupt # in next slot)"),
 	LJMP(2,		"ljmp",		"Long jump. Address in next cell."),
-	RNEXT(-1,	"rnext",	"remaining next"),
+//	RNEXT(-1,	"rnext",	"remaining next"),
 	LNEXT(2,	"lnext",	"long next"),
+	DO(2,		"do",		"do ( start limit - )"),
+	QDO(2,		"?do",		"conditional do ( start limit - flag )"),
+	QFOR(2,		"?for",		"conditional for ( n - flag )"),
+	LOOP(2,		"loop",		"loop ( - flag ). If flag = 0 then jump"),
+	PLOOP(2,	"+loop",	"+loop ( n - flag ). If flag = 0 then jump"),
 	MIN(2,		"min",		"minimum"),
 	MAX(2,		"max",		"maximum"),
 	ADDC(2,		"+y",		"add with carry"),
@@ -40,7 +45,8 @@ public enum Ext1 {
 	WBITS(2,	"b!",		"write bit T from carry into S and put old bit in carry. Put result in T and pop stack into S"),
 	ENTERM(2,	"enterm",	"push the MT to the return stack and load the MT with the method table from SELF"),
 	LCALLM(2,	"lcallm",	"long method call. Call a method on SELF (T contains the method #)"),
-	LJMPM(2,	"ljmpm",	"long method jump. Jump to a method on SELF (T contains the method #)");
+	LJMPM(2,	"ljmpm",	"long method jump. Jump to a method on SELF (T contains the method #)"),
+	;
 
 	private int size;
 	private String display;

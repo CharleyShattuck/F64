@@ -48,7 +48,8 @@ public enum Ext2 {
 	POPS(3,			"spop",		"Pop system register from return stack (register in next slot)"),
 	BLIT(3,			"blit",		"bit literal (bit position in next slot)"),
 	JMPIO(3,		"iojmp",	"jump to I/O address (mask in next slot)"),
-	CONFIGFETCH(3,	"config@",	"fetch processor configuration (selector in next slot) ( - n)");
+	CONFIGFETCH(3,	"config@",	"fetch processor configuration (selector in next slot) ( - n)"),
+	;
 
 	private int size;
 	private String display;

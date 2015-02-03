@@ -6,6 +6,7 @@ public enum Register {
 	S("s",	"second of parameter stack"),
 	R("r",	"top of return stack"),
 	W("w",	"temporary (work) register"),
+	L("l",	"limit register"),
 	;
 
 	private String display;

@@ -32,8 +32,8 @@ public enum ISA {
 	USKIP(1,	"uskip",	"skip all remaining slots"),
 	CONT(1,		"cont",		"move R to I, pop return stack and jump to slot 0"),
 	BRANCH(-2,	"branch",	"branch (next slot contains the conditional slot specifier)"),
-	FJMP(2,		"fjmp",		"forward short jump to slot 0 (next slot will be added to P)"),
-	BJMP(-1,	"bjmp",		"back short jump to slot 0 (next slot will be subtracted from P)"),
+	FJMP(2,		"fjmp",		"forward short jump to slot 0 (next slot (0=64) will be added to P)"),
+	BJMP(2,		"bjmp",		"back short jump to slot 0 (next slot (0=64) will be subtracted from P)"),
 	// 32
 	INC(2,		"++",		"increment register (register in next slot)"),
 	DEC(2,		"--",		"decrement register (register in next slot)"),

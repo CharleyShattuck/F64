@@ -1419,6 +1419,80 @@ public class Processor implements Runnable {
 		}
 	}
 
+	public void doDo()
+	{
+		long start = this.register[Register.S.ordinal()];
+		long limit = this.register[Register.T.ordinal()];
+		this.register[Register.T.ordinal()] = this.popStack();
+		this.register[Register.S.ordinal()] = this.popStack();
+		this.pushReturnStack(this.register[Register.R.ordinal()]);
+		this.pushReturnStack(this.register[Register.L.ordinal()]);
+		this.register[Register.R.ordinal()] = start;
+		this.register[Register.L.ordinal()] = limit;
+	}
+
+	public void doQDo()
+	{
+		long start = this.register[Register.S.ordinal()];
+		long limit = this.register[Register.T.ordinal()];
+		this.register[Register.S.ordinal()] = this.popStack();
+		if (start < limit) {
+			this.register[Register.T.ordinal()] = TRUE;
+			this.pushReturnStack(this.register[Register.R.ordinal()]);
+			this.pushReturnStack(this.register[Register.L.ordinal()]);
+			this.register[Register.R.ordinal()] = start;
+			this.register[Register.L.ordinal()] = limit;
+		}
+		else {
+			this.register[Register.T.ordinal()] = FALSE;
+		}
+	}
+
+	public void doQFor()
+	{
+		long limit = this.register[Register.T.ordinal()];
+		if (limit!= 0) {
+			this.register[Register.T.ordinal()] = TRUE;
+			this.pushReturnStack(this.register[Register.R.ordinal()]);
+			this.register[Register.R.ordinal()] = limit;
+		}
+		else {
+			this.register[Register.T.ordinal()] = FALSE;
+		}
+	}
+
+	public void doLoop()
+	{
+		this.doDup();
+		if (++this.register[Register.R.ordinal()] == this.register[Register.T.ordinal()]) {
+			this.register[Register.T.ordinal()] = FALSE;
+		}
+		else {
+			this.register[Register.T.ordinal()] = TRUE;
+			this.register[Register.L.ordinal()] = this.popReturnStack();
+			this.register[Register.R.ordinal()] = this.popReturnStack();
+		}
+	}
+
+	public void doPLoop()
+	{
+		boolean beforeSign = this.register[Register.R.ordinal()] < 0;
+		boolean before = this.register[Register.R.ordinal()] < this.register[Register.T.ordinal()];
+		this.register[Register.R.ordinal()] += this.register[Register.T.ordinal()];
+		boolean afterSign = this.register[Register.R.ordinal()] < 0;
+		boolean after = beforeSign == afterSign
+			? this.register[Register.R.ordinal()] < this.register[Register.T.ordinal()]
+			: this.register[Register.R.ordinal()] >= this.register[Register.T.ordinal()];
+		if (before == after) {
+			this.register[Register.T.ordinal()] = FALSE;
+		}
+		else {
+			this.register[Register.T.ordinal()] = TRUE;
+			this.register[Register.L.ordinal()] = this.popReturnStack();
+			this.register[Register.R.ordinal()] = this.popReturnStack();
+		}
+	}
+
 //	public boolean doJumpMethod(long index)
 //	{
 //		// check index is in range of method table
@@ -2926,8 +3000,13 @@ public class Processor implements Runnable {
 		case EXITI:			this.doExitInterrupt(this.nextSlot()); break;
 //		case SWAP0:			this.doSwap(this.nextSlot(), this.nextSlot()); this.slot = 0; break;
 		case LJMP:			this.doLongJump(); break;
-		case RNEXT:			this.doRemainingNext(); break;
+//		case RNEXT:			this.doRemainingNext(); break;
 		case LNEXT:			this.doLongNext(); break;
+		case DO:			this.doDo(); break;
+		case QDO:			this.doQDo(); break;
+		case QFOR:			this.doQFor(); break;
+		case LOOP:			this.doLoop(); break;
+		case PLOOP:			this.doPLoop(); break;
 		case MIN:			this.doMin(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
 		case MAX:			this.doMax(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
 		case ADDC:			this.doAddWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
