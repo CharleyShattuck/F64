@@ -137,7 +137,12 @@ public class Builder {
 
 	public static boolean forwardBranchCanBeImplicit(int slot, int instructionCount)
 	{
-		return((instructionCount+slot) < (Processor.NO_OF_SLOTS-2));
+		return ((instructionCount+slot) < (Processor.NO_OF_SLOTS-2));
+	}
+
+	public static boolean backwardBranchCanBeImplicit(int instructionCount)
+	{
+		return instructionCount < (Processor.NO_OF_SLOTS-1);
 	}
 
 	public static boolean forwardBranchIsImplicit(Builder b, Condition cond, Scope block)

@@ -3,6 +3,7 @@ package com.F64;
 public enum Ext1 {
 	RDROP(2,	"rdrop",	"drop R"),
 	RDUP(2,		"rdup",		"dup R"),
+	QDUP(2,		"qdup",		"dup if T != 0"),
 	EXECUTE(2,	"execute",	"Execute word. Move T to I"),
 	EXITI(3,	"exiti",	"return from interrupt (interrupt # in next slot)"),
 	LJMP(2,		"ljmp",		"Long jump. Address in next cell."),

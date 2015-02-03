@@ -1,13 +1,18 @@
 package com.F64;
 
-public class ConditionalBranch {
+import com.F64.codepoint.Literal;
+import com.F64.codepoint.QDup;
+
+
+public class ConditionalBranch implements java.lang.Cloneable {
 	private Branch		branch;
 	private Condition	cond;
 	private long		fixup_adr;
 	private long		p_adr;
 	private int			fixup_slot;
-	private int			remaining_bits;
+//	private int			remaining_bits;
 	private	ISA			code;
+	private	Block		preceding_block;
 
 	public ConditionalBranch(ISA isa, Condition c)
 	{
@@ -19,6 +24,12 @@ public class ConditionalBranch {
 	{
 		cond = c;
 		code = ISA.BRANCH;
+	}
+
+	public ConditionalBranch clone() throws CloneNotSupportedException
+	{
+		ConditionalBranch res = (ConditionalBranch)super.clone();
+		return res;
 	}
 
 	public void setBranch(Branch br) {branch = br;}
@@ -95,6 +106,58 @@ public class ConditionalBranch {
 	public long getFixupAdr() {return fixup_adr;}
 	public long getPAdr() {return p_adr;}
 	public int getFixupSlot() {return fixup_slot;}
+	public void setPrecedingBlock(Block value) {preceding_block = value;}
+	public Block getPrecedingBlock() {return preceding_block;}
+
+	public boolean optimize(Compiler c, Optimization opt)
+	{
+		Codepoint p;
+		if (preceding_block == null) {return false;}
+		switch (opt) {
+		case CONSTANT_FOLDING:
+			p = preceding_block.getTail();
+			if ((p != null) && (p instanceof Literal)) {
+				Literal lit = (Literal) p;
+				switch (cond) {
+				case EQ0:
+					cond = lit.getValue() == 0 ? Condition.ALWAYS : Condition.NEVER;
+					lit.remove();
+					return true;
+
+				case QEQ0:
+					if (lit.getValue() == 0) {
+						cond = Condition.ALWAYS;
+						lit.remove();
+					}
+					else {
+						cond = Condition.NEVER;
+					}
+					return true;
+
+				default:
+					break;
+				
+				}
+			}
+			break;
+
+		case PEEPHOLE:
+			p = preceding_block.getTail();
+			if ((p != null) && (p instanceof QDup)) {
+				if (cond == Condition.EQ0) {
+					cond = Condition.QEQ0;
+					p.remove();
+					return true;
+				}
+			}
+			break;
+
+		default:
+			break;
+		
+		}
+		return false;
+	}
 
 	public void set(Builder b, int slot_offset)
 	{
@@ -122,7 +185,7 @@ public class ConditionalBranch {
 				fixup_adr = b.getCurrentP();
 				fixup_slot = 0;
 				p_adr = b.getCurrentP();
-				remaining_bits = 0;
+//				remaining_bits = 0;
 				return;
 //			case REM:
 //				b.add(ISA.RJMP);
@@ -152,7 +215,7 @@ public class ConditionalBranch {
 			fixup_adr = b.getCurrentPosition();
 			fixup_slot = b.getCurrentSlot()-1;
 			p_adr = b.getCurrentP();
-			remaining_bits = 0;
+//			remaining_bits = 0;
 			return;
 		}
 		switch (branch) {
@@ -161,7 +224,7 @@ public class ConditionalBranch {
 			fixup_adr = b.getCurrentPosition();
 			fixup_slot = b.getCurrentSlot()-1;
 			p_adr = b.getCurrentP();
-			remaining_bits = 0;
+//			remaining_bits = 0;
 			break;
 		case FORWARD:
 		case BACK:
@@ -169,7 +232,7 @@ public class ConditionalBranch {
 			fixup_adr = b.getCurrentPosition();
 			fixup_slot = b.getCurrentSlot()-1;
 			p_adr = b.getCurrentP();
-			remaining_bits = 0;
+//			remaining_bits = 0;
 			break;
 //		case REM:
 //			b.add(code, cond.encode(Branch.REM));
@@ -184,14 +247,14 @@ public class ConditionalBranch {
 			fixup_adr = b.getCurrentP();
 			fixup_slot = 0;
 			p_adr = b.getCurrentP();
-			remaining_bits = 0;
+//			remaining_bits = 0;
 			break;
 		default:
 			b.add(code, cond.encode(branch));
 			fixup_adr = b.getCurrentPosition();
 			fixup_slot = b.getCurrentSlot()-1;
 			p_adr = b.getCurrentP();
-			remaining_bits = 0;
+//			remaining_bits = 0;
 			break;
 
 			

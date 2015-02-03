@@ -8,6 +8,7 @@ import com.F64.Ext1;
 import com.F64.Optimization;
 import com.F64.Processor;
 import com.F64.codepoint.Literal;
+import com.F64.codepoint.QDup;
 
 public class If extends com.F64.Block implements java.lang.Cloneable {
 	private com.F64.ConditionalBranch	branch_to_false;
@@ -52,9 +53,30 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 	@Override
 	public boolean optimize(Compiler c, Optimization opt)
 	{
+		Condition cond;
 		boolean res = false;
-		if (opt == Optimization.DEAD_CODE_ELIMINATION) {
-			Condition cond = branch_to_false.getCondition();
+		switch (opt) {
+		case CONSTANT_FOLDING:
+			cond = branch_to_false.getCondition();
+			if (cond == Condition.EQ0) {
+				com.F64.Codepoint p = this.getPrevious();
+				if (p != null) {
+					if (p instanceof Literal) {
+						Literal lit = (Literal) p;
+						if (lit.getValue() == 0) {
+							cond = Condition.ALWAYS;
+						}
+						else {
+							cond = Condition.NEVER;
+						}
+						lit.remove();
+						res = true;
+					}
+				}
+			}
+			break;
+		case DEAD_CODE_ELIMINATION:
+			cond = branch_to_false.getCondition();
 			if (cond == Condition.ALWAYS) {
 				if ((false_part == null) || false_part.isEmpty()) {
 					this.remove();
@@ -70,28 +92,18 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 				this.replaceWithScope(true_part);
 				res = true;
 			}
-		}
-		else if (opt == Optimization.CONSTANT_FOLDING) {
-			Condition cond = branch_to_false.getCondition();
-			if (cond == Condition.EQ0) {
-				com.F64.Codepoint p = this.getPrevious();
-				if (p != null) {
-					if (p instanceof Literal) {
-						Literal lit = (Literal) p;
-						long data = lit.getValue();
-						if (cond == Condition.EQ0) {
-							if (data == 0) {
-								cond = Condition.ALWAYS;
-							}
-							else {
-								cond = Condition.NEVER;
-							}
-						}
-						lit.remove();
-						res = true;
-					}
-				}
+			break;
+		case PEEPHOLE:
+			com.F64.Codepoint p = this.getPrevious();
+			if ((p != null) && (p instanceof QDup) && (branch_to_false.getCondition() == Condition.EQ0)) {
+				branch_to_false.setCondition(Condition.QEQ0);
+				p.remove();
+				res = true;
 			}
+			break;
+		default:
+			break;
+		
 		}
 		if (false_part != null) {
 			if (false_part.optimize(c, opt)) {res = true;}
@@ -149,6 +161,7 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 			return;
 		}
 		// non-empty true and false part
+		Builder probe = null;
 
 		// try pattern 1 (implicit + implicit)
 		//												+-------------------------------+
@@ -159,7 +172,6 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		//				|										^
 		//				+---------------------------------------+
 
-		Builder probe = null;
 
 		if (Builder.forwardBranchCanBeImplicit(b.getCurrentSlot(), t_cnt + f_cnt + 1)) {
 			probe = b.fork(false);
@@ -197,7 +209,7 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	v
 
 		if (Builder.forwardBranchCanBeImplicit(b.getCurrentSlot(), t_cnt + 2)) {
-			probe = b.fork(false);
+			probe = b.fork(false, probe);
 			cpos = probe.getCurrentPosition();
 			additional = probe.getAdditionalDataSize();
 			branch_to_false.generateBranch(probe, Branch.SKIP);
@@ -239,7 +251,7 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		//	|	-	|	-	|	-	|	-	|	-	| SKIP	|		|		|		|		|	|
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	v
 
-		probe = b.fork(false);
+		probe = b.fork(false, probe);
 		branch_to_false.generateBranch(probe, Branch.FORWARD);
 		true_part.generate(probe);
 		branch_to_end.generateBranch(probe, Branch.FORWARD);
@@ -290,7 +302,7 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	|
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	v
 
-		probe = b.fork(false);
+		probe = b.fork(false, probe);
 		branch_to_false.generateBranch(probe, Branch.FORWARD);
 		true_part.generate(probe);
 		branch_to_end.generateBranch(probe, Branch.LONG);
@@ -336,7 +348,7 @@ public class If extends com.F64.Block implements java.lang.Cloneable {
 		//	|	-	|	-	|	-	|	-	|	-	| SKIP	|		|		|		|		|	|
 		// -+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+	v
 
-		probe = b.fork(false);
+		probe = b.fork(false, probe);
 		branch_to_false.generateBranch(probe, Branch.LONG);
 		true_part.generate(probe);
 		branch_to_end.generateBranch(probe, Branch.FORWARD);

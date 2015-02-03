@@ -124,6 +124,7 @@ public class Dictionary {
 		this.register("^.<<",			false,	new Rcl());
 		this.register("\\",				false,	new LineComment());
 		this.register("(",				false,	new Comment());
+		this.register("?dup",			false,	new QDup());
 		this.register("?if",			true,	new If(Condition.QEQ0));
 		this.register("1+",				false,	new Inc());
 		this.register("1-",				false,	new Dec());
@@ -131,6 +132,7 @@ public class Dictionary {
 		this.register("2/",				false,	new Div2());
 		this.register("abs",			false,	new Abs());
 		this.register("and",			false,	new And());
+		this.register("begin",			true,	new Begin());
 		this.register("constant",		false,	new Constant());
 		this.register("drop",			false,	new Drop());
 		this.register("dup",			false,	new Dup());
@@ -150,15 +152,18 @@ public class Dictionary {
 		this.register("or",				false,	new Or());
 		this.register("over",			false,	new Over());
 		this.register("r>",				true,	new Pop());
+		this.register("repeat",			true,	new Repeat());
 		this.register("sign",			false,	new Sign());
 		this.register("swap",			false,	new Swap());
 		this.register("then",			true,	new Then());
 		this.register("to",				false,	new To());
 		this.register("tuck",			false,	new Tuck());
 		this.register("under",			false,	new Under());
+		this.register("until",			true,	new Until());
 		this.register("value",			false,	new Value());
 		this.register("variable",		false,	new Variable());
 		this.register("vector",			false,	new Vector());
+		this.register("while",			true,	new While());
 		this.register("xor",			false,	new Xor());
 		this.register("zero",			false,	new Zero());
 

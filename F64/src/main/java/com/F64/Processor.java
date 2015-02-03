@@ -1383,6 +1383,14 @@ public class Processor implements Runnable {
 		this.register[Register.S.ordinal()] = this.register[Register.T.ordinal()];		
 	}
 
+	public void doQDup()
+	{
+		if (this.register[Register.T.ordinal()] != 0) {
+			this.pushStack(this.register[Register.S.ordinal()]);
+			this.register[Register.S.ordinal()] = this.register[Register.T.ordinal()];
+		}
+	}
+
 	public void doShortNext(int slot, boolean forward)
 	{
 		if (this.register[Register.R.ordinal()] == 0) {
@@ -2922,6 +2930,7 @@ public class Processor implements Runnable {
 		switch (Ext1.values()[this.nextSlot()]) {
 		case RDROP:			this.doRDrop(); break;
 		case RDUP:			this.doRDup(); break;
+		case QDUP:			this.doQDup(); break;
 		case EXECUTE:		this.doExecute(); break;
 		case EXITI:			this.doExitInterrupt(this.nextSlot()); break;
 //		case SWAP0:			this.doSwap(this.nextSlot(), this.nextSlot()); this.slot = 0; break;

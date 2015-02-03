@@ -2,7 +2,7 @@
 \ -4 test .
 \ 1 test .
 
-: test 10 for 2 *  3 + next ;
-1 test .
+: test begin 2 *  3 + again ;
+
 
 
