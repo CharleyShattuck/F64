@@ -48,7 +48,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 	private Register			register_panel;
 	private LocalRegister		local_panel;
 	private SystemRegister		system_register_panel;
-	private MediaRegister		media_panel;
+	private SIMDRegister		media_panel;
 	private Flags				flag_panel;
 	private Ports				port_panel;
 	private Slots				slot_panel;
@@ -183,7 +183,7 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		this.register_panel = new Register(p);
 		this.local_panel = new LocalRegister(p);
 		this.system_register_panel = new SystemRegister(p);
-		this.media_panel = new MediaRegister(p);
+		this.media_panel = new SIMDRegister(p);
 		this.parameter_stack = new ParameterStack(p);
 		this.return_stack = new ReturnStack(p);
 		this.flag_panel = new Flags(this);

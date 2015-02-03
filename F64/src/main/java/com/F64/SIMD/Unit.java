@@ -3,7 +3,7 @@ package com.F64.SIMD;
 
 public class Unit {
 
-	public static long AddModI32(long s1, long s2)
+	public static long addModI32(long s1, long s2)
 	{
 		int s1_0 = (int) (s1 & 0xffff_ffff);
 		int s2_0 = (int) (s2 & 0xffff_ffff);
@@ -23,7 +23,7 @@ public class Unit {
 	{
 		this.register = new long[com.F64.Processor.NO_OF_REG][];
 		for (int i=0; i<com.F64.Processor.NO_OF_REG; ++i) {
-			this.register[i] = new long[com.F64.Processor.NO_OF_MEDIA_REGISTER_CELLS];
+			this.register[i] = new long[com.F64.Processor.NO_OF_SIMD_REGISTER_CELLS];
 		}
 
 	}
@@ -35,8 +35,8 @@ public class Unit {
 		long[] da = this.register[d];
 		long[] s1a = this.register[s1];
 		long[] s2a = this.register[s2];
-		for (int i=0; i<com.F64.Processor.MEDIA_SLICE_SIZE; ++i) {
-			da[i] = AddModI32(s1a[i], s2a[i]);
+		for (int i=0; i<com.F64.Processor.SIMD_SLICE_SIZE; ++i) {
+			da[i] = addModI32(s1a[i], s2a[i]);
 		}
 	}
 
@@ -149,6 +149,10 @@ public class Unit {
 		case SUB:
 			break;
 		case XOR:
+			break;
+		case PACK:
+			break;
+		case UNPACK:
 			break;
 		}
 	}

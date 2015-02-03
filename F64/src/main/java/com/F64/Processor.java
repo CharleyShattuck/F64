@@ -6,13 +6,13 @@ public class Processor implements Runnable {
 	public static final long	IO_BASE = 0xFFFF_FFFF_FFFF_FF00L;
 	public static final int		SLOT_ENCODE_BITS = 4;
 	public static final int		SLOT_BITS = 6;
-	public static final int		MEDIA_BITS = 9;
-	public static final int		MEDIA_SLICE_BITS = MEDIA_BITS - SLOT_BITS;
-	public static final int		MEDIA_SLICE_SIZE = 1 << MEDIA_SLICE_BITS;
-	public static final int		MEDIA_SLICE_MASK = MEDIA_SLICE_SIZE - 1;
+	public static final int		SIMD_BITS = 9;
+	public static final int		SIMD_SLICE_BITS = SIMD_BITS - SLOT_BITS;
+	public static final int		SIMD_SLICE_SIZE = 1 << SIMD_SLICE_BITS;
+	public static final int		SIMD_SLICE_MASK = SIMD_SLICE_SIZE - 1;
 	public static final int		BIT_PER_CELL = 1 << SLOT_BITS;
-	public static final int		MEDIA_REGISTER_BITS = 1 << MEDIA_BITS;
-	public static final int		NO_OF_MEDIA_REGISTER_CELLS = 1 << MEDIA_SLICE_BITS;
+	public static final int		SIMD_REGISTER_BITS = 1 << SIMD_BITS;
+	public static final int		NO_OF_SIMD_REGISTER_CELLS = 1 << SIMD_SLICE_BITS;
 	public static final int		NO_OF_REG = BIT_PER_CELL;
 	public static final int		NO_OF_FULL_SLOTS = BIT_PER_CELL / SLOT_BITS;
 	public static final int		SLOT_SIZE = 1 << SLOT_BITS;
@@ -488,7 +488,7 @@ public class Processor implements Runnable {
 	public int getPortReadMask() {return this.port_read_mask;}
 	public int getPortWriteMask() {return this.port_write_mask;}
 
-	public void setSlice(int value) {slice = value % NO_OF_MEDIA_REGISTER_CELLS;}
+	public void setSlice(int value) {slice = value % NO_OF_SIMD_REGISTER_CELLS;}
 
 	public long adc(long a, long b, boolean carry)
 	{
@@ -653,8 +653,8 @@ public class Processor implements Runnable {
 	{
 		long res = this.system_register[SystemRegister.FLAG.ordinal()];
 		int aux_data = this.slot;
-		aux_data <<= MEDIA_SLICE_BITS;
-		aux_data |= slice & MEDIA_SLICE_MASK;
+		aux_data <<= SIMD_SLICE_BITS;
+		aux_data |= slice & SIMD_SLICE_MASK;
 		aux_data <<= 9;
 		if (this.port_read_mask != 0) {
 			aux_data |= this.port_read_mask;
@@ -684,8 +684,8 @@ public class Processor implements Runnable {
 			this.port_read_mask = port;
 		}
 		aux_data >>= 9;
-		this.slice = aux_data & MEDIA_SLICE_MASK;
-		aux_data >>= MEDIA_SLICE_BITS;
+		this.slice = aux_data & SIMD_SLICE_MASK;
+		aux_data >>= SIMD_SLICE_BITS;
 		this.slot = aux_data;
 		long mask = -1;
 		this.system_register[SystemRegister.FLAG.ordinal()] = data & (mask >>> (3*SLOT_BITS));
@@ -2785,6 +2785,20 @@ public class Processor implements Runnable {
 		this.doDrop();
 	}
 
+	public void doFetchSIMD(int reg)
+	{
+		this.doDup();
+		int slice = (int)(this.getRegister(Register.R) & SIMD_SLICE_MASK);
+		this.setRegister(Register.T, this.getSIMDRegister(reg)[slice]);
+	}
+
+	public void doStoreSIMD(int reg)
+	{
+		int slice = (int)(this.getRegister(Register.R) & SIMD_SLICE_MASK);
+		this.getSIMDRegister(reg)[slice] = this.getRegister(Register.T);
+		this.doDrop();
+	}
+
 	public void doEQ0Q(int dest, int src, boolean pushStack)
 	{
 		long data = this.register[src];
@@ -2983,6 +2997,8 @@ public class Processor implements Runnable {
 //		case STORES:		this.doStoreS(this.nextSlot()); break;
 		case SFETCH:		this.doFetchSystem(this.nextSlot()); break;
 		case SSTORE:		this.doStoreSystem(this.nextSlot()); break;
+		case SIMDFETCH:		this.doFetchSIMD(this.nextSlot()); break;
+		case SIMDSTORE:		this.doStoreSIMD(this.nextSlot()); break;
 //		case SFETCHI:		this.doSFetch(this.nextSlot()); break;
 //		case SSTOREI:		this.doSStore(this.nextSlot()); break;
 		case FETCHPORT:		this.doFetchPort(this.nextSlot(), false); break;

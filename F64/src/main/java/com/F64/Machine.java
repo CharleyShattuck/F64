@@ -157,7 +157,7 @@ public class Machine {
 //		java.lang.System.setProperty( "user.dir", args[0] );
 //		String file_base = args[0];
 		
-		assert((Processor.SLOT_ENCODE_BITS + Processor.MEDIA_SLICE_BITS + 9) <= (3*Processor.SLOT_BITS));
+		assert((Processor.SLOT_ENCODE_BITS + Processor.SIMD_SLICE_BITS + 9) <= (3*Processor.SLOT_BITS));
 		assert(Branch.values().length <= (1 << (Processor.SLOT_BITS-2)));
 		assert(ISA.values().length <= Processor.SLOT_SIZE);
 		assert(Ext1.values().length <= Processor.SLOT_SIZE);

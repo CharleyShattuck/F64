@@ -19,6 +19,9 @@ public enum Operation {
 	LEQ,
 	GEQ,
 	GTQ,
+	PACK,
+	UNPACK,
+	BLEND,
 	;
 
 }

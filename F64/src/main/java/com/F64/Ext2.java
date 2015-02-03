@@ -32,6 +32,8 @@ public enum Ext2 {
 //	STORES(3,		"!s",		"store via system register (register in next slot)"),
 	SFETCH(3,		"s@",		"fetch system register (system register in next slot) ( - n)"),
 	SSTORE(3,		"s!",		"store system register (system register in next slot) ( n -)"),
+	SIMDFETCH(3,	"simd@",	"fetch SIMD register (SIMD register in next slot, slice in register R) ( - n)"),
+	SIMDSTORE(3,	"simd!",	"store SIMD register (SIMD register in next slot, slice in register R) ( n -)"),
 //	SFETCHI(3,		"",	"fetch system register indirect (register in next slot)"),
 //	SSTOREI(3,		"",	"store system register indirect (register in next slot)"),
 	FETCHPORT(3,	"@io?",		"fetch from port(s) without waiting. The next slot contains the mask with one bit per port."),
