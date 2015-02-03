@@ -5,7 +5,7 @@ public enum Register {
 	T("t",	"top of parameter stack"),
 	S("s",	"second of parameter stack"),
 	R("r",	"top of return stack"),
-	W("w",	"temporary (work) register"),
+//	W("w",	"temporary (work) register"),
 	L("l",	"limit register"),
 	;
 

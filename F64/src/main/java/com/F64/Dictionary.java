@@ -211,6 +211,8 @@ public class Dictionary {
 		this.register("Reg|^T",			false,	new Const(Register.T.ordinal()));
 		this.register("Reg|^S",			false,	new Const(Register.S.ordinal()));
 		this.register("Reg|^R",			false,	new Const(Register.R.ordinal()));
+//		this.register("Reg|^W",			false,	new Const(Register.W.ordinal()));
+		this.register("Reg|^L",			false,	new Const(Register.L.ordinal()));
 
 		this.register("ISA|^+",			false,	new Const(ISA.ADD.ordinal()));
 		this.register("ISA|^++",		false,	new Const(ISA.INC.ordinal()));

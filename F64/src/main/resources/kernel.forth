@@ -2,7 +2,7 @@
 \ -4 test .
 \ 1 test .
 
-: test begin 2 * ?dup while 3 + repeat ;
+: test ?for 2 * 3 + next ;
 
 
 
