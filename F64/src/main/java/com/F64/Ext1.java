@@ -6,6 +6,7 @@ public enum Ext1 {
 	QDUP(2,		"qdup",		"dup if T != 0"),
 	EXECUTE(2,	"execute",	"Execute word. Move T to I"),
 	EXITI(3,	"exiti",	"return from interrupt (interrupt # in next slot)"),
+	LCOL(2,		"lcol",		"Local colon. Continuation address in next cell. ( - xt )"),
 	LJMP(2,		"ljmp",		"Long jump. Address in next cell."),
 //	RNEXT(-1,	"rnext",	"remaining next"),
 	LNEXT(2,	"lnext",	"long next"),

@@ -385,6 +385,7 @@ public class Processor implements Runnable {
 	public static int readSlot(long value, int slot)
 	{
 		assert(slot >= 0);
+		if (slot >= NO_OF_SLOTS) {return 0;}
 		return (int)(value >>> SLOT_SHIFT[slot]) & SLOT_MASK;
 	}
 
@@ -1451,10 +1452,10 @@ public class Processor implements Runnable {
 	public void doQFor()
 	{
 		long limit = this.register[Register.T.ordinal()];
-		if (limit!= 0) {
+		if (limit != 0) {
 			this.register[Register.T.ordinal()] = TRUE;
 			this.pushReturnStack(this.register[Register.R.ordinal()]);
-			this.register[Register.R.ordinal()] = limit;
+			this.register[Register.R.ordinal()] = limit-1;
 		}
 		else {
 			this.register[Register.T.ordinal()] = FALSE;
@@ -2204,6 +2205,17 @@ public class Processor implements Runnable {
 		this.slot = NO_OF_SLOTS;		
 	}
 
+
+	public void doLongCol()
+	{
+		doDup();
+		long cont_adr = system.getMemory(this.getSystemRegister(SystemRegister.P));
+		nextP();
+		long col_adr = this.getSystemRegister(SystemRegister.P);
+		this.register[Register.T.ordinal()] = col_adr;
+		this.system_register[SystemRegister.P.ordinal()] = cont_adr;
+		this.slot = NO_OF_SLOTS;		
+	}
 	
 	/**
 	 * Jump to an address. Replace I with the content of the target address.
@@ -2248,8 +2260,10 @@ public class Processor implements Runnable {
 
 	public void doExecute()
 	{
-		this.system_register[SystemRegister.I.ordinal()] = writeSlot(register[Register.T.ordinal()], 0, ISA.CALL.ordinal());
+		long code = Processor.writeSlot(register[Register.T.ordinal()], 0, ISA.CALL.ordinal());
 		this.doDrop();
+//		p.execute(code);
+		this.system_register[SystemRegister.I.ordinal()] = code;
 		this.slot = 0; // start with first slot
 	}
 
@@ -2279,10 +2293,12 @@ public class Processor implements Runnable {
 
 	public void doEnter()
 	{
+		long adr = this.system_register[SystemRegister.P.ordinal()];
+		long new_adr =  this.getSystemRegister(SystemRegister.W);
 		// push P on return stack
 		this.doPushSystem(SystemRegister.P.ordinal());
 		// set P with saved address in W. W is set by CALL
-		this.setSystemRegister(SystemRegister.P, this.getSystemRegister(SystemRegister.W));
+		this.setSystemRegister(SystemRegister.P, new_adr);
 		
 	}
 
@@ -2999,6 +3015,7 @@ public class Processor implements Runnable {
 		case EXECUTE:		this.doExecute(); break;
 		case EXITI:			this.doExitInterrupt(this.nextSlot()); break;
 //		case SWAP0:			this.doSwap(this.nextSlot(), this.nextSlot()); this.slot = 0; break;
+		case LCOL:			this.doLongCol(); break;
 		case LJMP:			this.doLongJump(); break;
 //		case RNEXT:			this.doRemainingNext(); break;
 		case LNEXT:			this.doLongNext(); break;
@@ -3450,7 +3467,7 @@ public class Processor implements Runnable {
 	{
 		this.doPushSystem(SystemRegister.P.ordinal());
 		system_register[SystemRegister.I.ordinal()] = instr;
-		system_register[SystemRegister.P.ordinal()] = 0x7fff_ffff_ffff_ffffL;
+		system_register[SystemRegister.P.ordinal()] = 0x7fff_ffff_ffff_ffffL; // invalid address
 		this.slot = 0;
 		this.running = true;
 		while (this.running) {

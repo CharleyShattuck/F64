@@ -53,6 +53,7 @@ public class Execute extends com.F64.Codepoint {
 		}
 		else {
 			b.add(Ext1.EXECUTE);
+			b.flush();
 			if (use_jump) {
 				b.add(ISA.EXIT);
 			}

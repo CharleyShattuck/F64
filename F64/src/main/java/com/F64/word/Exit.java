@@ -4,6 +4,7 @@ import com.F64.Compiler;
 import com.F64.Interpreter;
 import com.F64.Processor;
 import com.F64.Exception;
+import com.F64.Scope;
 
 public class Exit extends com.F64.Word {
 
@@ -18,8 +19,18 @@ public class Exit extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
+
+		Scope s = c.getScope();
+		while (!(s instanceof com.F64.scope.Main)) {
+			s = s.getOwner();
+			if (s == null) {
+				i.getProcessor().doThrow(Exception.INVALID_SCOPE);
+				return;
+			}
+		}
+		com.F64.scope.Main main = (com.F64.scope.Main)s;
 		c.compile(new com.F64.codepoint.Exit());
-		c.getMainScope().internalExit();
+		main.internalExit();
 	}
 
 }

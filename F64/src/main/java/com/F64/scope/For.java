@@ -102,13 +102,12 @@ public class For extends com.F64.Block implements java.lang.Cloneable {
 		int diff;
 		Builder probe = null;
 		int t_cnt = body.countInstructions();
-		
+		boolean is_conditional = conditional;
 		
 		if (count_valid) {
-			if (conditional) {
+			if (is_conditional) {
 				if (count == 0) {return;}
-				--count;
-				conditional = false;
+				is_conditional = false;
 			}
 			if (t_cnt == 0) {return;}
 			b.addLiteral(count);
@@ -117,7 +116,7 @@ public class For extends com.F64.Block implements java.lang.Cloneable {
 			b.add(ISA.DROP);
 			return;
 		}
-		if (conditional) {
+		if (is_conditional) {
 			// check if short variant is possible
 			probe = b.fork(false);
 			com.F64.ConditionalBranch branch_to_end = new com.F64.ConditionalBranch(Condition.EQ0);

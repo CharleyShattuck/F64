@@ -6,6 +6,12 @@ import com.F64.Interpreter;
 import com.F64.Processor;
 
 public class Semicolon extends com.F64.Word {
+	private boolean		local;
+	
+	public Semicolon (boolean local)
+	{
+		this.local = local;
+	}
 
 	@Override
 	public void execute(Interpreter i)
@@ -19,9 +25,14 @@ public class Semicolon extends com.F64.Word {
 	{
 		Compiler c = i.getCompiler();
 		c.compile(new com.F64.codepoint.Exit());
-		c.stop();
+		if (local) {
+			c.setScope(c.getScope().getOwner());
+		}
+		else {
+			c.stop();
 //		c.getBlock().strip();
-		i.setCompiling(false);
+			i.setCompiling(false);
+		}
 	}
 
 

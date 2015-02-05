@@ -231,7 +231,7 @@ public class ConditionalBranch implements java.lang.Cloneable {
 			b.add(code, cond.encode(branch), Processor.SLOT_MASK);
 			fixup_adr = b.getCurrentPosition();
 			fixup_slot = b.getCurrentSlot()-1;
-			p_adr = b.getCurrentP();
+			p_adr = b.getCurrentP()+1;
 //			remaining_bits = 0;
 			break;
 //		case REM:

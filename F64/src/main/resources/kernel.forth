@@ -2,7 +2,8 @@
 \ -4 test .
 \ 1 test .
 
-: test ?for 2 * 3 + next ;
-
+: test [: ?for 2 * 3 + next ;] execute ;
+\ : test ?for 2 * 3 + next ;
+1 1 test .
 
 

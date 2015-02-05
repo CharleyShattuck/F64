@@ -18,6 +18,11 @@ public class Main extends Block {
 		word = w;
 	}
 
+	public Main(com.F64.Scope s)
+	{
+		super(s);
+	}
+
 	public void internalExit() {has_internal_exit = true;}
 	public void internalCall() {has_internal_call = true;}
 	

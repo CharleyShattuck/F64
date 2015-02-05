@@ -93,8 +93,10 @@ public class Dictionary {
 
 	public void createStandardWords()
 	{
-		this.register(":",				false,	new Colon(false));
-		this.register(";",				true,	new Semicolon());
+		this.register(":",				false,	new Colon(false, false));
+		this.register(";",				true,	new Semicolon(false));
+		this.register("[:",				false,	new Colon(false, true));
+		this.register(";]",				true,	new Semicolon(true));
 		this.register(".",				false,	new Dot());
 		this.register("+",				false,	new Add());
 		this.register("-",				false,	new Sub());
@@ -138,10 +140,11 @@ public class Dictionary {
 		this.register("drop",			false,	new Drop());
 		this.register("dup",			false,	new Dup());
 		this.register("else",			true,	new Else());
+		this.register("execute",		false,	new Execute());
 		this.register("exit",			true,	new Exit());
 		this.register("for",			true,	new For());
 		this.register("if",				true,	new If(Condition.EQ0));
-		this.register("inline:",		false,	new Colon(true));
+		this.register("inline:",		false,	new Colon(true, false));
 		this.register("max",			false,	new Max());
 		this.register("min",			false,	new Min());
 		this.register("mod",			false,	new Mod());
