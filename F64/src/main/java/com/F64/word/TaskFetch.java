@@ -3,23 +3,21 @@ package com.F64.word;
 import com.F64.Compiler;
 import com.F64.Interpreter;
 import com.F64.Processor;
-import com.F64.Register;
 
-public class Lsl extends com.F64.Word {
+public class TaskFetch extends com.F64.Word {
 
 	@Override
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.getTask().setRegister(Register.T, p.lsl(p.getTask().getRegister(Register.S), (int)p.getTask().getRegister(Register.T)));
-		p.getTask().nip();
+		p.doTaskFetch();
 	}
 
 	@Override
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(new com.F64.codepoint.Lsl());
+		c.compile(new com.F64.codepoint.TaskFetch());
 	}
 
 

@@ -186,6 +186,10 @@ public class Dictionary {
 		this.register("System|@",		false,	new SystemFetch());
 		this.register("System|!",		false,	new SystemStore());
 
+		this.register("Task|@",			false,	new TaskFetch());
+		this.register("Task|!",			false,	new TaskStore());
+		this.register("Task|switch",	false,	new TaskSwitch());
+
 		this.register("SysReg|^CLI",	false,	new Const(SystemRegister.CLI.ordinal()));
 		this.register("SysReg|^CLK",	false,	new Const(SystemRegister.CLK.ordinal()));
 		this.register("SysReg|^EXC",	false,	new Const(SystemRegister.EXC.ordinal()));

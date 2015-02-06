@@ -11,7 +11,7 @@ public class Sign extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.setRegister(Register.T, Processor.sign(p.getRegister(Register.T)));
+		p.getTask().setRegister(Register.T, Processor.sign(p.getTask().getRegister(Register.T)));
 	}
 
 	@Override

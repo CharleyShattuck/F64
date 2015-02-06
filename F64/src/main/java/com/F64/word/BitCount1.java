@@ -11,7 +11,7 @@ public class BitCount1 extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.setRegister(Register.T, Processor.countBits(p.getRegister(Register.T)));
+		p.getTask().setRegister(Register.T, Processor.countBits(p.getTask().getRegister(Register.T)));
 	}
 
 	@Override

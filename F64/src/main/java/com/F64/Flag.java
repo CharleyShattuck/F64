@@ -23,6 +23,8 @@ public enum Flag {
 	CLOCK(		"clk",		"external clock interrupt"),
 	// arithmetic
 	CARRY(		"y",		"carry flag"),
+//	READPEND(	"r?",		"read pending"),
+//	WRITEPEND(	"w?",		"write possible"),
 	// ports flags
 	UPREAD(		"ur",		"data was fetched from up port"),
 	DOWNREAD(	"dr",		"data was fetched from down port"),

@@ -11,7 +11,7 @@ public class BitParity extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.setRegister(Register.T, Processor.parityBits(p.getRegister(Register.T)) ? Processor.TRUE : Processor.FALSE);
+		p.getTask().setRegister(Register.T, Processor.parityBits(p.getTask().getRegister(Register.T)) ? Processor.TRUE : Processor.FALSE);
 	}
 
 	@Override

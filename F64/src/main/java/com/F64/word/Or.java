@@ -11,7 +11,7 @@ public class Or extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.setRegister(Register.T, p.getRegister(Register.S) | p.getRegister(Register.T));
+		p.getTask().setRegister(Register.T, p.getTask().getRegister(Register.S) | p.getTask().getRegister(Register.T));
 		p.getTask().nip();
 	}
 

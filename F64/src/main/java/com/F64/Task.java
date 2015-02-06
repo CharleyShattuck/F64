@@ -4,6 +4,9 @@ public class Task {
 	private System				system;
 	private Processor			processor;
 	private int					index;
+	private int					slot;
+	private int					slice;
+	private boolean				carry;
 	private long[]				register;
 	private long[]				local_register;
 	private long[]				system_register;
@@ -26,6 +29,12 @@ public class Task {
 	}
 
 	public	com.F64.SIMD.Unit getSIMD() {return simd;}
+	public	int getSlot() {return slot;}
+	public	void setSlot(int value) {slot = value;}
+	public	int getSlice() {return slice;}
+	public	void setSlice(int value) {slice = value;}
+	public	boolean getCarry() {return carry;}
+	public	void setCarry(boolean value) {carry = value;}
 
 	public void reset()
 	{
@@ -50,6 +59,7 @@ public class Task {
 			this.setSystemRegister(SystemRegister.R0, 0);
 			this.setSystemRegister(SystemRegister.RL, return_stack.length - 1);
 		}
+		slot = Processor.NO_OF_SLOTS;
 		setSystemRegister(SystemRegister.P, 0);
 		setSystemRegister(SystemRegister.FLAG, 0);
 		// system register
@@ -71,10 +81,10 @@ public class Task {
 		bootcode = Processor.writeSlot(bootcode, slot++, Ext2.SSTORE.ordinal());
 		bootcode = Processor.writeSlot(bootcode, slot++, SystemRegister.P.ordinal());
 		setSystemRegister(SystemRegister.I, bootcode);
+		this.slot = 0;
 		// power-on reset clears the reset interrupt flags
 		setFlag(Flag.RESET, false);
 		setFlag(SystemRegister.INTS, Flag.RESET, false);
-
 	}
 
 	public long[] getSIMDRegister(int reg) {return simd.getRegister(reg);}

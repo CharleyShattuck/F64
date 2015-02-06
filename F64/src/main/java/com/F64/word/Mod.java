@@ -11,8 +11,8 @@ public class Mod extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		long dd = p.getRegister(Register.S);
-		long ds = p.getRegister(Register.T);
+		long dd = p.getTask().getRegister(Register.S);
+		long ds = p.getTask().getRegister(Register.T);
 		if (dd < 0) {dd = -dd;}
 		boolean dsneg = false;
 		if (ds < 0) {dsneg = true; ds = -ds;}
@@ -24,7 +24,7 @@ public class Mod extends com.F64.Word {
 		if (dsneg) {
 			r = -r;
 		}
-		p.setRegister(Register.T, r);
+		p.getTask().setRegister(Register.T, r);
 		p.getTask().nip();
 	}
 

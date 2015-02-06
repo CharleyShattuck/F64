@@ -11,7 +11,7 @@ public class Asr extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.setRegister(Register.T, p.asr(p.getRegister(Register.S), (int)p.getRegister(Register.T)));
+		p.getTask().setRegister(Register.T, p.asr(p.getTask().getRegister(Register.S), (int)p.getTask().getRegister(Register.T)));
 		p.getTask().nip();
 	}
 

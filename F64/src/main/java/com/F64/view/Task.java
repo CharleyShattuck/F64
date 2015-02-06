@@ -15,6 +15,7 @@ import javax.swing.JTabbedPane;
 
 import com.F64.Flag;
 
+@SuppressWarnings("serial")
 public class Task extends JPanel implements ActionListener, ItemListener {
 	private com.F64.Processor	processor;
 	private com.F64.Task		task;
@@ -30,13 +31,14 @@ public class Task extends JPanel implements ActionListener, ItemListener {
 	private	int					no_of_tasks;
 	private	int					selected_task;
 	private volatile boolean	updating;
+	private volatile boolean	selection_locked;
 
 	public Task(com.F64.Processor p)
 	{
 		super( new GridBagLayout() );
 		processor = p;
 		task = p.getTask();
-		int i,limit = p.getNoOfTasks();
+		int i;
 		task_selection = new JComboBox<String>();
 		this.register_pane = new JTabbedPane();
 		this.register_panel = new Register(task);
@@ -102,6 +104,9 @@ public class Task extends JPanel implements ActionListener, ItemListener {
 
 	public void update()
 	{
+		if (!this.selection_locked && (this.selected_task != processor.getCurrentTask())) {
+			selectTask(processor.getCurrentTask());
+		}
 		this.updating = true;
 		if (processor.hasFailed()) {
 			this.simd_panel.setBackground(Color.RED);
@@ -152,11 +157,15 @@ public class Task extends JPanel implements ActionListener, ItemListener {
 
 	public void selectTask(int index)
 	{
-		this.selected_task = index;
-		this.updating = true;
-		task_selection.setSelectedIndex(index);
-		this.updating = false;
-		setTask(processor.getTask(index));
+		if (index != this.selected_task) {
+			selection_locked = true;
+			this.selected_task = index;
+			this.updating = true;
+			task_selection.setSelectedIndex(index);
+			this.updating = false;
+			setTask(processor.getTask(index));
+			selection_locked = false;
+		}
 	}
 
 	@Override
@@ -169,7 +178,9 @@ public class Task extends JPanel implements ActionListener, ItemListener {
 			if (flag_panel.isFlag(i, source)) {
 				// toggle flag bit
 				this.task.setFlag(i, !this.task.getFlag(i));
+				selection_locked = true;
 				flag_panel.update();
+				selection_locked = false;
 			}
 		}
 	}
@@ -180,7 +191,7 @@ public class Task extends JPanel implements ActionListener, ItemListener {
 		if (this.updating) {return;}
 		if (ev.getSource() == task_selection) {
 			selectTask(task_selection.getSelectedIndex());
-			update();
+//			update();
 		}
 	}
 

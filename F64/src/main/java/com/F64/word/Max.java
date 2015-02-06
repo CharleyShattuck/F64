@@ -11,7 +11,7 @@ public class Max extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.setRegister(Register.T, Processor.max(p.getRegister(Register.S), p.getRegister(Register.T)));
+		p.getTask().setRegister(Register.T, Processor.max(p.getTask().getRegister(Register.S), p.getTask().getRegister(Register.T)));
 		p.getTask().nip();
 	}
 

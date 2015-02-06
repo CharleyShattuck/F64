@@ -11,7 +11,7 @@ public class Zero extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.setRegister(Register.T, 0);
+		p.getTask().setRegister(Register.T, 0);
 	}
 
 	@Override

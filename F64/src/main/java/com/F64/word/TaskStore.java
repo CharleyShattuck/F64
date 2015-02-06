@@ -1,28 +1,25 @@
 package com.F64.word;
 
 import com.F64.Compiler;
-import com.F64.Flag;
 import com.F64.Interpreter;
 import com.F64.Processor;
 import com.F64.Register;
 
-public class Rcr extends com.F64.Word {
+public class TaskStore extends com.F64.Word {
 
 	@Override
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.getTask().setRegister(Register.T, p.rcr(p.getTask().getRegister(Register.S), (int)p.getTask().getRegister(Register.T), p.getTask().getFlag(Flag.CARRY)));
-		p.getTask().nip();
+		p.doTaskSetup();
 	}
 
 	@Override
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(new com.F64.codepoint.Rcr());
+		c.compile(new com.F64.codepoint.TaskStore());
 	}
-
 
 
 }

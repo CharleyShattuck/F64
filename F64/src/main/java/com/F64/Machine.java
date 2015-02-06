@@ -172,7 +172,7 @@ public class Machine {
 		assert(Flag.values().length <= (Processor.BIT_PER_CELL - 3*Processor.SLOT_BITS));
 		assert(SystemRegister.values().length <= Processor.SLOT_SIZE);
 		assert(Register.values().length <= Processor.SLOT_SIZE);
-		Machine main = new Machine(8, 4, 10000, 100000, 32, 16, 10, false);
+		Machine main = new Machine(8, 4, 10000, 100000, 256, 256, 10, false);
 		for (int i=0; i<args.length; ++i) {
 			java.io.FileInputStream reader;
 			try {

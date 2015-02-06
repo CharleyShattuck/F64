@@ -64,6 +64,36 @@ public class Slots extends JPanel {
 		);
 		y += 1;
 		//
+		label = new JLabel("slice#");
+		this.add(
+			label,
+			new GridBagConstraints(
+				x, y,
+				1, 1,
+				0.0, 0.0,
+				GridBagConstraints.WEST,
+				GridBagConstraints.BOTH,
+				label_insets,
+				2, 0
+			)
+		);
+		this.slice_no = new JTextField("", 20);
+		this.slice_no.setFont(font);
+//		this.slot_no.setHorizontalAlignment(JTextField.RIGHT);
+		this.add(
+			this.slice_no,
+			new GridBagConstraints(
+				x+1, y,
+				1, 1,
+				0.0, 0.0,
+				GridBagConstraints.WEST,
+				GridBagConstraints.BOTH,
+				field_insets,
+				2, 0
+			)
+		);
+		y += 1;
+		//
 		label = new JLabel("slot#");
 		this.add(
 			label,
@@ -125,34 +155,6 @@ public class Slots extends JPanel {
 			);
 		}
 		y += limit;
-		label = new JLabel("slice#");
-		this.add(
-			label,
-			new GridBagConstraints(
-				x, y,
-				1, 1,
-				0.0, 0.0,
-				GridBagConstraints.WEST,
-				GridBagConstraints.BOTH,
-				label_insets,
-				2, 0
-			)
-		);
-		this.slice_no = new JTextField("", 20);
-		this.slice_no.setFont(font);
-//		this.slot_no.setHorizontalAlignment(JTextField.RIGHT);
-		this.add(
-			this.slice_no,
-			new GridBagConstraints(
-				x+1, y,
-				1, 1,
-				0.0, 0.0,
-				GridBagConstraints.WEST,
-				GridBagConstraints.BOTH,
-				field_insets,
-				2, 0
-			)
-		);
 	}
 
 	public void setProcessor(com.F64.Processor value) {processor = value;}

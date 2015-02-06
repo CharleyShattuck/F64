@@ -15,7 +15,7 @@ public class Flags extends JPanel {
 	private JCheckBox[]			flags;
 	private com.F64.Task		task;
 
-	public Flags(Task p)
+	public Flags(Task t)
 	{
 		super( new GridBagLayout() );
 
@@ -44,7 +44,7 @@ public class Flags extends JPanel {
 		for (i=0; i<limit; ++i) {
 			this.flags[i] = new JCheckBox(Flag.values()[i].name());
 			this.flags[i].setToolTipText(Flag.values()[i].getTooltip());
-			this.flags[i].addItemListener(p);
+			this.flags[i].addItemListener(t);
 			this.add(
 				this.flags[i],
 				new GridBagConstraints(
@@ -65,8 +65,10 @@ public class Flags extends JPanel {
 
 	public void update()
 	{
-		for (int i=0; i<Flag.values().length; ++i) {
-			this.flags[i].setSelected(task.getFlag(i));
+		if (task != null) {
+			for (int i=0; i<Flag.values().length; ++i) {
+				this.flags[i].setSelected(task.getFlag(i));
+			}
 		}
 	}
 

@@ -458,8 +458,8 @@ public class Processor implements Runnable {
 
 	public System getSystem() {return system;}
 	
-	public long getRegister(Register reg) {return task.getRegister(reg.ordinal());}
-	public void setRegister(Register reg, long value) {task.setRegister(reg.ordinal(), value);}
+//	public long getRegister(Register reg) {return task.getRegister(reg.ordinal());}
+//	public void setRegister(Register reg, long value) {task.setRegister(reg.ordinal(), value);}
 
 //	public long[] getSIMDRegister(int reg) {return task.getSIMDRegister(reg);}
 	
@@ -1392,7 +1392,7 @@ public class Processor implements Runnable {
 	public void doJumpIO(int mask)
 	{
 		task.setSystemRegister(SystemRegister.P, getIOAddress(mask));
-		slot = NO_OF_SLOTS; // leave slot
+		slot = NO_OF_SLOTS;
 	}
 
 	public void doSign(int dest, int src)
@@ -1443,7 +1443,7 @@ public class Processor implements Runnable {
 //			this.setFlag(Flag.RESERVED, true);
 		}
 		task.setSystemRegister(SystemRegister.RES, adr);
-		this.setRegister(Register.T, system.getMemory(adr));
+		task.setRegister(Register.T, system.getMemory(adr));
 		return true;
 	}
 
@@ -1461,11 +1461,11 @@ public class Processor implements Runnable {
 			// memory has not been reserved
 		}
 		if (task.getFlag(Flag.TOUCHED)) {
-			this.setRegister(Register.T, -1);
+			task.setRegister(Register.T, Processor.TRUE);
 		}
 		else {
 			system.setMemory(adr, value);
-			this.setRegister(Register.T, 0);
+			task.setRegister(Register.T, Processor.FALSE);
 		}
 		task.setSystemRegister(SystemRegister.RES, 0);
 		task.nip();
@@ -1496,7 +1496,7 @@ public class Processor implements Runnable {
 	public void doFetchSystem(int reg)
 	{
 		task.dup();
-		this.setRegister(Register.T, task.getSystemRegister(reg));
+		task.setRegister(Register.T, task.getSystemRegister(reg));
 	}
 
 	public void doStoreSystem(int reg)
@@ -1509,7 +1509,7 @@ public class Processor implements Runnable {
 	{
 		task.dup();
 		int slice = (int)(task.getRegister(Register.R) & SIMD_SLICE_MASK);
-		this.setRegister(Register.T, task.getSIMDRegister(reg)[slice]);
+		task.setRegister(Register.T, task.getSIMDRegister(reg)[slice]);
 	}
 
 	public void doStoreSIMD(int reg)
@@ -1518,7 +1518,7 @@ public class Processor implements Runnable {
 		task.getSIMDRegister(reg)[slice] = task.getRegister(Register.T);
 		task.drop();
 	}
-
+	
 	public void doExt1()
 	{
 		switch (Ext1.values()[this.nextSlot()]) {
@@ -1568,6 +1568,7 @@ public class Processor implements Runnable {
 		case LE0Q:			task.le0q(Register.T.ordinal(), Register.T.ordinal(), false); break;
 		case FETCHRES:		this.doFetchReserved(); break;
 		case STORECOND:		this.doStoreConditional(); break;
+		case TASKFETCH:		this.doTaskFetch(); break;
 		default: this.interrupt(Flag.ILLEGAL);
 		}
 	}
@@ -1958,5 +1959,44 @@ public class Processor implements Runnable {
 		task.popSystem(SystemRegister.P.ordinal());
 	}
 
-	
+	/**
+	 * Prepare a task so that it starts with the execution token xt
+	 * ( xt task - )
+	 */
+	public void doTaskSetup()
+	{
+		int no = (int)task.getT();
+		long xt = task.getT();
+		long code = Processor.writeSlot(xt, 0, ISA.CALL.ordinal());
+		this.task_list[no].reset();
+		this.task_list[no].setSystemRegister(SystemRegister.I, code);
+	}
+
+	/**
+	 * Switch task
+	 * ( task - )
+	 */
+	public void doTaskSwitch()
+	{
+		int no = (int)task.getT();
+		task.setSlot(slot);
+		task.setSlice(slice);
+		task.setCarry(carry);
+		this.current_task = no;
+		this.task = task_list[no];
+		slot = task.getSlot();
+		slice = task.getSlice();
+		carry = task.getCarry();
+	}
+
+	/**
+	 * Get current task
+	 * ( - task )
+	 */
+	public void doTaskFetch()
+	{
+		task.dup();
+		task.setRegister(Register.T, this.current_task);
+	}
+
 }
