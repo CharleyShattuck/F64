@@ -34,7 +34,7 @@ import com.F64.Interpreter;
 import com.F64.System;
 
 @SuppressWarnings("serial")
-public class Processor  extends JFrame implements ActionListener, ItemListener, Runnable {
+public class Processor  extends JFrame implements ActionListener, Runnable {
 	private com.F64.Processor	processor;
 	private JSplitPane			main_split_pane;
 	private JToolBar			toolbar;
@@ -44,16 +44,17 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 	private JButton				stop;
 	private JScrollPane 		scroll;
 	private JPanel				main_panel;
-	private JTabbedPane			register_pane;
-	private Register			register_panel;
-	private LocalRegister		local_panel;
-	private SystemRegister		system_register_panel;
-	private SIMDRegister		media_panel;
-	private Flags				flag_panel;
+//	private JTabbedPane			register_pane;
+//	private Register			register_panel;
+//	private LocalRegister		local_panel;
+//	private SystemRegister		system_register_panel;
+//	private SIMDRegister		media_panel;
+//	private Flags				flag_panel;
+	private Task				task_panel;
 	private Ports				port_panel;
 	private Slots				slot_panel;
-	private ParameterStack		parameter_stack;
-	private ReturnStack			return_stack;
+//	private ParameterStack		parameter_stack;
+//	private ReturnStack			return_stack;
 //	private JPanel				other_panel;
 	private volatile boolean	running;
 	private volatile boolean	tracing;
@@ -155,8 +156,8 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 	public Processor(com.F64.Processor p, Interpreter i, Compiler c, System s, Dictionary d)
 	{
 		this.processor = p;
-		this.setSize(1000,850);
-		this.setPreferredSize(new Dimension(1000, 850));
+		this.setSize(1000,900);
+		this.setPreferredSize(new Dimension(1000, 900));
 		this.setTitle("Single Processor View");
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		Insets panel_insets = new Insets( 0, 0, 0, 0);
@@ -174,39 +175,25 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		this.toolbar.add(this.step);
 		this.toolbar.add(this.stop);
 
-		this.register_pane = new JTabbedPane();
+//		this.register_pane = new JTabbedPane();
 		this.main_panel = new JPanel( new GridBagLayout() );
 		this.main_split_pane.setTopComponent(this.toolbar);
 		this.scroll = new JScrollPane(this.main_panel);
 		this.main_split_pane.setBottomComponent(this.scroll);
-//		this.register_panel = new JPanel( new GridBagLayout() );
-		this.register_panel = new Register(p);
-		this.local_panel = new LocalRegister(p);
-		this.system_register_panel = new SystemRegister(p);
-		this.media_panel = new SIMDRegister(p);
-		this.parameter_stack = new ParameterStack(p);
-		this.return_stack = new ReturnStack(p);
-		this.flag_panel = new Flags(this);
-		this.port_panel = new Ports();
-		this.slot_panel = new Slots();
+		task_panel = new Task(p);
+		this.port_panel = new Ports(p);
+		this.slot_panel = new Slots(p);
 //		this.port_panel = new JPanel( new GridBagLayout() );
 //		this.other_panel = new JPanel( new GridBagLayout() );
 		// register
 //		this.addRegister(this.register_panel, 0, 0);
 
-		this.register_pane.addTab("Register", null, this.register_panel, "General purpose register");
-		this.register_pane.addTab("Local", null, this.local_panel, "Local register");
-		this.register_pane.addTab("System", null, this.system_register_panel, "System register");
-		this.register_pane.addTab("Media", null, this.media_panel, "Multi media register");
-		this.register_pane.addTab("Flags", null, this.flag_panel, "Flags");
-		this.register_pane.addTab("Stack", null, this.parameter_stack, "Parameter stack");
-		this.register_pane.addTab("Return", null, this.return_stack, "Return stack");
 		
 		int x = 0;
 		int y = 0;
 		// register
 		this.main_panel.add(
-				this.register_pane,
+				this.task_panel,
 				new GridBagConstraints(
 					x, y,
 					1, 2,
@@ -218,37 +205,6 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 				)
 			);
 		x += 1;
-//		// system register
-//		this.main_panel.add(
-//				this.system_register_panel,
-//				new GridBagConstraints(
-//					x, y,
-//					1, 2,
-//					0.0, 1.0,
-//					GridBagConstraints.WEST,
-//					GridBagConstraints.BOTH,
-//					panel_insets,
-//					0, 0
-//				)
-//			);
-//		x += 1;
-		// flags
-//		this.addFlags(this.flag_panel, 0, 0);
-//		this.main_panel.add(
-//				this.flag_panel,
-//				new GridBagConstraints(
-//					x, y,
-//					1, 2,
-//					0.0, 1.0,
-//					GridBagConstraints.WEST,
-//					GridBagConstraints.BOTH,
-//					panel_insets,
-//					0, 0
-//				)
-//			);
-//		x += 1;
-		// slots
-//		this.addSlots(this.other_panel, 0, 0);
 		this.main_panel.add(
 				this.slot_panel,
 				new GridBagConstraints(
@@ -302,52 +258,28 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		this.updating = true;
 		if (processor.hasFailed()) {
 			this.main_panel.setBackground(Color.RED);
-			this.register_panel.setBackground(Color.RED);
-			this.local_panel.setBackground(Color.RED);
-			this.system_register_panel.setBackground(Color.RED);
-			this.media_panel.setBackground(Color.RED);
-			this.flag_panel.setBackground(Color.RED);
+			this.task_panel.setBackground(Color.RED);
 			this.port_panel.setBackground(Color.RED);
 			this.slot_panel.setBackground(Color.RED);
 		}
 		else {
 			this.main_panel.setBackground(null);
-			this.register_panel.setBackground(null);
-			this.local_panel.setBackground(null);
-			this.system_register_panel.setBackground(null);
-			this.media_panel.setBackground(null);
-			this.flag_panel.setBackground(null);
+			this.task_panel.setBackground(null);
 			this.port_panel.setBackground(null);
 			this.slot_panel.setBackground(null);
 		}
-		this.register_panel.update();
-		this.local_panel.update();
-		this.system_register_panel.update();
-		this.media_panel.update();
-		this.parameter_stack.update();
-		this.return_stack.update();
-//		for (i=0; i<com.F64.Processor.SLOT_SIZE; ++i) {
-//			long value = processor.getRegister(i);
-//			this.register_fields[i].setText(convertLongToString(value));
-//		}
-		this.flag_panel.update(processor);
-		this.slot_panel.update(processor);
-		this.port_panel.update(processor);
-//		for (i=0; i<Interrupt.values().length; ++i) {
-//			interrupts[i].setSelected(vm.getInterruptFlag(Register.INTF, Interrupt.values()[i]));
-//		}
+		this.task_panel.update();
+		this.slot_panel.update();
+		this.port_panel.update();
 		this.updating = false;
 	}
 
 	public void setProcessor(com.F64.Processor p)
 	{
 		this.processor = p;
-		this.register_panel.setProcessor(p);
-		this.local_panel.setProcessor(p);
-		this.system_register_panel.setProcessor(p);
-		this.media_panel.setProcessor(p);
-		this.parameter_stack.setProcessor(p);
-		this.return_stack.setProcessor(p);
+		this.task_panel.setProcessor(p);
+		this.slot_panel.setProcessor(p);
+		this.port_panel.setProcessor(p);
 		this.update();
 	}
 
@@ -381,29 +313,6 @@ public class Processor  extends JFrame implements ActionListener, ItemListener, 
 		if (source == this.stop) {
 			this.stop();
 		}
-	}
-
-	@Override
-	public void itemStateChanged(ItemEvent ev)
-	{
-		if (this.updating) {return;}
-		int i;
-		Object source = ev.getItemSelectable();
-		for (i=0; i<Flag.values().length; ++i) {
-			if (flag_panel.isFlag(i, source)) {
-				// toggle flag bit
-				this.processor.setFlag(i, !this.processor.getFlag(i));
-				this.update();
-			}
-		}
-//		for (i=0; i<Interrupt.values().length; ++i) {
-//			if (source == interrupts[i]) {
-//				// toggle flag bit
-//				vm.setInterruptFlag(Register.INTF, Interrupt.values()[i], !vm.getInterruptFlag(Register.INTF, Interrupt.values()[i]));
-//				update();
-//			}
-//		}
-		
 	}
 
 	public void start()

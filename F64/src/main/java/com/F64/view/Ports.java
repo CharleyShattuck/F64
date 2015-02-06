@@ -15,10 +15,12 @@ import com.F64.Port;
 public class Ports extends JPanel {
 	private JTextField[]		ports;
 	private JLabel[]			states;
+	private com.F64.Processor	processor;
 
-	public Ports()
+	public Ports(com.F64.Processor p)
 	{
 		super( new GridBagLayout() );
+		processor = p;
 		JTextField field;
 		int limit = Port.values().length;
 		Font font = new Font(Font.MONOSPACED, Font.BOLD , 12);
@@ -150,7 +152,9 @@ public class Ports extends JPanel {
 		}
 	}
 
-	public void update(com.F64.Processor processor)
+	public void setProcessor(com.F64.Processor value) {processor = value;}
+
+	public void update()
 	{
 		int limit = Port.values().length;
 		int read_mask = processor.getPortReadMask();

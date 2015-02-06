@@ -2,8 +2,10 @@
 \ -4 test .
 \ 1 test .
 
-: test [: ?for 2 * 3 + next ;] execute ;
+\ : test [: ?for 2 * 3 + next ;] execute ;
 \ : test ?for 2 * 3 + next ;
-1 1 test .
+\ 1 1 test .
 
+: myswap { a b -- b a } b a ;
 
+1 2 myswap . .

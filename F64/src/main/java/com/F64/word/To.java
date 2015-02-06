@@ -15,7 +15,7 @@ public class To extends com.F64.Word {
 		assert(w != null);
 		if (w instanceof Val) {
 			Val value = (Val)w;
-			p.pushT(i.getSystem().getMemory(value.getAdr()));
+			p.getTask().pushT(i.getSystem().getMemory(value.getAdr()));
 		}
 		else {
 			assert(false);

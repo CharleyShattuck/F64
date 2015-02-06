@@ -19,18 +19,16 @@ public class Exit extends com.F64.Word {
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-
 		Scope s = c.getScope();
-		while (!(s instanceof com.F64.scope.Main)) {
-			s = s.getOwner();
-			if (s == null) {
-				i.getProcessor().doThrow(Exception.INVALID_SCOPE);
-				return;
+		while (s != null) {
+			if (s instanceof com.F64.Block) {
+				if (s instanceof com.F64.scope.Main) {
+					((com.F64.scope.Main)s).internalExit();
+				}
 			}
+			s = s.getOwner();
 		}
-		com.F64.scope.Main main = (com.F64.scope.Main)s;
 		c.compile(new com.F64.codepoint.Exit());
-		main.internalExit();
 	}
 
 }

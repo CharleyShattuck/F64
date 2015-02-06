@@ -56,6 +56,12 @@ public class Interpreter {
 	public Word lookup(String name)
 	{
 		String[] name_list = Dictionary.splitName(name);
+		if (name_list.length == 1) {
+			Local loc = compiler.findLocal(name);
+			if (loc != null) {
+				return new com.F64.word.Local(loc.getIndex());
+			}
+		}
 		Dictionary current = this.context;
 		Word w = current.lookup(name_list, this.compiling, true);
 		if (w != null) {return w;}
@@ -73,7 +79,7 @@ public class Interpreter {
 			this.compiler.compile(new Literal(value));
 		}
 		else {
-			this.processor.pushT(value);
+			this.processor.getTask().pushT(value);
 		}
 		
 	}

@@ -11,7 +11,7 @@ public class Value extends com.F64.Word {
 	{
 		Processor p = i.getProcessor();
 		String name = i.getNextWord();
-		com.F64.word.Val w = new com.F64.word.Val(i.getSystem(), p.popT());
+		com.F64.word.Val w = new com.F64.word.Val(i.getSystem(), p.getTask().popT());
 		i.getDictionary().register(name, false, w);
 	}
 

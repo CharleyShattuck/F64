@@ -12,7 +12,7 @@ public class Rcl extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.setRegister(Register.T, p.rcl(p.getRegister(Register.S), (int)p.getRegister(Register.T), p.getFlag(Flag.CARRY)));
+		p.setRegister(Register.T, p.rcl(p.getRegister(Register.S), (int)p.getRegister(Register.T), p.getTask().getFlag(Flag.CARRY)));
 		p.doNip();
 	}
 

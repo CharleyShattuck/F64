@@ -13,7 +13,7 @@ public class Dot extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		java.lang.System.out.println(p.popT());
+		java.lang.System.out.println(p.getTask().popT());
 	}
 
 	@Override

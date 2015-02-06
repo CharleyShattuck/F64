@@ -13,8 +13,9 @@ import com.F64.Flag;
 @SuppressWarnings("serial")
 public class Flags extends JPanel {
 	private JCheckBox[]			flags;
+	private com.F64.Task		task;
 
-	public Flags(Processor p)
+	public Flags(Task p)
 	{
 		super( new GridBagLayout() );
 
@@ -60,10 +61,12 @@ public class Flags extends JPanel {
 
 	}
 	
-	public void update(com.F64.Processor processor)
+	public void setTask(com.F64.Task value) {task = value;}
+
+	public void update()
 	{
 		for (int i=0; i<Flag.values().length; ++i) {
-			this.flags[i].setSelected(processor.getFlag(i));
+			this.flags[i].setSelected(task.getFlag(i));
 		}
 	}
 

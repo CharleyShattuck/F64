@@ -26,9 +26,11 @@ public class Semicolon extends com.F64.Word {
 		Compiler c = i.getCompiler();
 		c.compile(new com.F64.codepoint.Exit());
 		if (local) {
+			c.getBlock().releaseLocals(c);
 			c.setScope(c.getScope().getOwner());
 		}
 		else {
+			c.getMainScope().releaseLocals(c);
 			c.stop();
 //		c.getBlock().strip();
 			i.setCompiling(false);

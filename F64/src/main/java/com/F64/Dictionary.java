@@ -126,6 +126,7 @@ public class Dictionary {
 		this.register("^.<<",			false,	new Rcl());
 		this.register("\\",				false,	new LineComment());
 		this.register("(",				false,	new Comment());
+		this.register("{",				false,	new Locals());
 		this.register("?dup",			false,	new QDup());
 		this.register("?for",			false,	new QFor());
 		this.register("?if",			true,	new If(Condition.QEQ0));

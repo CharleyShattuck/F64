@@ -27,8 +27,7 @@ public class Main extends Block {
 	public void internalCall() {has_internal_call = true;}
 	
 	public Word getWord() {return word;}
-//	public boolean hasInternalExit() {return has_internal_exit;}
-
+	
 	@Override
 	public boolean optimize(Compiler c, Optimization opt)
 	{
@@ -46,18 +45,20 @@ public class Main extends Block {
 				}
 				Builder b = c.getBuilder();
 				b.start(false);
+				super.generate(b);
 				
-				while (curr != tail) {
-					curr.generate(b);
-					if (b.exceed1Cell()) {break;}
-					curr = curr.getNext();
-				}
+//				while (curr != tail) {
+//					curr.generate(b);
+//					if (b.exceed1Cell()) {break;}
+//					curr = curr.getNext();
+//				}
 				if (!b.exceed1Cell()) {
 					b.stop();
 					head.remove();
 					tail.remove();
 					return true;
 				}
+				b.stop();
 			}
 			return false;
 		}

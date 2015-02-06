@@ -8,22 +8,22 @@ public class SIMDRegister extends JTabbedPane {
 	private	int					blend;
 
 	
-	public SIMDRegister(com.F64.Processor processor)
+	public SIMDRegister(com.F64.Task t)
 	{
 		int i;
 		slice_panels = new SliceRegister[com.F64.Processor.NO_OF_SIMD_REGISTER_CELLS];
 
 		for (i=0; i<com.F64.Processor.NO_OF_SIMD_REGISTER_CELLS; ++i) {
-			slice_panels[i] = new SliceRegister(processor, i);
+			slice_panels[i] = new SliceRegister(t, i);
 			this.addTab("Slice "+i, null, slice_panels[i], "General purpose register");
 		}
 
 	}
 
-	public void setProcessor(com.F64.Processor value)
+	public void setTask(com.F64.Task value)
 	{
 		for (int i=0; i<com.F64.Processor.NO_OF_SIMD_REGISTER_CELLS; ++i) {
-			this.slice_panels[i].setProcessor(value);
+			this.slice_panels[i].setTask(value);
 		}
 	}
 

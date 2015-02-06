@@ -17,14 +17,14 @@ import javax.swing.SwingConstants;
 public class SliceRegister extends JPanel implements ActionListener {
 	private JTextField[]		fields;
 	private boolean				updating;
-	private com.F64.Processor	processor;
+	private com.F64.Task		task;
 	private int					slice;
 
 	
-	public SliceRegister(com.F64.Processor processor, int slice)
+	public SliceRegister(com.F64.Task t, int slice)
 	{
 		super( new GridBagLayout() );
-		this.processor = processor;
+		this.task = t;
 		this.slice = slice;
 		int limit = com.F64.Processor.NO_OF_REG;
 		JLabel label;
@@ -73,12 +73,12 @@ public class SliceRegister extends JPanel implements ActionListener {
 		}	
 	}
 
-	public void setProcessor(com.F64.Processor value) {processor = value;}
+	public void setTask(com.F64.Task value) {task = value;}
 
 	public void update()
 	{
 		for (int i=0; i<com.F64.Processor.NO_OF_REG; ++i) {
-			long value = processor.getSIMDRegister(i)[slice];
+			long value = task.getSIMDRegister(i)[slice];
 			this.fields[i].setText(Processor.convertLongToString(value));
 		}
 
@@ -96,12 +96,12 @@ public class SliceRegister extends JPanel implements ActionListener {
 					try {
 						String txt = ev.getActionCommand();
 						long value = Long.parseLong(txt.replaceAll(" ", ""), 16);
-						this.processor.getSIMDRegister(i)[slice] = value;
+						task.getSIMDRegister(i)[slice] = value;
 					}
 					catch (Exception ex) {}
 				}
 				this.updating = true;
-				this.fields[i].setText(Processor.convertLongToString(this.processor.getSIMDRegister(i)[slice]));
+				this.fields[i].setText(Processor.convertLongToString(task.getSIMDRegister(i)[slice]));
 				this.updating = false;
 				return;
 			}

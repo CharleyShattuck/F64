@@ -15,13 +15,16 @@ import com.F64.ISA;
 
 @SuppressWarnings("serial")
 public class Slots extends JPanel {
+	private JTextField			task_no;
 	private JTextField			slot_no;
 	private JTextField[]		slots;
 	private JTextField			slice_no;
+	private com.F64.Processor	processor;
 
-	public Slots()
+	public Slots(com.F64.Processor p)
 	{
 		super( new GridBagLayout() );
+		processor = p;
 		int limit = com.F64.Processor.max_slot;
 		Font font = new Font(Font.MONOSPACED, Font.BOLD , 12);
 		JLabel label;
@@ -30,6 +33,37 @@ public class Slots extends JPanel {
 		int y = 0;
 		Insets label_insets = new Insets( 0, 10, 0, 4);
 		Insets field_insets = new Insets( 0,  0, 0, 0);
+		//
+		label = new JLabel("task#");
+		this.add(
+			label,
+			new GridBagConstraints(
+				x, y,
+				1, 1,
+				0.0, 0.0,
+				GridBagConstraints.WEST,
+				GridBagConstraints.BOTH,
+				label_insets,
+				2, 0
+			)
+		);
+		this.task_no = new JTextField("", 20);
+		this.task_no.setFont(font);
+//		this.slot_no.setHorizontalAlignment(JTextField.RIGHT);
+		this.add(
+			this.task_no,
+			new GridBagConstraints(
+				x+1, y,
+				1, 1,
+				0.0, 0.0,
+				GridBagConstraints.WEST,
+				GridBagConstraints.BOTH,
+				field_insets,
+				2, 0
+			)
+		);
+		y += 1;
+		//
 		label = new JLabel("slot#");
 		this.add(
 			label,
@@ -121,9 +155,13 @@ public class Slots extends JPanel {
 		);
 	}
 
-	public void update(com.F64.Processor processor)
+	public void setProcessor(com.F64.Processor value) {processor = value;}
+
+	public void update()
 	{
 		int slot = processor.getSlot();
+		int task = processor.getCurrentTask();
+		this.task_no.setText(Integer.toString(task));
 		this.slot_no.setText(Integer.toString(slot));
 		this.slice_no.setText(Integer.toString(processor.getSlice()));
 

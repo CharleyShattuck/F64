@@ -18,15 +18,15 @@ public class ReturnStack extends JPanel implements ActionListener {
 	private JLabel[]			labels;
 	private JTextField[]		fields;
 	private boolean				updating;
-	private com.F64.Processor	processor;
+	private com.F64.Task		task;
 
 	public final int			INITIAL_OFFSET = 3;
 	public final int			RANGE = 32;
 	
-	public ReturnStack(com.F64.Processor processor)
+	public ReturnStack(com.F64.Task task)
 	{
 		super( new GridBagLayout() );
-		this.processor = processor;
+		this.task = task;
 		int limit = com.F64.Processor.NO_OF_REG;
 		JLabel label;
 		int x = 0;
@@ -92,12 +92,12 @@ public class ReturnStack extends JPanel implements ActionListener {
 	}
 
 	
-	public void setProcessor(com.F64.Processor value) {processor = value;}
+	public void setTask(com.F64.Task value) {task = value;}
 
 	public void update()
 	{
 		for (int i=0; i<RANGE; ++i) {
-			long value = processor.getReturnStack(processor.getReturnStackPosition(i-INITIAL_OFFSET));
+			long value = task.getReturnStack(task.getReturnStackPosition(i-INITIAL_OFFSET));
 			this.fields[i].setText(Processor.convertLongToString(value));
 		}
 	}
@@ -111,17 +111,17 @@ public class ReturnStack extends JPanel implements ActionListener {
 		for (int i=0; i<fields.length; ++i) {
 			if (fields[i] == source) {
 				int offset = i-INITIAL_OFFSET;
-				long pos = processor.getReturnStackPosition(offset);
+				long pos = task.getReturnStackPosition(offset);
 				if (i > 0) {// do not overwrite the Z register
 					try {
 						String txt = ev.getActionCommand();
 						long value = Long.parseLong(txt.replaceAll(" ", ""), 16);
-						this.processor.setReturnStack(pos, value);
+						this.task.setReturnStack(pos, value);
 					}
 					catch (Exception ex) {}
 				}
 				this.updating = true;
-				this.fields[i].setText(Processor.convertLongToString(this.processor.getReturnStack(pos)));
+				this.fields[i].setText(Processor.convertLongToString(this.task.getReturnStack(pos)));
 				this.updating = false;
 				return;
 			}

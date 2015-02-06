@@ -4,6 +4,7 @@ import com.F64.Builder;
 import com.F64.Compiler;
 import com.F64.ISA;
 import com.F64.Optimization;
+import com.F64.Scope;
 
 public class Exit extends com.F64.Codepoint {
 
@@ -52,6 +53,17 @@ public class Exit extends com.F64.Codepoint {
 	@Override
 	public void generate(Builder b)
 	{
+		Scope s = getOwner();
+		while (s != null) {
+			if (s instanceof com.F64.Block) {
+				com.F64.Block blk = (com.F64.Block)s;
+				blk.generateLeaveLocals(b);
+				if (s instanceof com.F64.scope.Main) {
+					break;
+				}
+			}
+			s = s.getOwner();
+		}
 		b.add(ISA.EXIT);
 	}
 

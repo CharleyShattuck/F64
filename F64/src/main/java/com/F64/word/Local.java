@@ -1,29 +1,30 @@
 package com.F64.word;
 
 import com.F64.Compiler;
+import com.F64.Exception;
 import com.F64.Interpreter;
 import com.F64.Processor;
 
-public class Const extends com.F64.Word {
-	private long	value;
-
-	public Const(long value)
+public class Local extends com.F64.Word {
+	private int	index;
+	
+	public Local(int i)
 	{
-		this.value = value;
+		index = i;
 	}
 
 	@Override
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.getTask().pushT(value);
+		p.doThrow(Exception.COMPILE_ONLY);
 	}
 
 	@Override
 	public void compile(Interpreter i)
 	{
 		Compiler c = i.getCompiler();
-		c.compile(new com.F64.codepoint.Literal(value));
+		c.compile(new com.F64.codepoint.Local(index));
 	}
 
 

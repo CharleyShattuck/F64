@@ -13,7 +13,7 @@ public class Lsr extends com.F64.Codepoint {
 	private int		src1;
 	private int 	src2;
 	private int 	dest;
-	private	int			cnt;
+	private	int		cnt;
 
 	public Lsr()
 	{

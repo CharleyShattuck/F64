@@ -24,7 +24,7 @@ public class Var extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.pushT(adr);
+		p.getTask().pushT(adr);
 	}
 
 	@Override

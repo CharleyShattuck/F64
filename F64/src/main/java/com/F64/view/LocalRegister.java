@@ -17,13 +17,13 @@ import javax.swing.SwingConstants;
 public class LocalRegister extends JPanel implements ActionListener {
 	private JTextField[]		fields;
 	private boolean				updating;
-	private com.F64.Processor	processor;
+	private com.F64.Task		task;
 
 	
-	public LocalRegister(com.F64.Processor processor)
+	public LocalRegister(com.F64.Task task)
 	{
 		super( new GridBagLayout() );
-		this.processor = processor;
+		this.task = task;
 		int limit = com.F64.Processor.NO_OF_REG;
 		JLabel label;
 		int i;
@@ -71,12 +71,12 @@ public class LocalRegister extends JPanel implements ActionListener {
 		}	
 	}
 
-	public void setProcessor(com.F64.Processor value) {processor = value;}
+	public void setTask(com.F64.Task value) {task = value;}
 
 	public void update()
 	{
 		for (int i=0; i<com.F64.Processor.NO_OF_REG; ++i) {
-			long value = processor.getLocalRegister(i);
+			long value = task.getLocalRegister(i);
 			this.fields[i].setText(Processor.convertLongToString(value));
 		}
 
@@ -94,12 +94,12 @@ public class LocalRegister extends JPanel implements ActionListener {
 					try {
 						String txt = ev.getActionCommand();
 						long value = Long.parseLong(txt.replaceAll(" ", ""), 16);
-						this.processor.setLocalRegister(i, value);
+						this.task.setLocalRegister(i, value);
 					}
 					catch (Exception ex) {}
 				}
 				this.updating = true;
-				this.fields[i].setText(Processor.convertLongToString(this.processor.getLocalRegister(i)));
+				this.fields[i].setText(Processor.convertLongToString(this.task.getLocalRegister(i)));
 				this.updating = false;
 				return;
 			}

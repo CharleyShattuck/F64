@@ -70,11 +70,30 @@ public class Compiler {
 
 	public Local requestLocal(String name)
 	{
-		Local res = new Local(locals_used++);
+		Local res = new Local(name, locals_used++);
+		if (local_map == null) {
+			local_map = new java.util.TreeMap<String, Local>();
+		}
 		local_map.put(name, res);
 		return res;
 	}
-	
+
+	public Local findLocal(String name)
+	{
+		if (local_map != null) {
+			return local_map.get(name);
+		}
+		return null;
+	}
+
+	public void releaseLocal(Local loc)
+	{
+		if (loc.getIndex() < locals_used) {
+			locals_used = loc.getIndex();
+		}
+		local_map.remove(loc.getName());
+	}
+
 	
 //	public int getRemainingBits()
 //	{
@@ -112,7 +131,7 @@ public class Compiler {
 		this.current_block = blk;
 		this.current_word = w;
 	}
-	
+
 	public void stop()
 	{
 		if (current_scope != main_scope) {

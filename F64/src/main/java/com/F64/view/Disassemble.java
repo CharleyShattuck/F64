@@ -284,8 +284,6 @@ public class Disassemble extends JFrame implements ActionListener {
 
 			case RFETCH:
 			case RSTORE:
-			case LFETCH:
-			case LSTORE:
 			case INC:
 			case DEC:
 				txt = txt + opcode.getDisplay()
@@ -293,6 +291,14 @@ public class Disassemble extends JFrame implements ActionListener {
 				;
 				size = 0;
 				break;
+
+			case LFETCH:
+			case LSTORE:
+				txt = txt + opcode.getDisplay()
+				+ " " + com.F64.Local.getDisplay(com.F64.Processor.readSlot(cell, slot++))
+			;
+			size = 0;
+			break;
 
 			case BRANCH:
 				int bc = com.F64.Processor.readSlot(cell, slot++);
@@ -514,6 +520,14 @@ public class Disassemble extends JFrame implements ActionListener {
 					txt = txt + ext3.getDisplay()
 					+ " " + com.F64.SystemRegister.getDisplay(value)
 					+ " " + com.F64.Register.getDisplay(value2)
+				;
+				break;
+
+				case LSAVE:
+				case LRESTORE:
+					txt = txt + ext3.getDisplay()
+					+ " " + com.F64.Local.getDisplay(value)
+					+ " " + com.F64.Local.getDisplay(value2)
 				;
 				break;
 

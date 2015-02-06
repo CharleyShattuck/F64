@@ -11,7 +11,7 @@ public class Constant extends com.F64.Word {
 	{
 		Processor p = i.getProcessor();
 		String name = i.getNextWord();
-		com.F64.word.Const w = new com.F64.word.Const(p.popT());
+		com.F64.word.Const w = new com.F64.word.Const(p.getTask().popT());
 		i.getDictionary().register(name, false, w);
 	}
 
