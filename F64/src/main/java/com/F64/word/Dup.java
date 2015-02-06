@@ -10,7 +10,7 @@ public class Dup extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doDup();
+		p.getTask().dup();
 	}
 
 	@Override

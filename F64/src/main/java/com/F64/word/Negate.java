@@ -11,7 +11,7 @@ public class Negate extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doNegate(Register.T.ordinal(), Register.T.ordinal());
+		p.getTask().negate(Register.T.ordinal(), Register.T.ordinal());
 	}
 
 	@Override

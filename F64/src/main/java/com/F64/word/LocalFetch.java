@@ -11,9 +11,9 @@ public class LocalFetch extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		int reg = (int)p.getRegister(Register.T.ordinal());
-		p.doDrop();
-		p.doLFetch(reg);
+		int reg = (int)p.getTask().getRegister(Register.T.ordinal());
+		p.getTask().drop();
+		p.getTask().lFetch(reg);
 		
 	}
 

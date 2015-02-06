@@ -26,7 +26,7 @@ public class Div extends com.F64.Word {
 			q = ~q;
 		}
 		p.setRegister(Register.T, q);
-		p.doNip();
+		p.getTask().nip();
 	}
 
 	@Override

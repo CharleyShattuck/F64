@@ -10,7 +10,7 @@ public class RDup extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doRDup();
+		p.getTask().rDup();
 	}
 
 	@Override

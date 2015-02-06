@@ -12,7 +12,7 @@ public class Lsl extends com.F64.Word {
 	{
 		Processor p = i.getProcessor();
 		p.setRegister(Register.T, p.lsl(p.getRegister(Register.S), (int)p.getRegister(Register.T)));
-		p.doNip();
+		p.getTask().nip();
 	}
 
 	@Override

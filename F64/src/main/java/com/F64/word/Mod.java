@@ -25,7 +25,7 @@ public class Mod extends com.F64.Word {
 			r = -r;
 		}
 		p.setRegister(Register.T, r);
-		p.doNip();
+		p.getTask().nip();
 	}
 
 	@Override

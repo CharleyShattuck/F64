@@ -11,8 +11,8 @@ public class Push extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doPush(Register.T.ordinal());
-		p.doDrop();
+		p.getTask().push(Register.T.ordinal());
+		p.getTask().drop();
 	}
 
 	@Override

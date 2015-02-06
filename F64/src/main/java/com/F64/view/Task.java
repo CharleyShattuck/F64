@@ -36,7 +36,7 @@ public class Task extends JPanel implements ActionListener, ItemListener {
 		super( new GridBagLayout() );
 		processor = p;
 		task = p.getTask();
-		int i,limit = com.F64.Processor.NO_OF_TASKS;
+		int i,limit = p.getNoOfTasks();
 		task_selection = new JComboBox<String>();
 		this.register_pane = new JTabbedPane();
 		this.register_panel = new Register(task);

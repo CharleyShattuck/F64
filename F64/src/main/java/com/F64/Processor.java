@@ -24,7 +24,7 @@ public class Processor implements Runnable {
 	public static final int		NO_OF_SLOTS = NO_OF_FULL_SLOTS+1;
 	public static final long	TRUE = -1L;
 	public static final long	FALSE = 0L;
-	public static final int		NO_OF_TASKS = 16;
+//	public static final int		NO_OF_TASKS = 16;
 
 	public static final long	SLOT0_MASK = -1L << (BIT_PER_CELL-FIRST_SLOT_BITS);
 
@@ -410,17 +410,11 @@ public class Processor implements Runnable {
 
 
 	private System				system;
-//	private long[]				register;
-//	private long[]				local_register;
-//	private long[]				system_register;
 	private long[]				read_port;
 	private long[]				write_port;
-//	private long[]				parameter_stack;
-//	private long[]				return_stack;
 	private Processor[]			port_partner;
 	private Task[]				task_list;
 	private Task				task;
-//	private	com.F64.SIMD.Unit	simd;
 	private long				communication;
 	private int					communication_register;
 	private int					x;
@@ -432,7 +426,6 @@ public class Processor implements Runnable {
 	private int					current_task;
 	private int					slice;
 	private int					saved_slot;
-//	private int					max_slot;	// max # of slots
 	private boolean				carry;
 	private boolean				failed;
 	private boolean				waiting;
@@ -440,12 +433,12 @@ public class Processor implements Runnable {
 	private volatile boolean	running;
 
 	
-	public Processor(System system, int x, int y, int z, int stack_size, int return_stack_size)
+	public Processor(System system, int x, int y, int z, int stack_size, int return_stack_size, int no_of_tasks)
 	{
 //		this.simd = new com.F64.SIMD.Unit();
 		this.system = system;
-		this.task_list = new Task[NO_OF_TASKS];
-		for (int i=0; i<NO_OF_TASKS; ++i) {
+		this.task_list = new Task[no_of_tasks];
+		for (int i=0; i<no_of_tasks; ++i) {
 			task_list[i] = new Task(system, this, i, stack_size, return_stack_size);
 		}
 		this.task = task_list[0];
@@ -465,13 +458,13 @@ public class Processor implements Runnable {
 
 	public System getSystem() {return system;}
 	
-	public long getRegister(Register reg) {return this.getRegister(reg.ordinal());}
-	public void setRegister(Register reg, long value) {this.setRegister(reg.ordinal(), value);}
+	public long getRegister(Register reg) {return task.getRegister(reg.ordinal());}
+	public void setRegister(Register reg, long value) {task.setRegister(reg.ordinal(), value);}
 
 //	public long[] getSIMDRegister(int reg) {return task.getSIMDRegister(reg);}
 	
-	public long getSystemRegister(SystemRegister reg) {return this.getSystemRegister(reg.ordinal());}
-	public void setSystemRegister(SystemRegister reg, long value) {this.setSystemRegister(reg.ordinal(), value);}
+//	public long getSystemRegister(SystemRegister reg) {return task.getSystemRegister(reg.ordinal());}
+//	public void setSystemRegister(SystemRegister reg, long value) {task.setSystemRegister(reg.ordinal(), value);}
 
 	public void setSlot(int s) {this.slot = s;}
 	public boolean getInternalCarry() {return this.carry;}
@@ -479,8 +472,8 @@ public class Processor implements Runnable {
 	public boolean isWaiting() {return this.waiting;}
 	public int getSlot() {return this.slot;}
 	public int getSlice() {return this.slice;}
-	public void setSlot(int reg, int slot, int value) {this.setRegister(reg, writeSlot(this.getRegister(reg), slot, value));}
-	public int getSlot(int reg, int slot) {return readSlot(this.getRegister(reg), slot);}
+	public void setSlot(int reg, int slot, int value) {task.setRegister(reg, writeSlot(task.getRegister(reg), slot, value));}
+	public int getSlot(int reg, int slot) {return readSlot(task.getRegister(reg), slot);}
 	public int getSlot(int slot) {return readSlot(task.getSystemRegister(SystemRegister.I), slot);}
 	public int nextSlot() {return readSlot(task.getSystemRegister(SystemRegister.I), this.slot++);}
 	public Processor getPortPartner(int p) {return this.port_partner[p];}
@@ -537,7 +530,6 @@ public class Processor implements Runnable {
 		data = data << shift;
 		return data;
 	}
-
 
 	public long asr(long data, int shift)
 	{
@@ -637,27 +629,6 @@ public class Processor implements Runnable {
 		return this.waiting && ((this.port_write_mask & (1 << p.ordinal())) != 0);
 	}
 	
-	public long getLocalRegister(int reg)
-	{
-		return task.getLocalRegister(reg);
-	}
-
-	public void setLocalRegister(int reg, long value)
-	{
-		task.setLocalRegister(reg, value);
-	}
-
-	public long getRegister(int reg)
-	{
-		return task.getRegister(reg);
-	}
-
-	
-	public void setRegister(int reg, long value)
-	{
-		task.setRegister(reg, value);
-	}
-
 	public long getFlagForInterrupt()
 	{
 		long res = task.getSystemRegister(SystemRegister.FLAG);
@@ -700,17 +671,6 @@ public class Processor implements Runnable {
 		task.setSystemRegister(SystemRegister.FLAG, data & (mask >>> (FIRST_SLOT_BITS + 3*SLOT_BITS)));
 	}
 
-	public long getSystemRegister(int reg)
-	{
-		return task.getSystemRegister(reg);
-	}
-	
-	
-	public boolean setSystemRegister(int reg, long value)
-	{
-		return task.setSystemRegister(reg, value);
-	}
-
 	public boolean canReadFromPort(int p)
 	{
 		return ((this.port_read_mask & (1 << p)) != 0);
@@ -725,11 +685,11 @@ public class Processor implements Runnable {
 	{
 		int reg = this.communication_register;
 		if (reg < BIT_PER_CELL) {
-			this.setRegister(reg, this.communication);
+			task.setRegister(reg, this.communication);
 		}
 		else {
 			reg -=  BIT_PER_CELL;
-			this.setSystemRegister(reg, this.communication);
+			task.setSystemRegister(reg, this.communication);
 		}
 		task.setFlag(Flag.UPREAD.ordinal()+p, true);
 		this.setPort(p, false, this.communication);
@@ -869,172 +829,6 @@ public class Processor implements Runnable {
 		else {this.read_port[p] = value;}
 	}
 
-	
-	
-
-	
-
-
-//	public void setInterruptFlag(SystemRegister reg, int fl, boolean value)
-//	{
-//		long mask = Flag.values()[fl].getMask();
-//		if (value) {
-//			this.system_register[reg.ordinal()] |= mask;
-//		}
-//		else if (reg != SystemRegister.INTE) {
-//			this.system_register[reg.ordinal()] &= ~mask;			
-//		}
-//		else {
-//			this.system_register[SystemRegister.INTE.ordinal()] &= ~mask;			
-//			this.system_register[SystemRegister.INTE.ordinal()] |= Flag.RESET.getMask() | Flag.NMI.getMask();
-//		}
-//	}
-
-
-//	public void storeRegister(int reg, long value)
-//	{
-//		if (reg != Register.Z.ordinal()) {
-//			if (reg == Register.INTE.ordinal()) {
-//				value |= Interrupt.Reset.getMask();
-//			}
-//			this.register[reg] = value;
-//		}
-//	}
-//
-//	public void storeRegister(Register reg, long value)
-//	{
-//		if (reg != Register.Z) {
-//			if (reg == Register.INTE) {
-//				value |= Interrupt.Reset.getMask();
-//			}
-//			this.register[reg.ordinal()] = value;
-//		}
-//	}
-
-	/**
-	 * Increment register
-	 */
-	public void inc(int reg)
-	{
-		this.setRegister(reg, this.getRegister(reg)+1);
-	}
-
-
-	/**
-	 * Increment register
-	 */
-	public void dec(int reg)
-	{
-		this.setRegister(reg, this.getRegister(reg)-1);
-	}
-
-	/**
-	 * Increment register
-	 */
-	public void inc(Register reg)
-	{
-		this.setRegister(reg, this.getRegister(reg)+1);
-	}
-
-
-	/**
-	 * Increment register
-	 */
-	public void dec(Register reg)
-	{
-		this.setRegister(reg, this.getRegister(reg)-1);
-	}
-
-	/**
-	 * Increment register
-	 */
-	public void inc(SystemRegister reg)
-	{
-		this.setSystemRegister(reg, this.getSystemRegister(reg)+1);
-	}
-
-
-	/**
-	 * Increment register
-	 */
-	public void dec(SystemRegister reg)
-	{
-		this.setSystemRegister(reg, this.getSystemRegister(reg)-1);
-	}
-
-//	/**
-//	 * Increment register. Do nothing if the register points not into memory
-//	 */
-//	public void incPointer(int reg)
-//	{
-//		long value = this.getRegister(reg);
-//		if (value >= 0) {
-//			this.setRegister(reg, value+1);
-//		}
-//	}
-//
-//
-//	/**
-//	 * Increment register. Do nothing if the register points not into memory
-//	 */
-//	public void decPointer(int reg)
-//	{
-//		long value = this.getRegister(reg);
-//		if (value >= 0) {
-//			this.setRegister(reg, value-1);
-//		}
-//	}
-//
-//
-//	/**
-//	 * Increment register. Do nothing if the register points not into memory
-//	 */
-//	public void incPointer(Register reg)
-//	{
-//		long value = this.getRegister(reg);
-//		if (value >= 0) {
-//			this.setRegister(reg, value+1);
-//		}
-//	}
-
-
-//	/**
-//	 * Increment register. Do nothing if the register points not into memory
-//	 */
-//	public void decPointer(SystemRegister reg)
-//	{
-//		long value = this.getRegister(reg);
-//		if (value >= 0) {
-//			this.setRegister(reg, value-1);
-//		}
-//	}
-//
-//	public void incPointer(SystemRegister reg)
-//	{
-//		long value = this.getRegister(reg);
-//		if (value >= 0) {
-//			this.setRegister(reg, value+1);
-//		}
-//	}
-//
-//
-//	/**
-//	 * Increment register. Do nothing if the register points not into memory
-//	 */
-//	public void decPointer(Register reg)
-//	{
-//		long value = this.getRegister(reg);
-//		if (value >= 0) {
-//			this.setRegister(reg, value-1);
-//		}
-//	}
-
-//	public long replaceNextSlot(long base)
-//	{
-//		long res = (-1 << SLOT_BITS) & base;
-//		return res | nextSlot();
-//	}
-
 	private void doSkipConditionalJump(int condition)
 	{
 		switch (Branch.values()[condition & 0xf]) {
@@ -1047,13 +841,12 @@ public class Processor implements Runnable {
 		}
 	}
 
-	
 	public boolean doConditionalJump(int condition)
 	{
 		Condition cond = Condition.values()[(condition >> 4) & 3];
 		switch (cond) {
-		case EQ0:		if (task.getT() != 0) {doDrop(); doSkipConditionalJump(condition); return false;} doDrop(); break;
-		case QEQ0:		if (task.getT() != 0) {doSkipConditionalJump(condition); return false;} doDrop(); break;
+		case EQ0:		if (task.getT() != 0) {task.drop(); doSkipConditionalJump(condition); return false;} task.drop(); break;
+		case QEQ0:		if (task.getT() != 0) {doSkipConditionalJump(condition); return false;} task.drop(); break;
 //		case NE0:		if (this.register[Register.T.ordinal()] == 0) {doDrop(); doSkipConditionalJump(condition); return false;} doDrop(); break;
 //		case GE0:		if (this.register[Register.T.ordinal()] < 0) {doDrop(); doSkipConditionalJump(condition); return false;} doDrop(); break;
 //		case CARRY:		if (!this.getFlag(Flag.CARRY)) {doSkipConditionalJump(condition); return false;} break;
@@ -1081,27 +874,6 @@ public class Processor implements Runnable {
 		return true;
 	}
 	
-
-	public void doDrop() {task.drop();}
-	public void doDup() {task.dup();}
-	public void doQDup() {task.qdup();}
-	public void doShortNext(int slot, boolean forward) {task.snext(slot, forward);}
-	public void doRemainingNext() {task.rnext();}
-	public void doLongNext() {task.lnext();}
-	public void doDo() {task.dodo();}
-	public void doQDo() {task.qdo();}
-	public void doQFor() {task.qfor();}
-
-	public void doLoop()
-	{
-		task.loop();
-	}
-
-	public void doPLoop()
-	{
-		task.ploop();
-	}
-
 	public void doSwapRR(int dst, int src)
 	{
 		long tmp = task.getRegister(dst);
@@ -1112,11 +884,6 @@ public class Processor implements Runnable {
 	public void doMoveRR(int dst, int src)
 	{
 		task.setRegister(dst, task.getRegister(src));
-	}
-
-	public void doMoveRI(int dst, int src)
-	{
-		task.setRegister(dst, src);
 	}
 
 	public void doSwapRS(int dst, int src)
@@ -1136,15 +903,6 @@ public class Processor implements Runnable {
 		task.setSystemRegister(dst, task.getRegister(src));
 	}
 
-	public void doMoveSI(int dst, int src)
-	{
-		task.setSystemRegister(dst, src);
-	}
-
-	public void doSwapRL(int dst, int src)
-	{
-		task.swapRL(dst, src);
-	}
 
 	public void doMoveRL(int dst, int src)
 	{
@@ -1156,547 +914,249 @@ public class Processor implements Runnable {
 		task.setLocalRegister(dst, task.getRegister(src));
 	}
 
-	public void doMoveLI(int dst, int src)
-	{
-		task.setLocalRegister(dst, src);
-	}
-
-	public void doFetch()
-	{
-		task.fetch();
-	}
-
-	public void doStore()
-	{
-		task.store();
-	}
-
-	public void doRFetchIndirect(int ireg)
-	{
-		task.rFetchIndirect(ireg);
-	}
-
-	public void doRStoreIndirect(int ireg)
-	{
-		task.rStoreIndirect(ireg);
-	}
-
-	public void doSFetchIndirect(int ireg)
-	{
-		task.sFetchIndirect(ireg);
-	}
-
-	public void doSStoreIndirect(int ireg)
-	{
-		task.sStoreIndirect(ireg);
-	}
-
-	public void doLFetchIndirect(int ireg)
-	{
-		task.lFetchIndirect(ireg);
-	}
-
-	public void doLStoreIndirect(int ireg)
-	{
-		task.lStoreIndirect(ireg);
-	}
-
-	public void doLFetch(int reg)
-	{
-		task.lFetch(reg);
-	}
-
-	public void doLStore(int reg)
-	{
-		task.lStore(reg);
-	}
-
-	public void doRFetch(int reg)
-	{
-		task.rFetch(reg);
-	}
-
-	public void doRStore(int reg)
-	{
-		task.rStore(reg);
-	}
-
-	public void doSFetch(int reg)
-	{
-		task.sFetch(reg);
-	}
-
-	public void doSStore(int reg)
-	{
-		task.sStore(reg);
-	}
-
-
-	public void doRFetchFetch(int reg, boolean dec, boolean pre, boolean post)
-	{
-		task.rFetchFetch(reg, dec, pre, post);
-	}
-
-	public void doRFetchStore(int reg, boolean dec, boolean pre, boolean post)
-	{
-		task.rFetchStore(reg, dec, pre, post);
-	}
-
-	public void doLFetchFetch(int reg, boolean dec, boolean pre, boolean post)
-	{
-		task.lFetchFetch(reg, dec, pre, post);
-	}
-
-	public void doLFetchStore(int reg, boolean dec, boolean pre, boolean post)
-	{
-		task.lFetchStore(reg, dec, pre, post);
-	}
-
-	public void doSFetchFetch(int reg, boolean dec, boolean pre, boolean post)
-	{
-		task.sFetchFetch(reg, dec, pre, post);
-	}
-
-	public void doSFetchStore(int reg, boolean dec, boolean pre, boolean post)
-	{
-		task.sFetchStore(reg, dec, pre, post);
-	}
-
-	public void doFetchPInc()
-	{
-		task.fetchPInc();
-	}
-	
-
-	public void doStorePInc()
-	{
-		task.storePInc();
-	}
-
-//	public void doFetchRegisterInc(int reg)
-//	{
-//		doDup();
-//		this.register[Register.T.ordinal()] = system.getMemory(this.getRegister(reg));
-//		this.register[reg] = incAdr(this.register[reg]);
-//	}
-//	
-//
-//	public void doStoreRegisterInc(int reg)
-//	{
-//		system.setMemory(this.getRegister(reg), this.register[Register.T.ordinal()]);
-//		doDrop();
-//		this.register[reg] = incAdr(this.register[reg]);
-//	}
-
-	public void doUNext()
-	{
-		task.unext();
-	}
-
-	public void doCont()
-	{
-		task.cont();
-	}
-
 	public void doMin(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = min(src1, src2);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doMax(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = max(src1, src2);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doAdd(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = src1 + src2;
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doAddi(int d, int s1, int src2)
 	{
-		this.setRegister(d, this.getRegister(s1) + src2);
+		task.setRegister(d, task.getRegister(s1) + src2);
 	}
 
 	public void doAddWithCarry(int d, int s1, int s2)
 	{
 		boolean carry = task.getFlag(Flag.CARRY);
-		long a = this.getRegister(s1);
-		long b = this.getRegister(s2);
-		this.setRegister(d, this.adc(a, b, carry));
+		long a = task.getRegister(s1);
+		long b = task.getRegister(s2);
+		task.setRegister(d, this.adc(a, b, carry));
 	}
 
 	
 	public void doSub(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = src1 - src2;
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doSubi(int d, int s1, int src2)
 	{
-		this.setRegister(d, this.getRegister(s1) - src2);
+		task.setRegister(d, task.getRegister(s1) - src2);
 	}
 
 	public void doSubtractWithCarry(int d, int s1, int s2)
 	{
 		boolean carry = task.getFlag(Flag.CARRY);
-		long a = this.getRegister(s1);
-		long b = ~this.getRegister(s2);
-		this.setRegister(d, this.adc(a, ~b, carry));
+		long a = task.getRegister(s1);
+		long b = ~task.getRegister(s2);
+		task.setRegister(d, this.adc(a, ~b, carry));
 	}
 
 	public void doAnd(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = src1 & src2;
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doOr(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = src1 | src2;
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doXor(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = src1 ^ src2;
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doEquivalent(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = src1 ^ ~src2;
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 
 	public void doAsl(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = this.asl(src1, (int)src2);
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doAsr(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = this.asr(src1, (int)src2);
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doLsl(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = this.lsl(src1, (int)src2);
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doLsr(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = this.lsr(src1, (int)src2);
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doAsli(int d, int s1, int src2)
 	{
-		long src1 = this.getRegister(s1);
+		long src1 = task.getRegister(s1);
 		long dest = this.asl(src1, src2);
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doAsri(int d, int s1, int src2)
 	{
-		long src1 = this.getRegister(s1);
+		long src1 = task.getRegister(s1);
 		long dest = this.asr(src1, src2);
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doLsli(int d, int s1, int src2)
 	{
-		long src1 = this.getRegister(s1);
+		long src1 = task.getRegister(s1);
 		long dest = this.lsl(src1, src2);
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doLsri(int d, int s1, int src2)
 	{
-		long src1 = this.getRegister(s1);
+		long src1 = task.getRegister(s1);
 		long dest = this.lsr(src1, src2);
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
-
 
 	public void doRol(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = this.rol(src1, (int)src2);
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doRor(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = this.ror(src1, (int)src2);
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doRcl(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = this.rcl(src1, (int)src2, task.getFlag(Flag.CARRY));
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doRcr(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = this.rcr(src1, (int)src2, task.getFlag(Flag.CARRY));
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doRoli(int d, int s1, int src2)
 	{
-		long src1 = this.getRegister(s1);
+		long src1 = task.getRegister(s1);
 		long dest = this.rol(src1, src2);
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doRori(int d, int s1, int src2)
 	{
-		long src1 = this.getRegister(s1);
+		long src1 = task.getRegister(s1);
 		long dest = this.ror(src1, src2);
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doRcli(int d, int s1, int src2)
 	{
-		long src1 = this.getRegister(s1);
+		long src1 = task.getRegister(s1);
 		long dest = this.rcl(src1, src2, task.getFlag(Flag.CARRY));
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doRcri(int d, int s1, int src2)
 	{
-		long src1 = this.getRegister(s1);
+		long src1 = task.getRegister(s1);
 		long dest = this.rcr(src1, src2, task.getFlag(Flag.CARRY));
 		task.setFlag(Flag.CARRY, this.carry);
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	
 	public void doMul2Add(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = (src1 << 1) + src2;
-		this.setRegister(d, dest);
+		task.setRegister(d, dest);
 	}
 
 	public void doDiv2Sub(int d, int s1, int s2)
 	{
-		long src1 = this.getRegister(s1);
-		long src2 = this.getRegister(s2);
+		long src1 = task.getRegister(s1);
+		long src2 = task.getRegister(s2);
 		long dest = (src1 >> 1) - src2;
-		this.setRegister(d, dest);
-	}
-
-	public void doOver()
-	{
-		task.over();
-	}
-
-	public void doUnder()
-	{
-		task.under();
-	}
-
-	public void doTuck()
-	{
-		task.tuck();
-	}
-
-	public void doNip()
-	{
-		task.nip();
-	}
-
-	public void doLit(int data)
-	{
-		task.lit(data);
-	}
-
-	public void doNLit(int data)
-	{
-		task.nLit(data);
-	}
-
-	public void doBLit(int data)
-	{
-		task.bLit(data);
-	}
-
-	public void doExtendLiteral(int data)
-	{
-		task.extLit(data);
-	}
-
-//	public void doShortJump(int slot)
-//	{
-//		this.shortJump(slot);
-//	}
-
-	public void doLongJump()
-	{
-		task.longJump();
-	}
-
-
-	public void doLongCol()
-	{
-		task.longCol();
-	}
-
-	
-	/**
-	 * Call a method. Replace I with the content of the target method address.
-	 */
-	public boolean doCallMethod(long index)
-	{
-		return task.callMethod(index);
-	}
-
-	public void doExecute()
-	{
-		task.execute();
-	}
-
-	/**
-	 * Call an address. Replace I with the content of the target address.
-	 */
-	public void doCall()
-	{
-		task.call();
-	}
-
-
-	public void doExit()
-	{
-		task.exit();
-	}
-
-	public void doEnter()
-	{
-		task.enter();
-	}
-
-	public void doLocalSave(int from, int to)
-	{
-		task.saveLocal(from, to);
-	}
-
-	public void doLocalRestore(int from, int to)
-	{
-		task.restoreLocal(from, to);
-	}
-
-//	public void doLeave()
-//	{
-//		// pop P from return stack
-//		this.doPopSystem(SystemRegister.P.ordinal());		
-//	}
-
-	public void doSave()
-	{
-		task.saveSelf();
-	}
-
-	public void doRestore()
-	{
-		task.restoreSelf();
-	}
-
-	public void doLoadMT()
-	{
-		task.loadMT();
-	}
-
-	public void doPush(int reg)
-	{
-		task.push(reg);
-	}
-
-	public void doPop(int reg)
-	{
-		task.pop(reg);
-	}
-
-	public void doPushSystem(int reg)
-	{
-		task.pushSystem(reg);
-	}
-
-	public void doPopSystem(int reg)
-	{
-		task.popSystem(reg);
-	}
-
-	public void doPushLocal(int reg)
-	{
-		task.pushLocal(reg);
-	}
-
-	public void doPopLocal(int reg)
-	{
-		task.popLocal(reg);
-	}
-
-	public void doLoadSelf()
-	{
-		task.loadSelf();
+		task.setRegister(d, dest);
 	}
 
 	public void step()
@@ -1715,32 +1175,31 @@ public class Processor implements Runnable {
 				this.saved_slot = this.slot; // save slot # in case of an interrupt before the operation
 				switch (ISA.values()[this.nextSlot()]) {
 				case NOP:		break;
-				case EXIT:		this.doExit(); break;
-				case UNEXT:		this.doUNext(); break;
-				case CONT:		this.doCont(); break;
+				case EXIT:		task.exit(); break;
+				case UNEXT:		task.unext(); break;
+				case CONT:		task.cont(); break;
 				case UJMP0:		this.slot = 0; break;
 				case UJMP1:		this.slot = 1; break;
 				case UJMP2:		this.slot = 2; break;
 				case UJMP3:		this.slot = 3; break;
 				case UJMP4:		this.slot = 4; break;
 				case UJMP5:		this.slot = 5; break;
-				case AND:		this.doAnd(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
-				case XOR:		this.doXor(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
-				case DUP:		this.doDup(); break;
-				case DROP:		this.doDrop(); break;
-				case OVER:		this.doOver(); break;
-				case NIP:		this.doNip(); break;
-				case LIT:		this.doLit(this.nextSlot()); break;
-				case NLIT:		this.doNLit(this.nextSlot()); break;
-//				case EXT:		this.doExtendLiteral(this.nextSlot()); break;
-				case SNEXT:		this.doShortNext(this.nextSlot(), false); break;
+				case AND:		this.doAnd(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); task.nip(); break;
+				case XOR:		this.doXor(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); task.nip(); break;
+				case DUP:		task.dup(); break;
+				case DROP:		task.drop(); break;
+				case OVER:		task.over(); break;
+				case NIP:		task.nip(); break;
+				case LIT:		task.lit(this.nextSlot()); break;
+				case NLIT:		task.nLit(this.nextSlot()); break;
+				case SNEXT:		task.snext(this.nextSlot(), false); break;
 				case BRANCH:	this.doConditionalJump(this.nextSlot()); break;
-				case CALL:		this.doCall(); break;
-				case CALLM:		this.doCallMethod(this.nextSlot()); break;
+				case CALL:		task.call(); break;
+				case CALLM:		task.callMethod(this.nextSlot()); break;
 				case FJMP:		task.shortJump(this.nextSlot(), true); break;
 				case BJMP:		task.shortJump(this.nextSlot(), false); break;
-				case SAVE:		this.doSave(); break;
-				case RESTORE:	this.doRestore(); break;
+				case SAVE:		task.saveSelf(); break;
+				case RESTORE:	task.restoreSelf(); break;
 				case USKIP:		this.slot = NO_OF_SLOTS; break;
 				case UJMP6:		this.slot = 6; break;
 				case UJMP7:		this.slot = 7; break;
@@ -1749,26 +1208,26 @@ public class Processor implements Runnable {
 				case UJMP10:	this.slot = 10; break;
 				case SWAP:		this.doSwapRR(this.nextSlot(), this.nextSlot()); break;
 				case MOV:		this.doMoveRR(this.nextSlot(), this.nextSlot()); break;
-				case OR:		this.doOr(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
-				case ENTER:		this.doEnter(); break;
-				case LOADSELF:	this.doLoadSelf(); break;
-				case LOADMT:	this.doLoadMT(); break;
-				case RFETCH:	this.doRFetch(this.nextSlot()); break;
-				case RSTORE:	this.doRStore(this.nextSlot()); break;
-				case LFETCH:	this.doLFetch(this.nextSlot()); break;
-				case LSTORE:	this.doLStore(this.nextSlot()); break;
-				case INC:		this.inc(this.nextSlot()); break;
-				case DEC:		this.doFetch(); break;
-				case FETCH:		this.doStore(); break;
-				case STORE:		this.dec(this.nextSlot()); break;
-				case FETCHPINC:	this.doFetchPInc(); break;
-				case STOREPINC:	this.doStorePInc(); break;
-				case ADD:		this.doAdd(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
-				case SUB:		this.doSub(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
+				case OR:		this.doOr(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); task.nip(); break;
+				case ENTER:		task.enter(); break;
+				case LOADSELF:	task.loadSelf(); break;
+				case LOADMT:	task.loadMT(); break;
+				case RFETCH:	task.rFetch(this.nextSlot()); break;
+				case RSTORE:	task.rStore(this.nextSlot()); break;
+				case LFETCH:	task.lFetch(this.nextSlot()); break;
+				case LSTORE:	task.lStore(this.nextSlot()); break;
+				case INC:		task.inc(this.nextSlot()); break;
+				case DEC:		task.dec(this.nextSlot()); break;
+				case FETCH:		task.fetch(); break;
+				case STORE:		task.store(); break;
+				case FETCHPINC:	task.fetchPInc(); break;
+				case STOREPINC:	task.storePInc(); break;
+				case ADD:		this.doAdd(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); task.nip(); break;
+				case SUB:		this.doSub(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); task.nip(); break;
 				case MUL2:		this.doMul2Add(Register.T.ordinal(), Register.T.ordinal(), Register.Z.ordinal()); break;
 				case DIV2:		this.doDiv2Sub(Register.T.ordinal(), Register.T.ordinal(), Register.Z.ordinal()); break;
-				case PUSH:		this.doPush(Register.T.ordinal()); this.doDrop(); break;
-				case POP:		this.doDup(); this.doPop(Register.T.ordinal()); break;
+				case PUSH:		task.push(Register.T.ordinal()); task.drop(); break;
+				case POP:		task.dup(); task.pop(Register.T.ordinal()); break;
 				case EXT1:		this.doExt1(); break;
 				case EXT2:		this.doExt2(); break;
 				case EXT3:		this.doExt3(); break;
@@ -1797,7 +1256,7 @@ public class Processor implements Runnable {
 						this.running = false;
 					}
 					else {
-						this.setSystemRegister(SystemRegister.I.ordinal(), system.getMemory(adr));
+						task.setSystemRegister(SystemRegister.I.ordinal(), system.getMemory(adr));
 						// increment P
 						task.setSystemRegister(SystemRegister.P, ++adr);
 					}
@@ -1819,60 +1278,7 @@ public class Processor implements Runnable {
 			throw ex;
 		}
 	}
-
-	/**
-	 * set the system register MDP with sign information about S & T.
-	 * Convert T & S into unsigned numbers
-	 */
-	public void doMultiplyDividePrepare()
-	{
-		task.multiplyDividePrepare();
-	}
-
-	/*
-	 * S = multiplicand
-	 * T = result low
-	 * MD = result high
-	 */
-	public void doMultiplyFinished()
-	{
-		task.multiplyFinished();
-	}
-
-	public void doDivideModFinished()
-	{
-		task.divideModFinished();
-	}
-
 	
-	/**
-	 *
-	 */
-	public void doMultiplyStep()
-	{
-		task.multiplyStep();
-	}
-
-	/**
-	 * S = Dividend
-	 * T = Divisor
-	 * MD = Remainder
-	 */
-	public void doDivideStep()
-	{
-		task.divideStep();
-	}
-
-
-//	/**
-//	 * S = System(MD):S / T (floored division)
-//	 * T = System(MD):S MOD T (floored division)
-//	 */
-//	public void doDivMod()
-//	{
-//		//TODO
-//	}
-
 	public void doRol(int reg, int shift)
 	{
 		task.setRegister(reg, this.rol(task.getRegister(reg), shift));
@@ -1900,42 +1306,42 @@ public class Processor implements Runnable {
 	public void doSetBit(int reg, int bit, boolean bit_is_reg, boolean swap_source)
 	{
 		long mask = 1;
-		int bitpos = bit_is_reg ? (int)(swap_source ? this.getRegister(reg) : this.getRegister(bit)) & 0x3f : bit;
+		int bitpos = bit_is_reg ? (int)(swap_source ? task.getRegister(reg) : task.getRegister(bit)) & 0x3f : bit;
 		mask <<= bitpos;
-		long value = swap_source ? this.getRegister(bit) : this.getRegister(reg);
-		this.setRegister(reg, value | mask);
+		long value = swap_source ? task.getRegister(bit) : task.getRegister(reg);
+		task.setRegister(reg, value | mask);
 		task.setFlag(Flag.CARRY, (value & mask) != 0);
-		if (bit_is_reg && ((swap_source ? reg : bit) == Register.S.ordinal())) {this.doNip();}
+		if (bit_is_reg && ((swap_source ? reg : bit) == Register.S.ordinal())) {task.nip();}
 	}
 
 	public void doClearBit(int reg, int bit, boolean bit_is_reg, boolean swap_source)
 	{
 		long mask = 1;
-		int bitpos = bit_is_reg ? (int)(swap_source ? this.getRegister(reg) : this.getRegister(bit)) & 0x3f : bit;
+		int bitpos = bit_is_reg ? (int)(swap_source ? task.getRegister(reg) : task.getRegister(bit)) & 0x3f : bit;
 		mask <<= bitpos;
-		long value = swap_source ? this.getRegister(bit) : this.getRegister(reg);
-		this.setRegister(reg, clearBit(value, bitpos));
+		long value = swap_source ? task.getRegister(bit) : task.getRegister(reg);
+		task.setRegister(reg, clearBit(value, bitpos));
 		task.setFlag(Flag.CARRY, (value & mask) != 0);
-		if (bit_is_reg && ((swap_source ? reg : bit) == Register.S.ordinal())) {this.doNip();}
+		if (bit_is_reg && ((swap_source ? reg : bit) == Register.S.ordinal())) {task.nip();}
 	}
 
 	public void doToggleBit(int reg, int bit, boolean bit_is_reg, boolean swap_source)
 	{
 		long mask = 1;
-		int bitpos = bit_is_reg ? (int)(swap_source ? this.getRegister(reg) : this.getRegister(bit)) & 0x3f : bit;
+		int bitpos = bit_is_reg ? (int)(swap_source ? task.getRegister(reg) : task.getRegister(bit)) & 0x3f : bit;
 		mask <<= bitpos;
-		long value = swap_source ? this.getRegister(bit) : this.getRegister(reg);
-		this.setRegister(reg, value ^ mask);
+		long value = swap_source ? task.getRegister(bit) : task.getRegister(reg);
+		task.setRegister(reg, value ^ mask);
 		task.setFlag(Flag.CARRY, (value & mask) != 0);
-		if (bit_is_reg && ((swap_source ? reg : bit) == Register.S.ordinal())) {this.doNip();}
+		if (bit_is_reg && ((swap_source ? reg : bit) == Register.S.ordinal())) {task.nip();}
 	}
 
 	public void doReadBit(int reg, int bit, boolean bit_is_reg, boolean swap_source)
 	{
 		long mask = 1;
-		int bitpos = bit_is_reg ? (int)(swap_source ? this.getRegister(reg) : this.getRegister(bit)) & 0x3f : bit;
+		int bitpos = bit_is_reg ? (int)(swap_source ? task.getRegister(reg) : task.getRegister(bit)) & 0x3f : bit;
 		mask <<= bitpos;
-		long value = swap_source ? this.getRegister(bit) : this.getRegister(reg);
+		long value = swap_source ? task.getRegister(bit) : task.getRegister(reg);
 		task.setFlag(Flag.CARRY, (value & mask) != 0);
 	}
 
@@ -1947,11 +1353,6 @@ public class Processor implements Runnable {
 		else {
 			this.doClearBit(reg, bit, bit_is_reg, swap_source);
 		}
-	}
-
-	public void doEnterM()
-	{
-		task.enterM();
 	}
 
 	public void doEnterInterrupt(int no)
@@ -1987,70 +1388,41 @@ public class Processor implements Runnable {
 		// clear interrupt service register
 		task.setFlag(SystemRegister.INTS, no, false);
 	}
-
-	public void doConfigFetch(int no)
-	{
-		task.configFetch(no);
-	}
 	
 	public void doJumpIO(int mask)
 	{
-		setSystemRegister(SystemRegister.P, getIOAddress(mask));
+		task.setSystemRegister(SystemRegister.P, getIOAddress(mask));
 		slot = NO_OF_SLOTS; // leave slot
 	}
 
 	public void doSign(int dest, int src)
 	{
-		setRegister(dest, sign(getRegister(src)));
+		task.setRegister(dest, sign(task.getRegister(src)));
 	}
 
 	public void doBitCnt1(int dest, int src)
 	{
-		setRegister(dest, countBits(getRegister(src)));
+		task.setRegister(dest, countBits(task.getRegister(src)));
 	}
 
 	public void doBitCnt0(int dest, int src)
 	{
-		setRegister(dest, BIT_PER_CELL-countBits(getRegister(src)));
+		task.setRegister(dest, BIT_PER_CELL-countBits(task.getRegister(src)));
 	}
-
 
 	public void doBitFindFirst1(int dest, int src)
 	{
-		setRegister(dest, findFirstBit1(getRegister(src)));
+		task.setRegister(dest, findFirstBit1(task.getRegister(src)));
 	}
 
 	public void doBitFindLast1(int dest, int src)
 	{
-		setRegister(dest, findLastBit1(getRegister(src)));
+		task.setRegister(dest, findLastBit1(task.getRegister(src)));
 	}
-
 
 	public void doByteCount(int dest, int src1, int src2)
 	{
-		setRegister(dest, countBytes(getRegister(src1), (byte)getRegister(src2)));
-	}
-
-	public void doRDrop()
-	{
-		task.rDrop();
-	}
-
-
-	public void doRDup()
-	{
-		task.rDup();
-	}
-
-
-	public void doSetFlags(int flag)
-	{
-		task.setFlag(flag);
-	}
-
-	public void doClearFlags(int flag)
-	{
-		task.clearFlag(flag);
+		task.setRegister(dest, countBytes(task.getRegister(src1), (byte)task.getRegister(src2)));
 	}
 
 	/**
@@ -2062,15 +1434,15 @@ public class Processor implements Runnable {
 	 */
 	public boolean doFetchReserved()
 	{
-		long adr = this.getRegister(Register.T);
-		if (this.getSystemRegister(SystemRegister.RES) != 0) {
+		long adr = task.getRegister(Register.T);
+		if (task.getSystemRegister(SystemRegister.RES) != 0) {
 			// some memory has already been reserved
 			if (interrupt(Flag.TOUCHED)) {
 				return false;
 			}
 //			this.setFlag(Flag.RESERVED, true);
 		}
-		this.setSystemRegister(SystemRegister.RES, adr);
+		task.setSystemRegister(SystemRegister.RES, adr);
 		this.setRegister(Register.T, system.getMemory(adr));
 		return true;
 	}
@@ -2083,9 +1455,9 @@ public class Processor implements Runnable {
 	 */
 	public void doStoreConditional()
 	{
-		long adr = this.getRegister(Register.T);
-		long value = this.getRegister(Register.S);
-		if (this.getSystemRegister(SystemRegister.RES) != adr) {
+		long adr = task.getRegister(Register.T);
+		long value = task.getRegister(Register.S);
+		if (task.getSystemRegister(SystemRegister.RES) != adr) {
 			// memory has not been reserved
 		}
 		if (task.getFlag(Flag.TOUCHED)) {
@@ -2095,13 +1467,13 @@ public class Processor implements Runnable {
 			system.setMemory(adr, value);
 			this.setRegister(Register.T, 0);
 		}
-		this.setSystemRegister(SystemRegister.RES, 0);
-		this.doNip();
+		task.setSystemRegister(SystemRegister.RES, 0);
+		task.nip();
 	}
 
 	public void doFetchPort(int mask, boolean wait)
 	{
-		this.doDup();
+		task.dup();
 		this.communication_register = Register.T.ordinal();
 		this.port_read_mask = mask;
 		if (!readPort() && wait) {
@@ -2112,8 +1484,8 @@ public class Processor implements Runnable {
 
 	public void doStorePort(int mask, boolean wait)
 	{
-		this.communication = this.getRegister(Register.T);
-		this.doDrop();
+		this.communication = task.getRegister(Register.T);
+		task.drop();
 		this.port_write_mask = mask;
 		if (!this.writePort() && wait) {
 			this.waiting = true;
@@ -2121,108 +1493,52 @@ public class Processor implements Runnable {
 		}
 	}
 
-
 	public void doFetchSystem(int reg)
 	{
-		this.doDup();
-		this.setRegister(Register.T, this.getSystemRegister(reg));
+		task.dup();
+		this.setRegister(Register.T, task.getSystemRegister(reg));
 	}
 
 	public void doStoreSystem(int reg)
 	{
-		this.setSystemRegister(reg, this.getRegister(Register.T));
-		this.doDrop();
+		task.setSystemRegister(reg, task.getRegister(Register.T));
+		task.drop();
 	}
 
 	public void doFetchSIMD(int reg)
 	{
-		this.doDup();
-		int slice = (int)(this.getRegister(Register.R) & SIMD_SLICE_MASK);
+		task.dup();
+		int slice = (int)(task.getRegister(Register.R) & SIMD_SLICE_MASK);
 		this.setRegister(Register.T, task.getSIMDRegister(reg)[slice]);
 	}
 
 	public void doStoreSIMD(int reg)
 	{
-		int slice = (int)(this.getRegister(Register.R) & SIMD_SLICE_MASK);
-		task.getSIMDRegister(reg)[slice] = this.getRegister(Register.T);
-		this.doDrop();
-	}
-
-	public void doEQ0Q(int dest, int src, boolean pushStack)
-	{
-		task.eq0q(dest, src, pushStack);
-	}
-
-	public void doNE0Q(int dest, int src, boolean pushStack)
-	{
-		task.ne0q(dest, src, pushStack);
-	}
-
-	public void doGT0Q(int dest, int src, boolean pushStack)
-	{
-		task.gt0q(dest, src, pushStack);
-	}
-
-	public void doGE0Q(int dest, int src, boolean pushStack)
-	{
-		task.ge0q(dest, src, pushStack);
-	}
-
-	public void doLT0Q(int dest, int src, boolean pushStack)
-	{
-		task.lt0q(dest, src, pushStack);
-	}
-
-	public void doLE0Q(int dest, int src, boolean pushStack)
-	{
-		task.le0q(dest, src, pushStack);
-	}
-
-	public void doAbs(int dest, int src)
-	{
-		task.abs(dest, src);
-	}
-
-	public void doNegate(int dest, int src)
-	{
-		task.negate(dest, src);
-	}
-
-	public void doReverse(int dest, int src)
-	{
-		task.reverse(dest, src);
-	}
-
-	public void doNextPow2(int dest, int src)
-	{
-		task.nextPow2(dest, src);
-	}
-
-	public void doParity(int dest, int src)
-	{
-		task.parityq(dest, src);
+		int slice = (int)(task.getRegister(Register.R) & SIMD_SLICE_MASK);
+		task.getSIMDRegister(reg)[slice] = task.getRegister(Register.T);
+		task.drop();
 	}
 
 	public void doExt1()
 	{
 		switch (Ext1.values()[this.nextSlot()]) {
-		case RDROP:			this.doRDrop(); break;
-		case RDUP:			this.doRDup(); break;
-		case QDUP:			this.doQDup(); break;
-		case EXECUTE:		this.doExecute(); break;
+		case RDROP:			task.rDrop(); break;
+		case RDUP:			task.rDup(); break;
+		case QDUP:			task.qdup(); break;
+		case EXECUTE:		task.execute(); break;
 		case EXITI:			this.doExitInterrupt(this.nextSlot()); break;
 //		case SWAP0:			this.doSwap(this.nextSlot(), this.nextSlot()); this.slot = 0; break;
-		case LCOL:			this.doLongCol(); break;
-		case LJMP:			this.doLongJump(); break;
+		case LCOL:			task.longCol(); break;
+		case LJMP:			task.longJump(); break;
 //		case RNEXT:			this.doRemainingNext(); break;
-		case LNEXT:			this.doLongNext(); break;
-		case DO:			this.doDo(); break;
-		case QDO:			this.doQDo(); break;
-		case QFOR:			this.doQFor(); break;
-		case LOOP:			this.doLoop(); break;
-		case PLOOP:			this.doPLoop(); break;
-		case MIN:			this.doMin(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
-		case MAX:			this.doMax(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); this.doNip(); break;
+		case LNEXT:			task.lnext(); break;
+		case DO:			task.dodo(); break;
+		case QDO:			task.qdo(); break;
+		case QFOR:			task.qfor(); break;
+		case LOOP:			task.loop(); break;
+		case PLOOP:			task.ploop(); break;
+		case MIN:			this.doMin(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); task.nip(); break;
+		case MAX:			this.doMax(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); task.nip(); break;
 		case ADDC:			this.doAddWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
 		case SUBC:			this.doSubtractWithCarry(Register.T.ordinal(), Register.S.ordinal(), Register.T.ordinal()); break;
 		case ROL:			this.doRol(Register.T.ordinal(), 1); break;
@@ -2234,22 +1550,22 @@ public class Processor implements Runnable {
 		case TBITS:			this.doToggleBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
 		case RBITS:			this.doReadBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
 		case WBITS:			this.doWriteBit(Register.T.ordinal(), Register.S.ordinal(), true, true); break;
-		case ENTERM:		this.doEnterM(); break;
-		case LCALLM:		this.doCallMethod(task.drop()); break;
+		case ENTERM:		task.enterM(); break;
+		case LCALLM:		task.callMethod(task.drop()); break;
 //		case LJMPM:			this.doJumpMethod(this.drop()); break;
-		case TUCK:			this.doTuck(); break;
-		case UNDER:			this.doUnder(); break;
-		case MULS:			this.doMultiplyStep(); break;
-		case DIVS:			this.doDivideStep(); break;
-		case MDP:			this.doMultiplyDividePrepare(); break;
-		case MULF:			this.doMultiplyFinished(); break;
-		case DIVMODF:		this.doDivideModFinished(); break;
-		case EQ0Q:			this.doEQ0Q(Register.T.ordinal(), Register.T.ordinal(), false); break;
-		case NE0Q:			this.doNE0Q(Register.T.ordinal(), Register.T.ordinal(), false); break;
-		case GT0Q:			this.doGT0Q(Register.T.ordinal(), Register.T.ordinal(), false); break;
-		case GE0Q:			this.doGE0Q(Register.T.ordinal(), Register.T.ordinal(), false); break;
-		case LT0Q:			this.doLT0Q(Register.T.ordinal(), Register.T.ordinal(), false); break;
-		case LE0Q:			this.doLE0Q(Register.T.ordinal(), Register.T.ordinal(), false); break;
+		case TUCK:			task.tuck(); break;
+		case UNDER:			task.under(); break;
+		case MULS:			task.multiplyStep(); break;
+		case DIVS:			task.divideStep(); break;
+		case MDP:			task.multiplyDividePrepare(); break;
+		case MULF:			task.multiplyFinished(); break;
+		case DIVMODF:		task.divideModFinished(); break;
+		case EQ0Q:			task.eq0q(Register.T.ordinal(), Register.T.ordinal(), false); break;
+		case NE0Q:			task.ne0q(Register.T.ordinal(), Register.T.ordinal(), false); break;
+		case GT0Q:			task.gt0q(Register.T.ordinal(), Register.T.ordinal(), false); break;
+		case GE0Q:			task.ge0q(Register.T.ordinal(), Register.T.ordinal(), false); break;
+		case LT0Q:			task.lt0q(Register.T.ordinal(), Register.T.ordinal(), false); break;
+		case LE0Q:			task.le0q(Register.T.ordinal(), Register.T.ordinal(), false); break;
 		case FETCHRES:		this.doFetchReserved(); break;
 		case STORECOND:		this.doStoreConditional(); break;
 		default: this.interrupt(Flag.ILLEGAL);
@@ -2267,14 +1583,14 @@ public class Processor implements Runnable {
 		case RORI:			this.doRor(Register.T.ordinal(), this.nextSlot()); break;
 		case RCLI:			this.doRcl(Register.T.ordinal(), this.nextSlot()); break;
 		case RCRI:			this.doRcr(Register.T.ordinal(), this.nextSlot()); break;
-		case EQ0Q:			this.doEQ0Q(Register.T.ordinal(), this.nextSlot(), true); break;
-		case NE0Q:			this.doNE0Q(Register.T.ordinal(), this.nextSlot(), true); break;
-		case GT0Q:			this.doGT0Q(Register.T.ordinal(), this.nextSlot(), true); break;
-		case GE0Q:			this.doGE0Q(Register.T.ordinal(), this.nextSlot(), true); break;
-		case LT0Q:			this.doLT0Q(Register.T.ordinal(), this.nextSlot(), true); break;
-		case LE0Q:			this.doLE0Q(Register.T.ordinal(), this.nextSlot(), true); break;
-		case SFLAG:			this.doSetFlags(this.nextSlot()); break;
-		case CFLAG:			this.doClearFlags(this.nextSlot()); break;
+		case EQ0Q:			task.eq0q(Register.T.ordinal(), this.nextSlot(), true); break;
+		case NE0Q:			task.ne0q(Register.T.ordinal(), this.nextSlot(), true); break;
+		case GT0Q:			task.gt0q(Register.T.ordinal(), this.nextSlot(), true); break;
+		case GE0Q:			task.ge0q(Register.T.ordinal(), this.nextSlot(), true); break;
+		case LT0Q:			task.lt0q(Register.T.ordinal(), this.nextSlot(), true); break;
+		case LE0Q:			task.le0q(Register.T.ordinal(), this.nextSlot(), true); break;
+		case SFLAG:			task.setFlag(this.nextSlot()); break;
+		case CFLAG:			task.clearFlag(this.nextSlot()); break;
 		case SBIT:			this.doSetBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
 		case CBIT:			this.doClearBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
 		case TBIT:			this.doToggleBit(Register.T.ordinal(), this.nextSlot(), false, false); break;
@@ -2298,15 +1614,15 @@ public class Processor implements Runnable {
 		case STOREPORT:		this.doStorePort(this.nextSlot(), false); break;
 		case FETCHPORTWAIT:	this.doFetchPort(this.nextSlot(), true); break;
 		case STOREPORTWAIT:	this.doStorePort(this.nextSlot(), true); break;
-		case PUSHR:			this.doPush(this.nextSlot()); break;
-		case POPR:			this.doPop(this.nextSlot()); break;
-		case PUSHL:			this.doPushLocal(this.nextSlot()); break;
-		case POPL:			this.doPopLocal(this.nextSlot()); break;
-		case PUSHS:			this.doPushSystem(this.nextSlot()); break;
-		case POPS:			this.doPopSystem(this.nextSlot()); break;
-		case BLIT:			this.doBLit(this.nextSlot()); break;
+		case PUSHR:			task.push(this.nextSlot()); break;
+		case POPR:			task.pop(this.nextSlot()); break;
+		case PUSHL:			task.pushLocal(this.nextSlot()); break;
+		case POPL:			task.popLocal(this.nextSlot()); break;
+		case PUSHS:			task.pushSystem(this.nextSlot()); break;
+		case POPS:			task.popSystem(this.nextSlot()); break;
+		case BLIT:			task.bLit(this.nextSlot()); break;
 		case JMPIO:			this.doJumpIO(this.nextSlot()); break;
-		case CONFIGFETCH:	this.doConfigFetch(this.nextSlot()); break;
+		case CONFIGFETCH:	task.configFetch(this.nextSlot()); break;
 		default: this.interrupt(Flag.ILLEGAL);
 		}
 	}
@@ -2314,27 +1630,27 @@ public class Processor implements Runnable {
 	public void doExt3()
 	{
 		switch (Ext3.values()[this.nextSlot()]) {
-		case LSAVE:			this.doLocalSave(this.nextSlot(), this.nextSlot()); break;
-		case LRESTORE:		this.doLocalRestore(this.nextSlot(), this.nextSlot()); break;
+		case LSAVE:			task.saveLocal(this.nextSlot(), this.nextSlot()); break;
+		case LRESTORE:		task.restoreLocal(this.nextSlot(), this.nextSlot()); break;
 		case SWAPRS:		this.doSwapRS(this.nextSlot(), this.nextSlot()); break;
-		case SWAPRL:		this.doSwapRL(this.nextSlot(), this.nextSlot()); break;
+		case SWAPRL:		task.swapRL(this.nextSlot(), this.nextSlot()); break;
 		case MOVSR:			this.doMoveSR(this.nextSlot(), this.nextSlot()); break;
 		case MOVRS:			this.doMoveRS(this.nextSlot(), this.nextSlot()); break;
 		case MOVLR:			this.doMoveLR(this.nextSlot(), this.nextSlot()); break;
 		case MOVRL:			this.doMoveRL(this.nextSlot(), this.nextSlot()); break;
-		case MOVRI:			this.doMoveRI(this.nextSlot(), this.nextSlot()); break;
-		case MOVSI:			this.doMoveSI(this.nextSlot(), this.nextSlot()); break;
-		case MOVLI:			this.doMoveLI(this.nextSlot(), this.nextSlot()); break;
+		case MOVRI:			task.setRegister(this.nextSlot(), this.nextSlot()); break;
+		case MOVSI:			task.setSystemRegister(this.nextSlot(), this.nextSlot()); break;
+		case MOVLI:			task.setLocalRegister(this.nextSlot(), this.nextSlot()); break;
 		case ROL:			this.doRol(this.nextSlot(), this.nextSlot()); break;
 		case ROR:			this.doRor(this.nextSlot(), this.nextSlot()); break;
 		case RCL:			this.doRcl(this.nextSlot(), this.nextSlot()); break;
 		case RCR:			this.doRcr(this.nextSlot(), this.nextSlot()); break;
-		case EQ0Q:			this.doEQ0Q(this.nextSlot(), this.nextSlot(), true); break;
-		case NE0Q:			this.doNE0Q(this.nextSlot(), this.nextSlot(), true); break;
-		case GT0Q:			this.doGT0Q(this.nextSlot(), this.nextSlot(), true); break;
-		case GE0Q:			this.doGE0Q(this.nextSlot(), this.nextSlot(), true); break;
-		case LT0Q:			this.doLT0Q(this.nextSlot(), this.nextSlot(), true); break;
-		case LE0Q:			this.doLE0Q(this.nextSlot(), this.nextSlot(), true); break;
+		case EQ0Q:			task.eq0q(this.nextSlot(), this.nextSlot(), true); break;
+		case NE0Q:			task.ne0q(this.nextSlot(), this.nextSlot(), true); break;
+		case GT0Q:			task.gt0q(this.nextSlot(), this.nextSlot(), true); break;
+		case GE0Q:			task.ge0q(this.nextSlot(), this.nextSlot(), true); break;
+		case LT0Q:			task.lt0q(this.nextSlot(), this.nextSlot(), true); break;
+		case LE0Q:			task.le0q(this.nextSlot(), this.nextSlot(), true); break;
 		case BITFF1:		this.doBitFindFirst1(this.nextSlot(), this.nextSlot()); break;
 		case BITFL1:		this.doBitFindLast1(this.nextSlot(), this.nextSlot()); break;
 		case RSBIT:			this.doSetBit(this.nextSlot(), this.nextSlot(), false, false); break;
@@ -2354,47 +1670,47 @@ public class Processor implements Runnable {
 	public void doExt4()
 	{
 		switch (Ext4.values()[this.nextSlot()]) {
-		case RFETCHI:	this.doRFetchIndirect(this.nextSlot()); break;
-		case RSTOREI:	this.doRStoreIndirect(this.nextSlot()); break;
-		case LFETCHI:	this.doLFetchIndirect(this.nextSlot()); break;
-		case LSTOREI:	this.doLStoreIndirect(this.nextSlot()); break;
-		case SFETCHI:	this.doSFetchIndirect(this.nextSlot()); break;
-		case SSTOREI:	this.doSStoreIndirect(this.nextSlot()); break;
+		case RFETCHI:	task.rFetchIndirect(this.nextSlot()); break;
+		case RSTOREI:	task.rStoreIndirect(this.nextSlot()); break;
+		case LFETCHI:	task.lFetchIndirect(this.nextSlot()); break;
+		case LSTOREI:	task.lStoreIndirect(this.nextSlot()); break;
+		case SFETCHI:	task.sFetchIndirect(this.nextSlot()); break;
+		case SSTOREI:	task.sStoreIndirect(this.nextSlot()); break;
 
-		case RFETCH:	this.doRFetchFetch(this.nextSlot(), false, false, false); break;
-		case RSTORE:	this.doRFetchStore(this.nextSlot(), false, false, false); break;
-		case LFETCH:	this.doLFetchFetch(this.nextSlot(), false, false, false); break;
-		case LSTORE:	this.doLFetchStore(this.nextSlot(), false, false, false); break;
-		case SFETCH:	this.doSFetchFetch(this.nextSlot(), false, false, false); break;
-		case SSTORE:	this.doSFetchStore(this.nextSlot(), false, false, false); break;
+		case RFETCH:	task.rFetchFetch(this.nextSlot(), false, false, false); break;
+		case RSTORE:	task.rFetchStore(this.nextSlot(), false, false, false); break;
+		case LFETCH:	task.lFetchFetch(this.nextSlot(), false, false, false); break;
+		case LSTORE:	task.lFetchStore(this.nextSlot(), false, false, false); break;
+		case SFETCH:	task.sFetchFetch(this.nextSlot(), false, false, false); break;
+		case SSTORE:	task.sFetchStore(this.nextSlot(), false, false, false); break;
 
-		case RFETCHPEI:	this.doRFetchFetch(this.nextSlot(), false, true, false); break;
-		case RSTOREPEI:	this.doRFetchStore(this.nextSlot(), false, true, false); break;
-		case LFETCHPEI:	this.doLFetchFetch(this.nextSlot(), false, true, false); break;
-		case LSTOREPEI:	this.doLFetchStore(this.nextSlot(), false, true, false); break;
-		case SFETCHPEI:	this.doSFetchFetch(this.nextSlot(), false, true, false); break;
-		case SSTOREPEI:	this.doSFetchStore(this.nextSlot(), false, true, false); break;
+		case RFETCHPEI:	task.rFetchFetch(this.nextSlot(), false, true, false); break;
+		case RSTOREPEI:	task.rFetchStore(this.nextSlot(), false, true, false); break;
+		case LFETCHPEI:	task.lFetchFetch(this.nextSlot(), false, true, false); break;
+		case LSTOREPEI:	task.lFetchStore(this.nextSlot(), false, true, false); break;
+		case SFETCHPEI:	task.sFetchFetch(this.nextSlot(), false, true, false); break;
+		case SSTOREPEI:	task.sFetchStore(this.nextSlot(), false, true, false); break;
 
-		case RFETCHPOI:	this.doRFetchFetch(this.nextSlot(), false, false, true); break;
-		case RSTOREPOI:	this.doRFetchStore(this.nextSlot(), false, false, true); break;
-		case LFETCHPOI:	this.doLFetchFetch(this.nextSlot(), false, false, true); break;
-		case LSTOREPOI:	this.doLFetchStore(this.nextSlot(), false, false, true); break;
-		case SFETCHPOI:	this.doSFetchFetch(this.nextSlot(), false, false, true); break;
-		case SSTOREPOI:	this.doSFetchStore(this.nextSlot(), false, false, true); break;
+		case RFETCHPOI:	task.rFetchFetch(this.nextSlot(), false, false, true); break;
+		case RSTOREPOI:	task.rFetchStore(this.nextSlot(), false, false, true); break;
+		case LFETCHPOI:	task.lFetchFetch(this.nextSlot(), false, false, true); break;
+		case LSTOREPOI:	task.lFetchStore(this.nextSlot(), false, false, true); break;
+		case SFETCHPOI:	task.sFetchFetch(this.nextSlot(), false, false, true); break;
+		case SSTOREPOI:	task.sFetchStore(this.nextSlot(), false, false, true); break;
 
-		case RFETCHPED:	this.doRFetchFetch(this.nextSlot(), true, true, false); break;
-		case RSTOREPED:	this.doRFetchStore(this.nextSlot(), true, true, false); break;
-		case LFETCHPED:	this.doLFetchFetch(this.nextSlot(), true, true, false); break;
-		case LSTOREPED:	this.doLFetchStore(this.nextSlot(), true, true, false); break;
-		case SFETCHPED:	this.doSFetchFetch(this.nextSlot(), true, true, false); break;
-		case SSTOREPED:	this.doSFetchStore(this.nextSlot(), true, true, false); break;
+		case RFETCHPED:	task.rFetchFetch(this.nextSlot(), true, true, false); break;
+		case RSTOREPED:	task.rFetchStore(this.nextSlot(), true, true, false); break;
+		case LFETCHPED:	task.lFetchFetch(this.nextSlot(), true, true, false); break;
+		case LSTOREPED:	task.lFetchStore(this.nextSlot(), true, true, false); break;
+		case SFETCHPED:	task.sFetchFetch(this.nextSlot(), true, true, false); break;
+		case SSTOREPED:	task.sFetchStore(this.nextSlot(), true, true, false); break;
 
-		case RFETCHPOD:	this.doRFetchFetch(this.nextSlot(), true, false, true); break;
-		case RSTOREPOD:	this.doRFetchStore(this.nextSlot(), true, false, true); break;
-		case LFETCHPOD:	this.doLFetchFetch(this.nextSlot(), true, false, true); break;
-		case LSTOREPOD:	this.doLFetchStore(this.nextSlot(), true, false, true); break;
-		case SFETCHPOD:	this.doSFetchFetch(this.nextSlot(), true, false, true); break;
-		case SSTOREPOD:	this.doSFetchStore(this.nextSlot(), true, false, true); break;
+		case RFETCHPOD:	task.rFetchFetch(this.nextSlot(), true, false, true); break;
+		case RSTOREPOD:	task.rFetchStore(this.nextSlot(), true, false, true); break;
+		case LFETCHPOD:	task.lFetchFetch(this.nextSlot(), true, false, true); break;
+		case LSTOREPOD:	task.lFetchStore(this.nextSlot(), true, false, true); break;
+		case SFETCHPOD:	task.sFetchFetch(this.nextSlot(), true, false, true); break;
+		case SSTOREPOD:	task.sFetchStore(this.nextSlot(), true, false, true); break;
 
 		default: this.interrupt(Flag.ILLEGAL);
 		}
@@ -2419,12 +1735,12 @@ public class Processor implements Runnable {
 	{
 		switch (RegOp1.values()[op]) {
 		case NOT:		this.doEquivalent(d, d, Register.Z.ordinal()); break;
-		case ABS:		this.doAbs(d, d); break;
-		case NEGATE:	this.doNegate(d, d); break;
+		case ABS:		task.abs(d, d); break;
+		case NEGATE:	task.negate(d, d); break;
 		case SIGN:		this.doSign(d, d); break;
-		case REVERSE:	this.doReverse(d, d); break;
-		case NEXTPOW2:	this.doNextPow2(d, d); break;
-		case PARITY:	this.doParity(d, d); break;
+		case REVERSE:	task.reverse(d, d); break;
+		case NEXTPOW2:	task.nextPow2(d, d); break;
+		case PARITY:	task.parityq(d, d); break;
 		case BITCNT1:	this.doBitCnt1(d, d); break;
 		case BITCNT0:	this.doBitCnt0(d, d); break;
 		case ASL1:		this.doAsl(d, d, 1); break;
@@ -2445,12 +1761,12 @@ public class Processor implements Runnable {
 		case MIN:		this.doMin(d, d, s); break;
 		case MAX:		this.doMax(d, d, s); break;
 		case NOT:		this.doEquivalent(d, s, Register.Z.ordinal()); break;
-		case ABS:		this.doAbs(d, s); break;
-		case NEGATE:	this.doNegate(d, s); break;
+		case ABS:		task.abs(d, s); break;
+		case NEGATE:	task.negate(d, s); break;
 		case SIGN:		this.doSign(d, s); break;
-		case REVERSE:	this.doReverse(d, s); break;
-		case NEXTPOW2:	this.doNextPow2(d, s); break;
-		case PARITY:	this.doParity(d, s); break;
+		case REVERSE:	task.reverse(d, s); break;
+		case NEXTPOW2:	task.nextPow2(d, s); break;
+		case PARITY:	task.parityq(d, s); break;
 		case BYTECOUNT:	this.doByteCount(d, d, s); break;
 		case BITCNT1:	this.doBitCnt1(d, s); break;
 		case BITCNT0:	this.doBitCnt0(d, s); break;
@@ -2566,8 +1882,8 @@ public class Processor implements Runnable {
 
 	public void incrementExternalClock()
 	{
-		this.inc(SystemRegister.CLK);
-		if (this.getSystemRegister(SystemRegister.CLK) == this.getSystemRegister(SystemRegister.CLI)) {
+		task.inc(SystemRegister.CLK);
+		if (task.getSystemRegister(SystemRegister.CLK) == task.getSystemRegister(SystemRegister.CLI)) {
 			task.setFlag(Flag.CLOCK, true);
 		}
 	}
@@ -2579,39 +1895,21 @@ public class Processor implements Runnable {
 		this.failed = false;
 		this.port_read_mask = 0;
 		this.port_write_mask = 0;
-		// initialize instruction pointer
-		this.setSystemRegister(SystemRegister.P, 0);
-		this.setSystemRegister(SystemRegister.FLAG, 0);
 		this.slot = 0;
-		// initialize stack
+		this.slice = 0;
+		this.current_task = 0;
+		this.task = this.task_list[0];
 		for (int i=0; i<task_list.length; ++i) {
 			task_list[i].reset();
 		}
-		//
 		this.interrupt(Flag.RESET);
 	}
 	
 	public void powerOn()
 	{
 		this.reset();
-		// initial bootcode
-		int slot = 0;
-		long bootcode = 0;
-		bootcode = writeSlot(bootcode, slot++, ISA.EXT1.ordinal());
-		bootcode = writeSlot(bootcode, slot++, Ext1.RDROP.ordinal());
-		bootcode = writeSlot(bootcode, slot++, ISA.EXT1.ordinal());
-		bootcode = writeSlot(bootcode, slot++, Ext1.RDROP.ordinal());
-		bootcode = writeSlot(bootcode, slot++, ISA.NLIT.ordinal());
-		bootcode = writeSlot(bootcode, slot++, 0);
-		bootcode = writeSlot(bootcode, slot++, ISA.EXT2.ordinal());
-		bootcode = writeSlot(bootcode, slot++, Ext2.SSTORE.ordinal());
-		bootcode = writeSlot(bootcode, slot++, SystemRegister.P.ordinal());
-		this.setSystemRegister(SystemRegister.I, bootcode);
-		// power-on reset clears the reset interrupt flags
-		task.setFlag(Flag.RESET, false);
-		task.setFlag(SystemRegister.INTS, Flag.RESET, false);
+		this.task.powerOn();
 	}
-
 	
 	public synchronized void start()
 	{
@@ -2643,7 +1941,7 @@ public class Processor implements Runnable {
 
 	public void execute(long instr)
 	{
-		this.doPushSystem(SystemRegister.P.ordinal());
+		task.pushSystem(SystemRegister.P.ordinal());
 		task.setSystemRegister(SystemRegister.I, instr);
 		task.setSystemRegister(SystemRegister.P, 0x7fff_ffff_ffff_ffffL); // invalid address
 		this.slot = 0;
@@ -2657,7 +1955,7 @@ public class Processor implements Runnable {
 				break;
 			}
 		}
-		this.doPopSystem(SystemRegister.P.ordinal());
+		task.popSystem(SystemRegister.P.ordinal());
 	}
 
 	

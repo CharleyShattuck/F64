@@ -12,8 +12,8 @@ public class LeQ extends com.F64.Word {
 	{
 		Processor p = i.getProcessor();
 		p.setRegister(Register.T, p.getRegister(Register.S) - p.getRegister(Register.T));
-		p.doNip();
-		p.doLE0Q(Register.T.ordinal(), Register.T.ordinal(), false);
+		p.getTask().nip();
+		p.getTask().le0q(Register.T.ordinal(), Register.T.ordinal(), false);
 	}
 
 	@Override

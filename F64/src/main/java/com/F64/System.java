@@ -5,25 +5,25 @@ public class System {
 	private long		heap_size;
 	private long		stack_size;
 	private long		return_stack_size;
-	private int			no_of_threads;
+	private int			no_of_tasks;
 	private	long[]		memory;
 	private	long[]		stack;
 	private	long[]		return_stack;
 	private long		code_position;
 	private long		data_position;
 
-	public System(int dictionary_size, int heap_size, int stack_size, int return_stack_size, int no_of_threads)
+	public System(int dictionary_size, int heap_size, int stack_size, int return_stack_size, int no_of_tasks)
 	{
 		this.dictionary_size = dictionary_size;
 		this.heap_size = heap_size;
 		this.stack_size = stack_size;
 		this.return_stack_size = return_stack_size;
-		this.no_of_threads = no_of_threads;
+		this.no_of_tasks = no_of_tasks;
 		this.code_position = Processor.BIT_PER_CELL;
 		this.data_position = dictionary_size;
 		memory = new long[dictionary_size+heap_size];
-		stack = new long[stack_size*no_of_threads];
-		return_stack = new long[return_stack_size*no_of_threads];
+		stack = new long[stack_size*no_of_tasks];
+		return_stack = new long[return_stack_size*no_of_tasks];
 	}
 
 	public long getMemorySize() {return memory.length;}
@@ -112,18 +112,18 @@ public class System {
 		memory[(int)adr] = value;
 	}
 
-	public long getStackBottom(int thread, boolean return_stack)
+	public long getStackBottom(int task, boolean return_stack)
 	{
-		long adr = thread;
+		long adr = task;
 		adr *= return_stack ? return_stack_size : stack_size;
 		return adr;
 	}
 	
-	public long getStackTop(int thread, boolean return_stack)
+	public long getStackTop(int task, boolean return_stack)
 	{
-		long adr = thread;
+		long adr = task+1;
 		adr *= return_stack ? return_stack_size : stack_size;
-		return adr + (return_stack ? return_stack_size : stack_size) - 1;		
+		return adr - 1;		
 	}
 
 	

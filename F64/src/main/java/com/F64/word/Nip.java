@@ -10,7 +10,7 @@ public class Nip extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doNip();
+		p.getTask().nip();
 	}
 
 	@Override

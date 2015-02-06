@@ -11,7 +11,7 @@ public class Lt0Q extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doLT0Q(Register.T.ordinal(), Register.T.ordinal(), false);
+		p.getTask().lt0q(Register.T.ordinal(), Register.T.ordinal(), false);
 	}
 
 	@Override

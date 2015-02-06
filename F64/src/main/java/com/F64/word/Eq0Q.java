@@ -11,7 +11,7 @@ public class Eq0Q extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doEQ0Q(Register.T.ordinal(), Register.T.ordinal(), false);
+		p.getTask().eq0q(Register.T.ordinal(), Register.T.ordinal(), false);
 	}
 
 	@Override

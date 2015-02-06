@@ -11,7 +11,7 @@ public class Gt0Q extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doGT0Q(Register.T.ordinal(), Register.T.ordinal(), false);
+		p.getTask().gt0q(Register.T.ordinal(), Register.T.ordinal(), false);
 	}
 
 	@Override

@@ -11,8 +11,8 @@ public class Pop extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doDup();
-		p.doPop(Register.T.ordinal());
+		p.getTask().dup();
+		p.getTask().pop(Register.T.ordinal());
 	}
 
 	@Override

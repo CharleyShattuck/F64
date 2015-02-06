@@ -12,7 +12,7 @@ public class Min extends com.F64.Word {
 	{
 		Processor p = i.getProcessor();
 		p.setRegister(Register.T, Processor.min(p.getRegister(Register.S), p.getRegister(Register.T)));
-		p.doNip();
+		p.getTask().nip();
 	}
 
 	@Override

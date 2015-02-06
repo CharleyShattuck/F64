@@ -12,7 +12,7 @@ public class Ror extends com.F64.Word {
 	{
 		Processor p = i.getProcessor();
 		p.setRegister(Register.T, p.ror(p.getRegister(Register.S), (int)p.getRegister(Register.T)));
-		p.doNip();
+		p.getTask().nip();
 	}
 
 	@Override

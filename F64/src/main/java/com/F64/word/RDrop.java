@@ -10,7 +10,7 @@ public class RDrop extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doRDrop();
+		p.getTask().rDrop();
 	}
 
 	@Override

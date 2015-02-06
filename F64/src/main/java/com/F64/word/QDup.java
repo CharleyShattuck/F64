@@ -10,7 +10,7 @@ public class QDup extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doQDup();
+		p.getTask().qdup();
 	}
 
 	@Override

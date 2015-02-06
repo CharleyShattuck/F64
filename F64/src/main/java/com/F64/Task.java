@@ -30,9 +30,9 @@ public class Task {
 	public void reset()
 	{
 		if (parameter_stack == null) {
-			this.setSystemRegister(SystemRegister.SP, system.getStackTop(0, false));
-			this.setSystemRegister(SystemRegister.S0, system.getStackBottom(0, false));
-			this.setSystemRegister(SystemRegister.SL, system.getStackTop(0, false));
+			this.setSystemRegister(SystemRegister.SP, system.getStackTop(index, false));
+			this.setSystemRegister(SystemRegister.S0, system.getStackBottom(index, false));
+			this.setSystemRegister(SystemRegister.SL, system.getStackTop(index, false));
 		}
 		else {
 			this.setSystemRegister(SystemRegister.SP, parameter_stack.length - 1);
@@ -41,18 +41,40 @@ public class Task {
 		}
 		// initialize return stack
 		if (return_stack == null) {
-			this.setSystemRegister(SystemRegister.RP, system.getStackTop(0, true));
-			this.setSystemRegister(SystemRegister.R0, system.getStackBottom(0, true));
-			this.setSystemRegister(SystemRegister.RL, system.getStackTop(0, true));
+			this.setSystemRegister(SystemRegister.RP, system.getStackTop(index, true));
+			this.setSystemRegister(SystemRegister.R0, system.getStackBottom(index, true));
+			this.setSystemRegister(SystemRegister.RL, system.getStackTop(index, true));
 		}
 		else {
 			this.setSystemRegister(SystemRegister.RP, return_stack.length - 1);
 			this.setSystemRegister(SystemRegister.R0, 0);
 			this.setSystemRegister(SystemRegister.RL, return_stack.length - 1);
 		}
+		setSystemRegister(SystemRegister.P, 0);
+		setSystemRegister(SystemRegister.FLAG, 0);
 		// system register
 		this.setSystemRegister(SystemRegister.INTV, 0);
 		this.setSystemRegister(SystemRegister.INTE, 0);
+	}
+
+	public void powerOn()
+	{
+		long bootcode = 0;
+		int slot = 0;
+		bootcode = Processor.writeSlot(bootcode, slot++, ISA.EXT1.ordinal());
+		bootcode = Processor.writeSlot(bootcode, slot++, Ext1.RDROP.ordinal());
+		bootcode = Processor.writeSlot(bootcode, slot++, ISA.EXT1.ordinal());
+		bootcode = Processor.writeSlot(bootcode, slot++, Ext1.RDROP.ordinal());
+		bootcode = Processor.writeSlot(bootcode, slot++, ISA.NLIT.ordinal());
+		bootcode = Processor.writeSlot(bootcode, slot++, 0);
+		bootcode = Processor.writeSlot(bootcode, slot++, ISA.EXT2.ordinal());
+		bootcode = Processor.writeSlot(bootcode, slot++, Ext2.SSTORE.ordinal());
+		bootcode = Processor.writeSlot(bootcode, slot++, SystemRegister.P.ordinal());
+		setSystemRegister(SystemRegister.I, bootcode);
+		// power-on reset clears the reset interrupt flags
+		setFlag(Flag.RESET, false);
+		setFlag(SystemRegister.INTS, Flag.RESET, false);
+
 	}
 
 	public long[] getSIMDRegister(int reg) {return simd.getRegister(reg);}
@@ -1159,6 +1181,36 @@ public class Task {
 		else {
 			this.register[dest] = Processor.FALSE;
 		}
+	}
+
+	public void inc(int reg)
+	{
+		++this.register[reg];
+	}
+
+	public void dec(int reg)
+	{
+		--this.register[reg];
+	}
+
+	public void inc(Register reg)
+	{
+		++this.register[reg.ordinal()];
+	}
+
+	public void dec(Register reg)
+	{
+		--this.register[reg.ordinal()];
+	}
+
+	public void inc(SystemRegister reg)
+	{
+		this.setSystemRegister(reg, this.getSystemRegister(reg)+1);
+	}
+
+	public void dec(SystemRegister reg)
+	{
+		this.setSystemRegister(reg, this.getSystemRegister(reg)-1);
 	}
 
 	public void abs(int dest, int src)

@@ -10,7 +10,7 @@ public class Execute extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doExecute();
+		p.getTask().execute();
 	}
 
 	@Override

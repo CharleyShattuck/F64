@@ -11,7 +11,7 @@ public class Abs extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doAbs(Register.T.ordinal(), Register.T.ordinal());
+		p.getTask().abs(Register.T.ordinal(), Register.T.ordinal());
 	}
 
 	@Override

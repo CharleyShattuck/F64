@@ -10,7 +10,7 @@ public class Tuck extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doTuck();
+		p.getTask().tuck();
 	}
 
 	@Override

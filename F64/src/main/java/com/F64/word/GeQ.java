@@ -12,8 +12,8 @@ public class GeQ extends com.F64.Word {
 	{
 		Processor p = i.getProcessor();
 		p.setRegister(Register.T, p.getRegister(Register.S) - p.getRegister(Register.T));
-		p.doNip();
-		p.doGE0Q(Register.T.ordinal(), Register.T.ordinal(), false);
+		p.getTask().nip();
+		p.getTask().ge0q(Register.T.ordinal(), Register.T.ordinal(), false);
 	}
 
 	@Override

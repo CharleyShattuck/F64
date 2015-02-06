@@ -10,7 +10,7 @@ public class Under extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doUnder();
+		p.getTask().under();
 	}
 
 	@Override

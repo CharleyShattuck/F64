@@ -10,7 +10,7 @@ public class Over extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doOver();
+		p.getTask().over();
 	}
 
 	@Override

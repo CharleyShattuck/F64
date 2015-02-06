@@ -10,7 +10,7 @@ public class Drop extends com.F64.Word {
 	public void execute(Interpreter i)
 	{
 		Processor p = i.getProcessor();
-		p.doDrop();
+		p.getTask().drop();
 	}
 
 	@Override

@@ -28,10 +28,10 @@ public class Machine {
 		}		
 	}
 
-	Machine(int columns, int rows, int dictionary_size, int heap_size, int stack_size, int return_stack_size, int no_of_threads)
+	Machine(int columns, int rows, int dictionary_size, int heap_size, int stack_size, int return_stack_size, int no_of_tasks, boolean stack_on_heap)
 	{
 		rom = new BootROM();
-		system = new System(dictionary_size, heap_size, stack_size, return_stack_size, no_of_threads);
+		system = new System(dictionary_size, heap_size, stack_size, return_stack_size, no_of_tasks);
 		//
 		long interrupt_code = Processor.writeSlot(0, 0, ISA.EXT1.ordinal());
 		interrupt_code = Processor.writeSlot(interrupt_code, 1, Ext1.EXITI.ordinal());
@@ -40,7 +40,7 @@ public class Machine {
 			system.setMemory(i, interrupt_code);
 		}
 		//
-		processor_array = new ProcessorArray(columns, rows, system, rom, 0x40, 0x80);
+		processor_array = new ProcessorArray(columns, rows, system, rom, stack_size, stack_on_heap ? 0 : return_stack_size, stack_on_heap ? 0 : no_of_tasks);
 		processor = processor_array.getProcessor(0, 0);
 		dictionary = new Dictionary(system);
 		dictionary.createStandardWords();
@@ -172,7 +172,7 @@ public class Machine {
 		assert(Flag.values().length <= (Processor.BIT_PER_CELL - 3*Processor.SLOT_BITS));
 		assert(SystemRegister.values().length <= Processor.SLOT_SIZE);
 		assert(Register.values().length <= Processor.SLOT_SIZE);
-		Machine main = new Machine(8, 4, 10000, 100000, 32, 16, 10);
+		Machine main = new Machine(8, 4, 10000, 100000, 32, 16, 10, false);
 		for (int i=0; i<args.length; ++i) {
 			java.io.FileInputStream reader;
 			try {
