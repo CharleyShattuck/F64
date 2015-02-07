@@ -16,6 +16,7 @@ public class To extends com.F64.Word {
 		if (w instanceof Val) {
 			Val value = (Val)w;
 			p.getTask().pushT(i.getSystem().getMemory(value.getAdr()));
+			p.getTask().store();
 		}
 		else {
 			assert(false);
@@ -33,6 +34,15 @@ public class To extends com.F64.Word {
 			Val value = (Val)w;
 			c.compile(new com.F64.codepoint.Literal(value.getAdr()));
 			c.compile(new com.F64.codepoint.Store());
+		}
+		else if (w instanceof Var) {
+			Var value = (Var)w;
+			c.compile(new com.F64.codepoint.Literal(value.getAdr()));
+			c.compile(new com.F64.codepoint.Store());
+		}
+		else if (w instanceof Local) {
+			Local value = (Local)w;
+			c.compile(new com.F64.codepoint.LocalStore(value.getIndex()));
 		}
 		else {
 			assert(false);

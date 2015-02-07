@@ -237,12 +237,10 @@ public class Dictionary {
 		this.register("ISA|^BRANCH",	false,	new Const(ISA.BRANCH.ordinal()));
 		this.register("ISA|^CALL",		false,	new Const(ISA.CALL.ordinal()));
 		this.register("ISA|^CALLM",		false,	new Const(ISA.CALLM.ordinal()));
-		this.register("ISA|^CONT",		false,	new Const(ISA.CONT.ordinal()));
 		this.register("ISA|^DROP",		false,	new Const(ISA.DROP.ordinal()));
 		this.register("ISA|^DUP",		false,	new Const(ISA.DUP.ordinal()));
 		this.register("ISA|^ENTER",		false,	new Const(ISA.ENTER.ordinal()));
 		this.register("ISA|^EXIT",		false,	new Const(ISA.EXIT.ordinal()));
-//		this.register("ISA|^EXT",		false,	new Const(ISA.EXT.ordinal()));
 		this.register("ISA|^EXT1",		false,	new Const(ISA.EXT1.ordinal()));
 		this.register("ISA|^EXT2",		false,	new Const(ISA.EXT2.ordinal()));
 		this.register("ISA|^EXT3",		false,	new Const(ISA.EXT3.ordinal()));
@@ -250,6 +248,7 @@ public class Dictionary {
 		this.register("ISA|^EXT5",		false,	new Const(ISA.EXT5.ordinal()));
 		this.register("ISA|^EXT6",		false,	new Const(ISA.EXT6.ordinal()));
 		this.register("ISA|^FJMP",		false,	new Const(ISA.FJMP.ordinal()));
+		this.register("ISA|^JUMP",		false,	new Const(ISA.JUMP.ordinal()));
 		this.register("ISA|^L@",		false,	new Const(ISA.LFETCH.ordinal()));
 		this.register("ISA|^L!",		false,	new Const(ISA.LSTORE.ordinal()));
 		this.register("ISA|^LIT",		false,	new Const(ISA.LIT.ordinal()));
@@ -285,6 +284,8 @@ public class Dictionary {
 		this.register("ISA|^USKIP",		false,	new Const(ISA.USKIP.ordinal()));
 		this.register("ISA|^UNEXT",		false,	new Const(ISA.UNEXT.ordinal()));
 		this.register("ISA|^XOR",		false,	new Const(ISA.XOR.ordinal()));
+
+		this.register("Ext1|^CONT",		false,	new Const(Ext1.CONT.ordinal()));
 
 		this.register("Exc|^COMPILE_ONLY",			false,	new Const(Exception.COMPILE_ONLY.ordinal()));
 		this.register("Exc|^EXECUTE_ONLY",			false,	new Const(Exception.EXECUTE_ONLY.ordinal()));

@@ -443,12 +443,12 @@ public class Task {
 		system_register[SystemRegister.P.ordinal()] = Processor.incAdr(system_register[SystemRegister.P.ordinal()]);
 	}
 
-	public long remainingSlots()
-	{
-		long res = this.system_register[SystemRegister.I.ordinal()] & Processor.REMAINING_MASKS[processor.getSlot()];
-		processor.setSlot(Processor.NO_OF_SLOTS);
-		return res;
-	}
+//	public long remainingSlots()
+//	{
+//		long res = this.system_register[SystemRegister.I.ordinal()] & Processor.REMAINING_MASKS[processor.getSlot()];
+//		processor.setSlot(Processor.NO_OF_SLOTS);
+//		return res;
+//	}
 
 	public void shortJump(int slot_bits, boolean forward)
 	{
@@ -466,6 +466,18 @@ public class Task {
 	public void longJump()
 	{
 		this.setSystemRegister(SystemRegister.P, this.pFetchInc());
+		processor.setSlot(Processor.NO_OF_SLOTS);
+	}
+
+	public void remainingCol()
+	{
+		dup();
+		long mask = Processor.REMAINING_MASKS[processor.getSlot()];
+		long data = this.system_register[SystemRegister.I.ordinal()];
+		long col_adr = this.system_register[SystemRegister.P.ordinal()];
+		long cont_adr = col_adr ^ ((col_adr ^ data) & mask);
+		this.register[Register.T.ordinal()] = col_adr;
+		this.system_register[SystemRegister.P.ordinal()] = cont_adr;
 		processor.setSlot(Processor.NO_OF_SLOTS);
 	}
 
@@ -510,7 +522,20 @@ public class Task {
 		// replace to lowest bits of P with the bits in the remaining slots
 		long mask = Processor.REMAINING_MASKS[processor.getSlot()];
 		long adr = this.getSystemRegister(SystemRegister.I) & mask;
-		// P contains return address
+		// save next address to register W
+		this.system_register[SystemRegister.W.ordinal()] = Processor.incAdr(adr);
+		// load I with content of adr
+		this.system_register[SystemRegister.I.ordinal()] = system.getMemory(adr);
+		processor.setSlot(0);
+	}
+
+	public void jump()
+	{
+		system_register[SystemRegister.P.ordinal()] = register[Register.R.ordinal()];
+		register[Register.R.ordinal()] = popReturnStack();
+		// replace to lowest bits of P with the bits in the remaining slots
+		long mask = Processor.REMAINING_MASKS[processor.getSlot()];
+		long adr = this.getSystemRegister(SystemRegister.I) & mask;
 		// save next address to register W
 		this.system_register[SystemRegister.W.ordinal()] = Processor.incAdr(adr);
 		// load I with content of adr

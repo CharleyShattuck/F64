@@ -191,11 +191,6 @@ public class Processor implements Runnable {
 		return IO_BASE + slot_bits;
 	}
 	
-	public static long geRemainingMask(int slot)
-	{
-		return REMAINING_MASKS[slot];
-	}
-
 	public static long incAdr(long data)
 	{
 		if (data >= 0) {
@@ -435,7 +430,6 @@ public class Processor implements Runnable {
 	
 	public Processor(System system, int x, int y, int z, int stack_size, int return_stack_size, int no_of_tasks)
 	{
-//		this.simd = new com.F64.SIMD.Unit();
 		this.system = system;
 		this.task_list = new Task[no_of_tasks];
 		for (int i=0; i<no_of_tasks; ++i) {
@@ -445,27 +439,12 @@ public class Processor implements Runnable {
 		this.x = x;
 		this.y = y;
 		this.z = z;
-//		this.register = new long[NO_OF_REG];
-//		this.local_register = new long[NO_OF_REG];
-//		this.system_register = new long[NO_OF_REG];
 		this.read_port = new long[Port.values().length];
 		this.write_port = new long[Port.values().length];
 		this.port_partner = new Processor[Port.values().length];
-//		this.register[Register.Z.ordinal()] = 0;
-//		if (stack_size > 0) {parameter_stack = new long[stack_size];}
-//		if (return_stack_size > 0) {return_stack = new long[return_stack_size];}
 	}
 
 	public System getSystem() {return system;}
-	
-//	public long getRegister(Register reg) {return task.getRegister(reg.ordinal());}
-//	public void setRegister(Register reg, long value) {task.setRegister(reg.ordinal(), value);}
-
-//	public long[] getSIMDRegister(int reg) {return task.getSIMDRegister(reg);}
-	
-//	public long getSystemRegister(SystemRegister reg) {return task.getSystemRegister(reg.ordinal());}
-//	public void setSystemRegister(SystemRegister reg, long value) {task.setSystemRegister(reg.ordinal(), value);}
-
 	public void setSlot(int s) {this.slot = s;}
 	public boolean getInternalCarry() {return this.carry;}
 	public boolean hasFailed() {return this.failed;}
@@ -1177,7 +1156,6 @@ public class Processor implements Runnable {
 				case NOP:		break;
 				case EXIT:		task.exit(); break;
 				case UNEXT:		task.unext(); break;
-				case CONT:		task.cont(); break;
 				case UJMP0:		this.slot = 0; break;
 				case UJMP1:		this.slot = 1; break;
 				case UJMP2:		this.slot = 2; break;
@@ -1195,6 +1173,7 @@ public class Processor implements Runnable {
 				case SNEXT:		task.snext(this.nextSlot(), false); break;
 				case BRANCH:	this.doConditionalJump(this.nextSlot()); break;
 				case CALL:		task.call(); break;
+				case JUMP:		task.jump(); break;
 				case CALLM:		task.callMethod(this.nextSlot()); break;
 				case FJMP:		task.shortJump(this.nextSlot(), true); break;
 				case BJMP:		task.shortJump(this.nextSlot(), false); break;
@@ -1525,9 +1504,11 @@ public class Processor implements Runnable {
 		case RDROP:			task.rDrop(); break;
 		case RDUP:			task.rDup(); break;
 		case QDUP:			task.qdup(); break;
+		case CONT:			task.cont(); break;
 		case EXECUTE:		task.execute(); break;
 		case EXITI:			this.doExitInterrupt(this.nextSlot()); break;
 //		case SWAP0:			this.doSwap(this.nextSlot(), this.nextSlot()); this.slot = 0; break;
+		case RCOL:			task.remainingCol(); break;
 		case LCOL:			task.longCol(); break;
 		case LJMP:			task.longJump(); break;
 //		case RNEXT:			this.doRemainingNext(); break;

@@ -33,6 +33,24 @@ public class Colon extends com.F64.scope.Main implements java.lang.Cloneable {
 	@Override
 	public void generate(Builder b)
 	{
+		// try to fit the jump address in the remaining slots
+		int slot = b.getCurrentSlot();
+		if (slot < com.F64.Processor.NO_OF_SLOTS-2) {
+			long source = b.getCurrentP();
+			long mask = com.F64.Processor.REMAINING_MASKS[slot+2];
+			Builder probe = b.fork(true);
+			super.generate(probe);
+			probe.flush();
+			long target = probe.getCurrentPosition();
+			long pattern = source ^ target;
+			if (pattern <= mask) {
+				b.add(Ext1.RCOL);
+				b.fillRemaining(target);
+				super.generate(b);
+				b.flush();
+				return;
+			}
+		}
 		b.add(Ext1.LCOL);
 		b.addAdditionalCell(0);
 		fixup_address = b.getCurrentP();

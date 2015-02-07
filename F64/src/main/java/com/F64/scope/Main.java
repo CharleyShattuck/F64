@@ -31,6 +31,7 @@ public class Main extends Block {
 	@Override
 	public boolean optimize(Compiler c, Optimization opt)
 	{
+		boolean res = super.optimize(c, opt);
 		if (opt == Optimization.ENTER_EXIT_ELIMINATION) {
 			if (!has_internal_exit && !has_internal_call
 				&& (head != null)
@@ -41,28 +42,23 @@ public class Main extends Block {
 				if (curr == tail) {
 					// no code inside colon definition
 					head = tail = new com.F64.codepoint.Skip();
-					return true;
+					res = true;
 				}
-				Builder b = c.getBuilder();
-				b.start(false);
-				super.generate(b);
-				
-//				while (curr != tail) {
-//					curr.generate(b);
-//					if (b.exceed1Cell()) {break;}
-//					curr = curr.getNext();
-//				}
-				if (!b.exceed1Cell()) {
+				else {
+					Builder b = c.getBuilder();
+					b.start(false);
+					super.generate(b);
+					if (!b.exceed1Cell()) {
+						b.stop();
+						head.remove();
+						tail.remove();
+						res = true;
+					}
 					b.stop();
-					head.remove();
-					tail.remove();
-					return true;
 				}
-				b.stop();
 			}
-			return false;
 		}
-		return super.optimize(c, opt);
+		return res;
 	}
 
 }

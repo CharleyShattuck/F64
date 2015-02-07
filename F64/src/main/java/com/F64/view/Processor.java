@@ -75,7 +75,7 @@ public class Processor  extends JFrame implements ActionListener, Runnable {
 
 	public static String convertRemainingToString(long value, int slot)
 	{
-		long mask = com.F64.Processor.geRemainingMask(slot);
+		long mask = com.F64.Processor.REMAINING_MASKS[slot];
 		value &= mask;
 		if (mask <= 0xffL) {
 			return String.format("%02X", (int) value);

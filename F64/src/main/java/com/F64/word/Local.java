@@ -13,6 +13,8 @@ public class Local extends com.F64.Word {
 		index = i;
 	}
 
+	public int getIndex() {return index;}
+	
 	@Override
 	public void execute(Interpreter i)
 	{

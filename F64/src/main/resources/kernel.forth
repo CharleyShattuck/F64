@@ -6,6 +6,6 @@
 \ : test ?for 2 * 3 + next ;
 \ 1 1 test .
 
-: myswap { a b -- b a } b a ;
+: myswap { a b -- b a } [: b a ;] execute ;
 
 1 2 myswap . .

@@ -2,11 +2,10 @@ package com.F64;
 
 public enum ISA {
 	NOP(1,		"nop",		"no operation"),
-	CALL(-1,	"call",		"call (address replacement in remaining slots)"),
 	ENTER(1,	"enter",	"Enter secondary. Push P on return stack and mov W to P."),
+	CALL(-1,	"call",		"call (address replacement in remaining slots)"),
+	JUMP(-1,	"jump",		"jump (address replacement in remaining slots)"),
 	SAVE(1,		"save",		"Save SELF on return stack and replace it with T. Also load new MT"),
-	LIT(2,		"lit",		"literal 0..63 (value in next slot)"),
-	NLIT(2,		"~lit",		"inverted literal. Push next slot on the stack and invert all bits"),
 	REGOP1(3,	"rop1",		"register operation with 1 operand (operation in next slot, destination in next slot+1)"),
 	REGOP2(4,	"rop2",		"register operation with 2 operand (operation in next slot, destination in next slot+1, source in next slot+2)"),
 	REGOP3(5,	"rop3",		"register operation with 3 operands (operation in next slot, destination in next slot+1, source 1 in next slot+2, source 2 in next slot+3)"),
@@ -17,6 +16,7 @@ public enum ISA {
 	EXT4(0,		"x4",		"code extension 4"),
 	EXT5(0,		"x5",		"code extension 5"),
 	EXT6(0,		"x6",		"code extension 6"),
+	LIT(2,		"lit",		"literal 0..63 (value in next slot)"),
 	// 16
 	UJMP0(1,	"ujmp0",	"jump to slot 0"),
 	UJMP1(1,	"ujmp1",	"jump to slot 1"),
@@ -30,10 +30,10 @@ public enum ISA {
 	UJMP9(1,	"ujmp9",	"jump to slot 9"),
 	UJMP10(1,	"ujmp10",	"jump to slot 10"),
 	USKIP(1,	"uskip",	"skip all remaining slots"),
-	CONT(1,		"cont",		"move R to I, pop return stack and jump to slot 0"),
 	BRANCH(-2,	"branch",	"branch (next slot contains the conditional slot specifier)"),
 	FJMP(2,		"fjmp",		"forward short jump to slot 0 (next slot (0=64) will be added to P)"),
 	BJMP(2,		"bjmp",		"back short jump to slot 0 (next slot (0=64) will be subtracted from P)"),
+	NLIT(2,		"~lit",		"inverted literal. Push next slot on the stack and invert all bits"),
 	// 32
 	INC(2,		"++",		"increment register (register in next slot)"),
 	DEC(2,		"--",		"decrement register (register in next slot)"),
